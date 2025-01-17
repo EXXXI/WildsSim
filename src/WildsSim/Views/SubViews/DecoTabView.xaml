@@ -1,0 +1,56 @@
+﻿<UserControl x:Class="WildsSim.Views.SubViews.DecoTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:WildsSim.Views.SubViews" xmlns:controls="clr-namespace:WildsSim.Views.Controls" xmlns:subviews="clr-namespace:WildsSim.ViewModels.SubViews" d:DataContext="{d:DesignInstance Type=subviews:DecoTabViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <!-- グリッド設定 -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- フィルタ等操作エリア -->
+        <StackPanel Orientation="Horizontal">
+            <StackPanel>
+                <TextBlock>フィルタ</TextBlock>
+                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                    <TextBlock>装飾品名：</TextBlock>
+                    <TextBox Width="150" Text="{Binding FilterName.Value}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                        <TextBlock>スキル名：</TextBlock>
+                    <TextBox Width="150" Text="{Binding FilterSkillName.Value}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Command="{Binding ClearFilterCommand}">クリア</Button>
+                    <Button Command="{Binding ApplyFilterCommand}" Margin="10,0,0,0">フィルタを適用</Button>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel  Margin="20,0,0,0">
+                <TextBlock>特殊操作(フィルタは解除されます)</TextBlock>
+                <Button Command="{Binding SetAll0Command}" Margin="5,0,0,0">全装飾品を0に</Button>
+                <Button Command="{Binding SetAll7Command}" Margin="5,0,0,0">全装飾品を7に</Button>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 一覧 -->
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding Path=Containers.Value, Mode=OneWay}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <controls:DecoCountSelectorContainer Margin="20,5"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

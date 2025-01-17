@@ -1,0 +1,37 @@
+﻿<UserControl x:Class="WildsSim.Views.Controls.DecoCountSelectorContainer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:WildsSim.Views.Controls" xmlns:controls="clr-namespace:WildsSim.ViewModels.Controls" d:DataContext="{d:DesignInstance Type=controls:DecoCountSelectorContainerViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Expander 
+            HorizontalAlignment="Left" 
+            Height="Auto" 
+            IsExpanded="True"
+            Margin="0,0,0,0" 
+            VerticalAlignment="Top" 
+            Width="auto"
+            Background="Azure"
+            BorderThickness="1"
+            BorderBrush="Black"
+        >
+        <Expander.Header>
+            <!-- TODO: Width10000はあまりよくないので別の方法があれば変えるべき -->
+            <TextBlock Text="{Binding Path=Category, Mode=OneWay}" Width="10000"/>
+        </Expander.Header>
+        <ItemsControl ItemsSource="{Binding Path=SelectorVMs.Value, Mode=OneWay}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <local:DecoCountSelector Margin="20,5"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </Expander>
+</UserControl>

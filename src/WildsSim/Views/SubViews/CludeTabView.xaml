@@ -1,0 +1,92 @@
+﻿<UserControl x:Class="WildsSim.Views.SubViews.CludeTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:WildsSim.Views.SubViews"
+             xmlns:ctrl="clr-namespace:WildsSim.Views.Controls" xmlns:subviews="clr-namespace:WildsSim.ViewModels.SubViews" d:DataContext="{d:DesignInstance Type=subviews:CludeTabViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <!-- グリッド設定 -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- フィルタ等操作エリア -->
+        <StackPanel Orientation="Horizontal">
+            <StackPanel>
+                <TextBlock>フィルタ</TextBlock>
+                <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                    <TextBlock>名前：</TextBlock>
+                    <TextBox Width="150" Text="{Binding FilterName.Value}"/>
+                </StackPanel>
+                <CheckBox Margin="5,0,0,0" IsChecked="{Binding IsCludeOnlyFilter.Value}">除外・固定が設定されている装備のみに絞る</CheckBox>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Command="{Binding ClearFilterCommand}">クリア</Button>
+                    <Button Command="{Binding ApplyFilterCommand}" Margin="10,0,0,0">フィルタを適用</Button>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel  Margin="20,0,0,0">
+                <TextBlock>特殊操作(フィルタは解除されます)</TextBlock>
+                <Button Command="{Binding DeleteAllCludeCommand}" Margin="5,0,0,0">除外・固定を全て解除</Button>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 一覧 -->
+            <DataGrid Grid.Row="1" x:Name="grid" ItemsSource="{Binding ShowingEquips.Value, Mode=OneWay}" IsReadOnly="true" AutoGenerateColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="頭">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:CludeGridCell DataContext="{Binding Head.Value}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="胴">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:CludeGridCell DataContext="{Binding Body.Value}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="腕">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:CludeGridCell DataContext="{Binding Arm.Value}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="腰">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:CludeGridCell DataContext="{Binding Waist.Value}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="足">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:CludeGridCell DataContext="{Binding Leg.Value}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="護石">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:CludeGridCell DataContext="{Binding Charm.Value}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="装飾品">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:CludeGridCell DataContext="{Binding Deco.Value}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+            </DataGrid>
+    </Grid>
+</UserControl>
