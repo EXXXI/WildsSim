@@ -26,7 +26,6 @@ namespace SimModel.Domain
         const string Slot2RowName = "slot2";
         const string Slot3RowName = "slot3";
         const string Slot4RowName = "slot4";
-        const string SexRowName = "sex";
         const string DefRowName = "def";
         const string FireRowName = "fire";
         const string WaterRowName = "water";
@@ -221,9 +220,6 @@ namespace SimModel.Domain
             Constraints.Add(Slot3RowName, SimSolver.MakeConstraint(0.0 - slotCond[2], double.PositiveInfinity, Slot3RowName));
             Constraints.Add(Slot4RowName, SimSolver.MakeConstraint(0.0 - slotCond[3], double.PositiveInfinity, Slot4RowName));
 
-            // 性別(自分と違う方を除外する)
-            Constraints.Add(SexRowName, SimSolver.MakeConstraint(0, 0, SexRowName));
-
             // 防御・耐性
             Constraints.Add(DefRowName, SimSolver.MakeConstraint(Condition.Def ?? 0.0, double.PositiveInfinity, DefRowName));
             Constraints.Add(FireRowName, SimSolver.MakeConstraint(Condition.Fire ?? double.NegativeInfinity, double.PositiveInfinity, FireRowName));
@@ -394,12 +390,6 @@ namespace SimModel.Domain
             Constraints[Slot2RowName].SetCoefficient(xvar, slotCond[1]);
             Constraints[Slot3RowName].SetCoefficient(xvar, slotCond[2]);
             Constraints[Slot4RowName].SetCoefficient(xvar, slotCond[3]);
-
-            // 性別情報(自分と違う方を除外する)
-            if (!equip.Sex.Equals(Sex.all) && !equip.Sex.Equals(Condition.Sex))
-            {
-                Constraints[SexRowName].SetCoefficient(xvar, 1);
-            }
 
             // 防御・耐性情報
             Constraints[DefRowName].SetCoefficient(xvar, equip.Maxdef);

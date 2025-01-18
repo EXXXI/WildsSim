@@ -14,6 +14,11 @@ namespace SimModel.Model
         public static List<Skill> Skills { get; set; } = new();
 
         /// <summary>
+        /// 武器マスタ
+        /// </summary>
+        public static List<Weapon> Weapons { get; set; } = new();
+
+        /// <summary>
         /// 頭装備マスタ
         /// </summary>
         public static List<Equipment> Heads { get; set; } = new();

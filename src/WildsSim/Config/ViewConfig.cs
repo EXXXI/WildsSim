@@ -41,11 +41,6 @@ namespace WildsSim.Config
         public string NoSkillName { get; set; }
 
         /// <summary>
-        /// 性別の初期値
-        /// </summary>
-        public Sex DefaultSex { get; set; }
-
-        /// <summary>
         /// グリッドの列順保存有無
         /// </summary>
         public bool UseSavedColumnIndexes { get; set; }
@@ -63,13 +58,6 @@ namespace WildsSim.Config
                 MaxSlotSize = ParseUtil.LoadConfigItem(line, @"スロットの最大の大きさ", 4);
                 DefaultLimit = ParseUtil.LoadConfigItem(line, @"デフォルトの頑張り度", 100).ToString();
                 NoSkillName = ParseUtil.LoadConfigItem(line, @"スキル未選択時の表示", @"スキル選択");
-                Sex defSex = ParseUtil.LoadConfigItem(line, @"性別の初期値", @"男性").StrToSex();
-                if (defSex == Sex.all)
-                {
-                    // 指定が不正な場合、ひとまず男性とする
-                    defSex = Sex.male;
-                }
-                DefaultSex = defSex;
                 UseSavedColumnIndexes = ParseUtil.LoadConfigItem(line, @"グリッドの列順保存有無", @"有").Equals(@"有");
             }
         }

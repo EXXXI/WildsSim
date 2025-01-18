@@ -60,11 +60,6 @@ namespace SimModel.Model
         public int? Dragon { get; set; }
 
         /// <summary>
-        /// 性別
-        /// </summary>
-        public Sex Sex { get; set; }
-
-        /// <summary>
         /// マイ検索条件保存用ID
         /// </summary>
         public string ID { get; set; }
@@ -131,7 +126,7 @@ namespace SimModel.Model
                 string none = "なし";
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine($"武器スロ:{WeaponSlot1}-{WeaponSlot2}-{WeaponSlot3}");
-                sb.AppendLine($"防御力:{Def?.ToString() ?? none}, 性別:{Sex.Str()}");
+                sb.AppendLine($"防御力:{Def?.ToString() ?? none}");
                 sb.Append($"火:{Fire?.ToString() ?? none},");
                 sb.Append($"水:{Water?.ToString() ?? none},");
                 sb.Append($"雷:{Thunder?.ToString() ?? none},");
@@ -174,7 +169,6 @@ namespace SimModel.Model
             Thunder = condition.Thunder;
             Ice = condition.Ice;
             Dragon = condition.Dragon;
-            Sex = condition.Sex;
         }
 
         /// <summary>

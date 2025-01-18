@@ -40,6 +40,7 @@ namespace SimModel.Service
             FileOperation.LoadLegCSV();
             FileOperation.LoadCludeCSV();
             FileOperation.LoadDecoCSV();
+            FileOperation.LoadWeaponCSV();
 
             // セーブデータ類の読み込み
             FileOperation.MakeSaveFolder();

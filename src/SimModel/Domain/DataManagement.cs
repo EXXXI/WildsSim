@@ -292,7 +292,6 @@ namespace SimModel.Domain
                     condition.Thunder = newCondition.Thunder;
                     condition.Ice = newCondition.Ice;
                     condition.Dragon = newCondition.Dragon;
-                    condition.Sex = newCondition.Sex;
                     condition.Skills = newCondition.Skills;
 
                     // マスタへ反映

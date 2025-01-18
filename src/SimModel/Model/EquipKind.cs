@@ -12,6 +12,7 @@
         leg,
         deco,
         charm,
+        weapon,
         error
     }
 
