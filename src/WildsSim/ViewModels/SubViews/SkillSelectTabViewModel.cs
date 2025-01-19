@@ -134,6 +134,11 @@ namespace WildsSim.ViewModels.SubViews
         public ReactivePropertySlim<bool> IsSlotOnly { get; } = new();
 
         /// <summary>
+        /// 最低攻撃力の表示をするフラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> ShowAttackCond { get; } = new();
+
+        /// <summary>
         /// スロット武器選択の選択肢
         /// </summary>
         public ReactivePropertySlim<ObservableCollection<string>> SlotWeapons { get; } = new();
@@ -233,6 +238,7 @@ namespace WildsSim.ViewModels.SubViews
             AddMyConditionCommand.Subscribe(_ => AddMyCondition());
             CalcWeapon.Subscribe(_ => ChangeIsCalcWeapon());
             SelectedWeaponType.Subscribe(_ => ChangeWeapons());
+            SelectedWeapon.Subscribe(_ => ChangeShowAttackCond());
         }
 
         /// <summary>
@@ -409,9 +415,7 @@ namespace WildsSim.ViewModels.SubViews
                 vm.TryAddSkill(mySet.Skills);
             }
 
-            // 武器情報反映
-            // TODO: ★マイセット変更後に検討
-            // WeaponSlots.Value = mySet.WeaponSlotDisp;
+            // TODO: 武器情報も反映すべき？指定かどうかが分からないので一旦なし
         }
 
         /// <summary>
@@ -427,9 +431,33 @@ namespace WildsSim.ViewModels.SubViews
                 vm.TryAddSkill(condition.Skills);
             }
 
-            // スロット情報反映
-            // TODO: ★マイ検索条件変更後に検討
-            // WeaponSlots.Value = condition.WeaponSlot1 + "-" + condition.WeaponSlot2 + "-" + condition.WeaponSlot3;
+            // 武器情報反映
+            if (condition.IsSpecificWeapon)
+            {
+                if (condition.WeaponType == WeaponType.指定なし)
+                {
+                    // スロットのみ指定
+                    CalcWeapon.Value = SlotOnlyString;
+                    SelectedSlotWeapon.Value = condition.WeaponName;
+                    MinAttack.Value = string.Empty;
+                }
+                else
+                {
+                    // 武器指定
+                    CalcWeapon.Value = CalcWeaponString;
+                    SelectedWeaponType.Value = condition.WeaponType.ToString();
+                    SelectedWeapon.Value = condition.WeaponName;
+                    MinAttack.Value = string.Empty;
+                }
+            }
+            else
+            {
+                // 武器種のみ指定
+                CalcWeapon.Value = CalcWeaponString;
+                SelectedWeaponType.Value = condition.WeaponType.ToString();
+                SelectedWeapon.Value = SearchWeaponString;
+                MinAttack.Value = condition.MinAttack?.ToString() ?? string.Empty;
+            }
 
             // 防御力・耐性を反映
             Def.Value = condition.Def?.ToString() ?? string.Empty;
@@ -479,6 +507,7 @@ namespace WildsSim.ViewModels.SubViews
                 IsCalcWeapon.Value = true;
                 IsSlotOnly.Value = false;
             }
+            ChangeShowAttackCond();
         }
 
         /// <summary>
@@ -492,6 +521,22 @@ namespace WildsSim.ViewModels.SubViews
             weapons.AddRange(Masters.Weapons.Where(w => w.WeaponType.ToString() == selected).Select(w => w.Name).ToList());
             Weapons.Value = weapons;
             SelectedWeapon.Value = weapons[0];
+            ChangeShowAttackCond();
+        }
+
+        /// <summary>
+        /// 最低攻撃力の表示を切り替える
+        /// </summary>
+        private void ChangeShowAttackCond()
+        {
+            if (IsCalcWeapon.Value && (SelectedWeapon.Value == SearchWeaponString))
+            {
+                ShowAttackCond.Value = true;
+            }
+            else
+            {
+                ShowAttackCond.Value = false;
+            }
         }
 
         /// <summary>
@@ -512,6 +557,7 @@ namespace WildsSim.ViewModels.SubViews
             {
                 condition.IsSpecificWeapon = true;
                 condition.WeaponName = SelectedSlotWeapon.Value;
+                condition.WeaponType = WeaponType.指定なし;
             }
             if (IsCalcWeapon.Value)
             {
@@ -524,6 +570,7 @@ namespace WildsSim.ViewModels.SubViews
                 else
                 {
                     condition.IsSpecificWeapon = true;
+                    condition.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), SelectedWeaponType.Value);
                     condition.WeaponName = SelectedWeapon.Value;
                 }
             }

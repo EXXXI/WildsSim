@@ -1,13 +1,8 @@
 ﻿using Google.OrTools.LinearSolver;
-using SimModel.Config;
 using SimModel.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Security.AccessControl;
-using System.Windows.Input;
-using System.Windows.Markup.Localizer;
 
 namespace SimModel.Domain
 {

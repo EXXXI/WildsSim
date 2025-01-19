@@ -492,10 +492,10 @@ namespace SimModel.Domain
                 List<string> bodyStrings = new();
                 bodyStrings.Add(condition.ID);
                 bodyStrings.Add(condition.DispName);
-                // TODO: ★後で検討
-                //bodyStrings.Add(condition.WeaponSlot1.ToString());
-                //bodyStrings.Add(condition.WeaponSlot2.ToString());
-                //bodyStrings.Add(condition.WeaponSlot3.ToString());
+                bodyStrings.Add(condition.IsSpecificWeapon.ToString());
+                bodyStrings.Add(condition.WeaponName ?? "null");
+                bodyStrings.Add(condition.WeaponType.ToString());
+                bodyStrings.Add(condition.MinAttack?.ToString() ?? "null");
                 bodyStrings.Add(condition.Def?.ToString() ?? "null");
                 bodyStrings.Add(condition.Fire?.ToString() ?? "null");
                 bodyStrings.Add(condition.Water?.ToString() ?? "null");
@@ -506,7 +506,7 @@ namespace SimModel.Domain
                 body.Add(bodyStrings.ToArray());
             }
 
-            string[] header = new string[] { "ID", "名前", "武器スロ1", "武器スロ2", "武器スロ3", "防御力", "火耐性", "水耐性", "雷耐性", "氷耐性", "龍耐性", "スキル"};
+            string[] header = new string[] { "ID", "名前", "武器指定有無", "武器名", "武器種", "攻撃力", "防御力", "火耐性", "水耐性", "雷耐性", "氷耐性", "龍耐性", "スキル"};
             string export = CsvWriter.WriteToText(header, body);
             File.WriteAllText(ConditionCsv, export);
         }
@@ -526,10 +526,16 @@ namespace SimModel.Domain
 
                 condition.ID = line[@"ID"];
                 condition.DispName = line[@"名前"];
-                // TODO: ★後で検討
-                //condition.WeaponSlot1 = ParseUtil.Parse(line[@"武器スロ1"]);
-                //condition.WeaponSlot2 = ParseUtil.Parse(line[@"武器スロ2"]);
-                //condition.WeaponSlot3 = ParseUtil.Parse(line[@"武器スロ3"]);
+                condition.IsSpecificWeapon = Convert.ToBoolean(line[@"武器指定有無"]);
+                condition.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), line[@"武器種"]);
+                if (condition.IsSpecificWeapon)
+                {
+                    condition.WeaponName = line[@"武器名"];
+                }
+                else
+                {
+                    condition.MinAttack = line[@"攻撃力"] == "null" ? null : ParseUtil.Parse(line[@"攻撃力"]);
+                }
                 condition.Def = line[@"防御力"] == "null" ? null : ParseUtil.Parse(line[@"防御力"]);
                 condition.Fire = line[@"火耐性"] == "null" ? null : ParseUtil.Parse(line[@"火耐性"]);
                 condition.Water = line[@"水耐性"] == "null" ? null : ParseUtil.Parse(line[@"水耐性"]);

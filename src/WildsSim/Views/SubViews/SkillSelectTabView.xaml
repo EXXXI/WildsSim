@@ -58,9 +58,9 @@
                         <TextBlock Width="65" Text="武器指定"/>
                         <ComboBox Width="200" ItemsSource="{Binding Weapons.Value, Mode=OneWay}" SelectedItem="{Binding SelectedWeapon.Value}" SelectedIndex="0" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Visibility="{Binding IsCalcWeapon.Value, Converter={StaticResource BoolVisibilityConverter}}">
-                        <TextBlock Width="50" Text="最低攻撃力"/>
-                        <ctrl:FocusTextBox Width="115" Text="{Binding MinAttack.Value}"/>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding ShowAttackCond.Value, Converter={StaticResource BoolVisibilityConverter}}">
+                        <TextBlock Width="65" Text="最低攻撃力"/>
+                        <ctrl:FocusTextBox Width="200" Text="{Binding MinAttack.Value}"/>
                     </StackPanel>
                 </StackPanel>
 

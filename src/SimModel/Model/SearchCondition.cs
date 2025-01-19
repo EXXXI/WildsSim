@@ -130,8 +130,15 @@ namespace SimModel.Model
             {
                 string none = "なし";
                 StringBuilder sb = new StringBuilder();
-                // TODO: ★マイ検索条件あたりの変更時に検討
-                //sb.AppendLine($"武器スロ:{WeaponSlot1}-{WeaponSlot2}-{WeaponSlot3}");
+                if (IsSpecificWeapon)
+                {
+                    sb.AppendLine($"武器:{WeaponName}");
+                }
+                else
+                {
+                    sb.Append($"武器種:{WeaponType}, ");
+                    sb.AppendLine($"最低攻撃力:{MinAttack}");
+                }
                 sb.AppendLine($"防御力:{Def?.ToString() ?? none}");
                 sb.Append($"火:{Fire?.ToString() ?? none},");
                 sb.Append($"水:{Water?.ToString() ?? none},");
