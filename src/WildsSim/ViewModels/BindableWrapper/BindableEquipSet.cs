@@ -11,6 +11,11 @@ namespace WildsSim.ViewModels.BindableWrapper
     internal class BindableEquipSet : ChildViewModelBase
     {
         /// <summary>
+        /// 武器装備
+        /// </summary>
+        public ReactivePropertySlim<BindableEquipment> Weapon { get; } = new();
+
+        /// <summary>
         /// 頭装備
         /// </summary>
         public ReactivePropertySlim<BindableEquipment> Head { get; } = new();
@@ -81,11 +86,6 @@ namespace WildsSim.ViewModels.BindableWrapper
         public ReactivePropertySlim<string> DecoNameCSV { get; } = new();
 
         /// <summary>
-        /// 武器スロの表示用形式(2-2-0など)
-        /// </summary>
-        public ReactivePropertySlim<string> WeaponSlotDisp { get; } = new();
-
-        /// <summary>
         /// スキルのCSV形式 3行
         /// </summary>
         public ReactivePropertySlim<string> SkillsDisp { get; } = new();
@@ -94,11 +94,6 @@ namespace WildsSim.ViewModels.BindableWrapper
         /// 説明
         /// </summary>
         public ReactivePropertySlim<string> Description { get; } = new();
-
-        /// <summary>
-        /// 空きスロット数
-        /// </summary>
-        public ReactivePropertySlim<string> EmptySlotNum { get; set; } = new();
 
         /// <summary>
         /// オリジナル
@@ -111,6 +106,7 @@ namespace WildsSim.ViewModels.BindableWrapper
         /// <param name="set"></param>
         public BindableEquipSet(EquipSet set)
         {
+            Weapon.Value = new BindableEquipment(set.Weapon);
             Head.Value = new BindableEquipment(set.Head);
             Body.Value = new BindableEquipment(set.Body);
             Arm.Value = new BindableEquipment(set.Arm);
@@ -125,10 +121,8 @@ namespace WildsSim.ViewModels.BindableWrapper
             Ice.Value = set.Ice;
             Dragon.Value = set.Dragon;
             DecoNameCSV.Value = set.DecoNameCSVMultiLine;
-            WeaponSlotDisp.Value = set.WeaponSlotDisp;
             SkillsDisp.Value = set.SkillsDispMultiLine;
             Description.Value = set.Description;
-            EmptySlotNum.Value = set.EmptySlotNum;
             Original = set;
         }
 

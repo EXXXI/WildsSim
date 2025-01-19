@@ -73,12 +73,6 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         public ReactivePropertySlim<ObservableCollection<MyConditionRowViewModel>> MyConditionVMs { get; } = new();
 
-        // TODO:要変更
-        /// <summary>
-        /// 武器スロ指定
-        /// </summary>
-        public ReactivePropertySlim<string> WeaponSlots { get; } = new();
-
         /// <summary>
         /// 防御力指定
         /// </summary>
@@ -118,12 +112,6 @@ namespace WildsSim.ViewModels.SubViews
         /// 選択中タブのIndex
         /// </summary>
         public ReactivePropertySlim<int> SelectedTabIndex { get; } = new();
-
-        // TODO: 要変更
-        /// <summary>
-        /// スロット選択の選択肢
-        /// </summary>
-        public ReactivePropertySlim<ObservableCollection<string>> SlotMaster { get; } = new();
 
         /// <summary>
         /// 武器指定方式の選択肢
@@ -227,21 +215,6 @@ namespace WildsSim.ViewModels.SubViews
             // 武器種の選択肢を生成し、画面に反映
             WeaponTypes.Value = new(Enum.GetNames(typeof(WeaponType)).Where(s => s != WeaponType.指定なし.ToString()));
             SelectedWeaponType.Value = WeaponTypes.Value[0];
-
-            // スロットの選択肢を生成し、画面に反映
-            ObservableCollection<string> slots = new();
-            for (int i = 0; i <= MaxSlotSize; i++)
-            {
-                for (int j = 0; j <= i; j++)
-                {
-                    for (int k = 0; k <= j; k++)
-                    {
-                        slots.Add(string.Join('-', i, j, k));
-                    }
-                }
-            }
-            SlotMaster.Value = slots;
-            WeaponSlots.Value = "0-0-0";
 
             // 頑張り度を設定
             Limit.Value = DefaultLimit;
@@ -364,7 +337,11 @@ namespace WildsSim.ViewModels.SubViews
             {
                 vm.ClearAll();
             }
-            WeaponSlots.Value = "0-0-0";
+            // TODO: 各プルダウンの初期化がちょっと雑な指定なので時間があれば再検討
+            SelectedWeapon.Value = Weapons.Value[0];
+            SelectedWeaponType.Value = WeaponTypes.Value[0];
+            CalcWeapon.Value = CalcWeaponMaster.Value[0];
+            MinAttack.Value = string.Empty;
             Def.Value = string.Empty;
             Fire.Value = string.Empty;
             Water.Value = string.Empty;
@@ -432,8 +409,9 @@ namespace WildsSim.ViewModels.SubViews
                 vm.TryAddSkill(mySet.Skills);
             }
 
-            // スロット情報反映
-            WeaponSlots.Value = mySet.WeaponSlotDisp;
+            // 武器情報反映
+            // TODO: ★マイセット変更後に検討
+            // WeaponSlots.Value = mySet.WeaponSlotDisp;
         }
 
         /// <summary>
@@ -450,7 +428,8 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // スロット情報反映
-            WeaponSlots.Value = condition.WeaponSlot1 + "-" + condition.WeaponSlot2 + "-" + condition.WeaponSlot3;
+            // TODO: ★マイ検索条件変更後に検討
+            // WeaponSlots.Value = condition.WeaponSlot1 + "-" + condition.WeaponSlot2 + "-" + condition.WeaponSlot3;
 
             // 防御力・耐性を反映
             Def.Value = condition.Def?.ToString() ?? string.Empty;
@@ -528,11 +507,26 @@ namespace WildsSim.ViewModels.SubViews
                 .SelectMany(vm => vm.SelectedSkills())
                 .ToList();
 
-            // 武器スロ条件を整理
-            string[] splited = WeaponSlots.Value.Split('-');
-            condition.WeaponSlot1 = int.Parse(splited[0]);
-            condition.WeaponSlot2 = int.Parse(splited[1]);
-            condition.WeaponSlot3 = int.Parse(splited[2]);
+            // 武器条件を整理
+            if (IsSlotOnly.Value)
+            {
+                condition.IsSpecificWeapon = true;
+                condition.WeaponName = SelectedSlotWeapon.Value;
+            }
+            if (IsCalcWeapon.Value)
+            {
+                if (SelectedWeapon.Value == SearchWeaponString)
+                {
+                    condition.IsSpecificWeapon = false;
+                    condition.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), SelectedWeaponType.Value);
+                    condition.MinAttack = ParseOrNull(MinAttack.Value);
+                }
+                else
+                {
+                    condition.IsSpecificWeapon = true;
+                    condition.WeaponName = SelectedWeapon.Value;
+                }
+            }
 
             // 防御力・耐性を整理
             condition.Def = ParseOrNull(Def.Value);

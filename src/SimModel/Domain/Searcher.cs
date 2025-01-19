@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Windows.Input;
+using System.Windows.Markup.Localizer;
 
 namespace SimModel.Domain
 {
@@ -16,22 +17,32 @@ namespace SimModel.Domain
     internal class Searcher : IDisposable
     {
         // 制約式・変数の名称
+        const string WeaponRowName = "weapon";
         const string HeadRowName = "head";
         const string BodyRowName = "body";
         const string ArmRowName = "arm";
         const string WaistRowName = "waist";
         const string LegRowName = "leg";
         const string CharmRowName = "charm";
-        const string Slot1RowName = "slot1";
-        const string Slot2RowName = "slot2";
-        const string Slot3RowName = "slot3";
-        const string Slot4RowName = "slot4";
+        const string WeaponSlot1RowName = "weaponslot1";
+        const string WeaponSlot2RowName = "weaponslot2";
+        const string WeaponSlot3RowName = "weaponslot3";
+        const string WeaponSlot4RowName = "weaponslot4";
+        const string ArmorSlot1RowName = "armorslot1";
+        const string ArmorSlot2RowName = "armorslot2";
+        const string ArmorSlot3RowName = "armorslot3";
+        const string ArmorSlot4RowName = "armorslot4";
+        const string AllSlot1RowName = "allslot1";
+        const string AllSlot2RowName = "allslot2";
+        const string AllSlot3RowName = "allslot3";
+        const string AllSlot4RowName = "allslot4";
         const string DefRowName = "def";
         const string FireRowName = "fire";
         const string WaterRowName = "water";
         const string ThunderRowName = "thunder";
         const string IceRowName = "ice";
         const string DragonRowName = "dragon";
+        const string AttackRowName = "attack";
         const string SkillRowPrefix = "skill_";
         const string SetRowPrefix = "set_";
         const string CludeRowPrefix = "clude_";
@@ -68,6 +79,11 @@ namespace SimModel.Domain
         public bool IsCanceling { get; set; } = false;
 
         /// <summary>
+        /// 検索対象の武器一覧
+        /// </summary>
+        private List<Weapon> Weapons { get; set; }
+
+        /// <summary>
         /// 検索対象の頭一覧
         /// </summary>
         private List<Equipment> Heads { get; set; }
@@ -100,6 +116,20 @@ namespace SimModel.Domain
         {
             Condition = condition;
             ResultSets = new List<EquipSet>();
+
+            if (condition.IsSpecificWeapon)
+            {
+                Weapons = new();
+                Weapon? weapon = Masters.Weapons.Where(w => w.Name == condition.WeaponName).FirstOrDefault();
+                if (weapon != null)
+                {
+                    Weapons.Add(weapon);
+                }
+            }
+            else
+            {
+                Weapons = Masters.Weapons.Where(w => w.WeaponType == condition.WeaponType).ToList();
+            }
 
             Heads = Masters.Heads;
             Bodys = Masters.Bodys;
@@ -179,7 +209,7 @@ namespace SimModel.Domain
         private void SetVariables()
         {
             // 各装備は0個以上で整数
-            var equips = Heads.Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
+            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
                 .Union(Masters.Charms).Union(Masters.Decos);
             foreach (var equip in equips)
             {
@@ -203,7 +233,10 @@ namespace SimModel.Domain
         /// </summary>
         private void SetConstraints()
         {
-            // 各部位に装着できる防具は1つまで
+            // 武器は指定されている場合1固定、そうでない場合1以下
+            Constraints.Add(WeaponRowName, SimSolver.MakeConstraint((Condition.IsSpecificWeapon ? 1 : 0), 1, WeaponRowName));
+
+            // 各部位に装着できる装備は1つまで
             Constraints.Add(HeadRowName, SimSolver.MakeConstraint(0, 1, HeadRowName));
             Constraints.Add(BodyRowName, SimSolver.MakeConstraint(0, 1, BodyRowName));
             Constraints.Add(ArmRowName, SimSolver.MakeConstraint(0, 1, ArmRowName));
@@ -211,14 +244,23 @@ namespace SimModel.Domain
             Constraints.Add(LegRowName, SimSolver.MakeConstraint(0, 1, LegRowName));
             Constraints.Add(CharmRowName, SimSolver.MakeConstraint(0, 1, CharmRowName));
 
-            // 武器スロ計算
-            int[] slotCond = SlotCalc(Condition.WeaponSlot1, Condition.WeaponSlot2, Condition.WeaponSlot3);
+            // 残りスロット数は0以上(武器スキル)
+            Constraints.Add(WeaponSlot1RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, WeaponSlot1RowName));
+            Constraints.Add(WeaponSlot2RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, WeaponSlot2RowName));
+            Constraints.Add(WeaponSlot3RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, WeaponSlot3RowName));
+            Constraints.Add(WeaponSlot4RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, WeaponSlot4RowName));
 
-            // 残りスロット数は0以上
-            Constraints.Add(Slot1RowName, SimSolver.MakeConstraint(0.0 - slotCond[0], double.PositiveInfinity, Slot1RowName));
-            Constraints.Add(Slot2RowName, SimSolver.MakeConstraint(0.0 - slotCond[1], double.PositiveInfinity, Slot2RowName));
-            Constraints.Add(Slot3RowName, SimSolver.MakeConstraint(0.0 - slotCond[2], double.PositiveInfinity, Slot3RowName));
-            Constraints.Add(Slot4RowName, SimSolver.MakeConstraint(0.0 - slotCond[3], double.PositiveInfinity, Slot4RowName));
+            // 残りスロット数は0以上(防具スキル)
+            Constraints.Add(ArmorSlot1RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, ArmorSlot1RowName));
+            Constraints.Add(ArmorSlot2RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, ArmorSlot2RowName));
+            Constraints.Add(ArmorSlot3RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, ArmorSlot3RowName));
+            Constraints.Add(ArmorSlot4RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, ArmorSlot4RowName));
+
+            // 残りスロット数は0以上(全スキル)
+            Constraints.Add(AllSlot1RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, AllSlot1RowName));
+            Constraints.Add(AllSlot2RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, AllSlot2RowName));
+            Constraints.Add(AllSlot3RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, AllSlot3RowName));
+            Constraints.Add(AllSlot4RowName, SimSolver.MakeConstraint(0.0, double.PositiveInfinity, AllSlot4RowName));
 
             // 防御・耐性
             Constraints.Add(DefRowName, SimSolver.MakeConstraint(Condition.Def ?? 0.0, double.PositiveInfinity, DefRowName));
@@ -227,6 +269,9 @@ namespace SimModel.Domain
             Constraints.Add(ThunderRowName, SimSolver.MakeConstraint(Condition.Thunder ?? double.NegativeInfinity, double.PositiveInfinity, ThunderRowName));
             Constraints.Add(IceRowName, SimSolver.MakeConstraint(Condition.Ice ?? double.NegativeInfinity, double.PositiveInfinity, IceRowName));
             Constraints.Add(DragonRowName, SimSolver.MakeConstraint(Condition.Dragon ?? double.NegativeInfinity, double.PositiveInfinity, DragonRowName));
+
+            // 攻撃力
+            Constraints.Add(AttackRowName, SimSolver.MakeConstraint(Condition.MinAttack ?? 0.0, double.PositiveInfinity, AttackRowName));
 
             // スキル
             foreach (var skill in Condition.Skills)
@@ -266,7 +311,7 @@ namespace SimModel.Domain
             Objective objective = SimSolver.Objective();
 
             // 各装備の防御力が、目的関数における各装備の項の係数となる
-            var equips = Heads.Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
+            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
                 .Union(Masters.Charms).Union(Masters.Decos);
             foreach (var equip in equips)
             {
@@ -322,7 +367,7 @@ namespace SimModel.Domain
         private void SetDatas()
         {
             // 防具データ
-            var equips = Heads.Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
+            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
                 .Union(Masters.Charms).Union(Masters.Decos);
             foreach (var equip in equips)
             {
@@ -349,6 +394,9 @@ namespace SimModel.Domain
             bool isDecoOrGSkill = false;
             switch (equip.Kind)
             {
+                case EquipKind.weapon:
+                    kindRowName = WeaponRowName;
+                    break;
                 case EquipKind.head:
                     kindRowName = HeadRowName;
                     break;
@@ -377,19 +425,47 @@ namespace SimModel.Domain
                 Constraints[kindRowName].SetCoefficient(xvar, 1);
             }
 
-            // スロット情報
-            int[] slotCond = SlotCalc(equip.Slot1, equip.Slot2, equip.Slot3);
+            // スロット情報(武器スキル)
+            int[] weaponSlotCond = SlotCalc(equip, true, false);
             if (isDecoOrGSkill)
             {
-                for (int i = 0; i < slotCond.Length; i++)
+                for (int i = 0; i < weaponSlotCond.Length; i++)
                 {
-                    slotCond[i] = slotCond[i] * -1;
+                    weaponSlotCond[i] = weaponSlotCond[i] * -1;
                 }
             }
-            Constraints[Slot1RowName].SetCoefficient(xvar, slotCond[0]);
-            Constraints[Slot2RowName].SetCoefficient(xvar, slotCond[1]);
-            Constraints[Slot3RowName].SetCoefficient(xvar, slotCond[2]);
-            Constraints[Slot4RowName].SetCoefficient(xvar, slotCond[3]);
+            Constraints[WeaponSlot1RowName].SetCoefficient(xvar, weaponSlotCond[0]);
+            Constraints[WeaponSlot2RowName].SetCoefficient(xvar, weaponSlotCond[1]);
+            Constraints[WeaponSlot3RowName].SetCoefficient(xvar, weaponSlotCond[2]);
+            Constraints[WeaponSlot4RowName].SetCoefficient(xvar, weaponSlotCond[3]);
+
+            // スロット情報(防具スキル)
+            int[] armorSlotCond = SlotCalc(equip, false, true);
+            if (isDecoOrGSkill)
+            {
+                for (int i = 0; i < armorSlotCond.Length; i++)
+                {
+                    armorSlotCond[i] = armorSlotCond[i] * -1;
+                }
+            }
+            Constraints[ArmorSlot1RowName].SetCoefficient(xvar, armorSlotCond[0]);
+            Constraints[ArmorSlot2RowName].SetCoefficient(xvar, armorSlotCond[1]);
+            Constraints[ArmorSlot3RowName].SetCoefficient(xvar, armorSlotCond[2]);
+            Constraints[ArmorSlot4RowName].SetCoefficient(xvar, armorSlotCond[3]);
+
+            // スロット情報(全スキル)
+            int[] allSlotCond = SlotCalc(equip, true, true);
+            if (isDecoOrGSkill)
+            {
+                for (int i = 0; i < allSlotCond.Length; i++)
+                {
+                    allSlotCond[i] = allSlotCond[i] * -1;
+                }
+            }
+            Constraints[AllSlot1RowName].SetCoefficient(xvar, allSlotCond[0]);
+            Constraints[AllSlot2RowName].SetCoefficient(xvar, allSlotCond[1]);
+            Constraints[AllSlot3RowName].SetCoefficient(xvar, allSlotCond[2]);
+            Constraints[AllSlot4RowName].SetCoefficient(xvar, allSlotCond[3]);
 
             // 防御・耐性情報
             Constraints[DefRowName].SetCoefficient(xvar, equip.Maxdef);
@@ -398,6 +474,12 @@ namespace SimModel.Domain
             Constraints[ThunderRowName].SetCoefficient(xvar, equip.Thunder);
             Constraints[IceRowName].SetCoefficient(xvar, equip.Ice);
             Constraints[DragonRowName].SetCoefficient(xvar, equip.Dragon);
+
+            // 攻撃力情報
+            if (equip is Weapon weapon)
+            {
+                Constraints[AttackRowName].SetCoefficient(xvar, weapon.Attack);
+            }
 
             // スキル情報
             foreach (var condSkill in Condition.Skills)
@@ -440,6 +522,12 @@ namespace SimModel.Domain
                     // 装備種類確認
                     switch (equip.Kind)
                     {
+                        case EquipKind.weapon:
+                            if (equip is Weapon weapon)
+                            {
+                                equipSet.Weapon = weapon;
+                            }
+                            break;
                         case EquipKind.head:
                             equipSet.Head = equip;
                             break;
@@ -473,11 +561,6 @@ namespace SimModel.Domain
 
             if (hasData)
             {
-                // 装備セットにスロット情報を付加
-                equipSet.WeaponSlot1 = Condition.WeaponSlot1;
-                equipSet.WeaponSlot2 = Condition.WeaponSlot2;
-                equipSet.WeaponSlot3 = Condition.WeaponSlot3;
-
                 // 重複する結果(今回の結果に無駄な装備を加えたもの)が既に見つかっていた場合、それを削除
                 RemoveDuplicateSet(equipSet);
 
@@ -504,6 +587,10 @@ namespace SimModel.Domain
             List<EquipSet> removeList = new();
             foreach (var set in ResultSets)
             {
+                if (!IsDuplicateEquipName(newSet.Weapon.Name, set.Weapon.Name))
+                {
+                    continue;
+                }
                 if (!IsDuplicateEquipName(newSet.Head.Name, set.Head.Name))
                 {
                     continue;
@@ -554,24 +641,33 @@ namespace SimModel.Domain
         /// GLPK用のスロット計算
         /// 例：3-1-1→1スロ以下2個2スロ以下2個3スロ以下3個
         /// </summary>
-        /// <param name="slot1">スロット1</param>
-        /// <param name="slot2">スロット2</param>
-        /// <param name="slot3">スロット3</param>
+        /// <param name="equip">装備</param>
+        /// <param name="isCountWeapon">武器スキルを数える場合true</param>
+        /// <param name="isCountArmor">防具スキルを数える場合true</param>
         /// <returns>GLPK用のスロット値</returns>
-        private int[] SlotCalc(int slot1, int slot2, int slot3)
+        private static int[] SlotCalc(Equipment equip, bool isCountWeapon, bool isCountArmor)
         {
             int[] slotCond = new int[4];
-            for (int i = 0; i < slot1; i++)
+            if ((isCountWeapon && equip.SlotType1 != 0) || (isCountArmor && equip.SlotType1 != 1))
             {
-                slotCond[i]++;
+                for (int i = 0; i < equip.Slot1; i++)
+                {
+                    slotCond[i]++;
+                }
             }
-            for (int i = 0; i < slot2; i++)
+            if ((isCountWeapon && equip.SlotType2 != 0) || (isCountArmor && equip.SlotType2 != 1))
             {
-                slotCond[i]++;
+                for (int i = 0; i < equip.Slot2; i++)
+                {
+                    slotCond[i]++;
+                }
             }
-            for (int i = 0; i < slot3; i++)
+            if ((isCountWeapon && equip.SlotType3 != 0) || (isCountArmor && equip.SlotType3 != 1))
             {
-                slotCond[i]++;
+                for (int i = 0; i < equip.Slot3; i++)
+                {
+                    slotCond[i]++;
+                }
             }
             return slotCond;
         }

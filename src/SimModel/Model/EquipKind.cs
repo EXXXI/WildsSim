@@ -30,6 +30,8 @@
         {
             switch (kind)
             {
+                case EquipKind.weapon:
+                    return "武器";
                 case EquipKind.head:
                     return "頭";
                 case EquipKind.body:

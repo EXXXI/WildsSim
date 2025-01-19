@@ -283,9 +283,10 @@ namespace SimModel.Domain
                 if (condition.ID == newCondition.ID)
                 {
                     condition.DispName = newCondition.DispName;
-                    condition.WeaponSlot1 = newCondition.WeaponSlot1;
-                    condition.WeaponSlot2 = newCondition.WeaponSlot2;
-                    condition.WeaponSlot3 = newCondition.WeaponSlot3;
+                    condition.IsSpecificWeapon = newCondition.IsSpecificWeapon;
+                    condition.WeaponName = newCondition.WeaponName;
+                    condition.WeaponType = newCondition.WeaponType;
+                    condition.MinAttack = newCondition.MinAttack;
                     condition.Def = newCondition.Def;
                     condition.Fire = newCondition.Fire;
                     condition.Water = newCondition.Water;

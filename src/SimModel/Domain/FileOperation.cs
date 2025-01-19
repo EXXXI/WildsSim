@@ -95,7 +95,7 @@ namespace SimModel.Domain
                     {
                         Weapon weapon = new()
                         {
-                            Name = $"汎用{i}-{j}-{k}",
+                            Name = $"スロットのみ_{i}-{j}-{k}",
                             Slot1 = i,
                             Slot2 = j,
                             Slot3 = k,
@@ -406,12 +406,9 @@ namespace SimModel.Domain
             List<string[]> body = new List<string[]>();
             foreach (var set in Masters.MySets)
             {
-                string weaponSlot1 = set.WeaponSlot1.ToString();
-                string weaponSlot2 = set.WeaponSlot2.ToString();
-                string weaponSlot3 = set.WeaponSlot3.ToString();
-                body.Add(new string[] { weaponSlot1, weaponSlot2, weaponSlot3, set.Head.Name, set.Body.Name, set.Arm.Name, set.Waist.Name, set.Leg.Name, set.Charm.Name, set.DecoNameCSV, set.Name });
+                body.Add(new string[] { set.Weapon.Name, set.Head.Name, set.Body.Name, set.Arm.Name, set.Waist.Name, set.Leg.Name, set.Charm.Name, set.DecoNameCSV, set.Name });
             }
-            string[] header = new string[] { "武器スロ1", "武器スロ2", "武器スロ3", "頭", "胴", "腕", "腰", "足", "護石", "装飾品", "名前" };
+            string[] header = new string[] { "武器", "頭", "胴", "腕", "腰", "足", "護石", "装飾品", "名前" };
             string export = CsvWriter.WriteToText(header, body);
             File.WriteAllText(MySetCsv, export);
         }
@@ -428,9 +425,7 @@ namespace SimModel.Domain
             foreach (ICsvLine line in CsvReader.ReadFromText(csv))
             {
                 EquipSet set = new EquipSet();
-                set.WeaponSlot1 = ParseUtil.Parse(line[@"武器スロ1"]);
-                set.WeaponSlot2 = ParseUtil.Parse(line[@"武器スロ2"]);
-                set.WeaponSlot3 = ParseUtil.Parse(line[@"武器スロ3"]);
+                set.Weapon = Masters.GetEquipByName(line[@"武器"]) as Weapon ?? new();
                 set.Head = Masters.GetEquipByName(line[@"頭"]);
                 set.Body = Masters.GetEquipByName(line[@"胴"]);
                 set.Arm = Masters.GetEquipByName(line[@"腕"]);
@@ -497,9 +492,10 @@ namespace SimModel.Domain
                 List<string> bodyStrings = new();
                 bodyStrings.Add(condition.ID);
                 bodyStrings.Add(condition.DispName);
-                bodyStrings.Add(condition.WeaponSlot1.ToString());
-                bodyStrings.Add(condition.WeaponSlot2.ToString());
-                bodyStrings.Add(condition.WeaponSlot3.ToString());
+                // TODO: ★後で検討
+                //bodyStrings.Add(condition.WeaponSlot1.ToString());
+                //bodyStrings.Add(condition.WeaponSlot2.ToString());
+                //bodyStrings.Add(condition.WeaponSlot3.ToString());
                 bodyStrings.Add(condition.Def?.ToString() ?? "null");
                 bodyStrings.Add(condition.Fire?.ToString() ?? "null");
                 bodyStrings.Add(condition.Water?.ToString() ?? "null");
@@ -530,9 +526,10 @@ namespace SimModel.Domain
 
                 condition.ID = line[@"ID"];
                 condition.DispName = line[@"名前"];
-                condition.WeaponSlot1 = ParseUtil.Parse(line[@"武器スロ1"]);
-                condition.WeaponSlot2 = ParseUtil.Parse(line[@"武器スロ2"]);
-                condition.WeaponSlot3 = ParseUtil.Parse(line[@"武器スロ3"]);
+                // TODO: ★後で検討
+                //condition.WeaponSlot1 = ParseUtil.Parse(line[@"武器スロ1"]);
+                //condition.WeaponSlot2 = ParseUtil.Parse(line[@"武器スロ2"]);
+                //condition.WeaponSlot3 = ParseUtil.Parse(line[@"武器スロ3"]);
                 condition.Def = line[@"防御力"] == "null" ? null : ParseUtil.Parse(line[@"防御力"]);
                 condition.Fire = line[@"火耐性"] == "null" ? null : ParseUtil.Parse(line[@"火耐性"]);
                 condition.Water = line[@"水耐性"] == "null" ? null : ParseUtil.Parse(line[@"水耐性"]);

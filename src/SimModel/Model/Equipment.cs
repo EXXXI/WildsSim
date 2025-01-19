@@ -159,7 +159,7 @@ namespace SimModel.Model
 
                 StringBuilder sb = new StringBuilder();
                 sb.Append(DispName);
-                if (!Kind.Equals(EquipKind.deco) && !Kind.Equals(EquipKind.charm))
+                if (!Kind.Equals(EquipKind.deco))
                 {
                     sb.Append(',');
                     sb.Append(Slot1);
@@ -210,7 +210,7 @@ namespace SimModel.Model
                 if (!string.IsNullOrWhiteSpace(Name))
                 {
                     sb.Append(DispName);
-                    if (!Kind.Equals(EquipKind.deco) && !Kind.Equals(EquipKind.charm))
+                    if (!Kind.Equals(EquipKind.deco))
                     {
                         sb.Append(',');
                         sb.Append(Slot1);

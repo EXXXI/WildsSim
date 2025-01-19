@@ -86,6 +86,7 @@ namespace WildsSim.ViewModels.Controls
             ObservableCollection<EquipRowViewModel> list = new();
             if (set != null)
             {
+                list.Add(new EquipRowViewModel(set.Weapon));
                 list.Add(new EquipRowViewModel(set.Head));
                 list.Add(new EquipRowViewModel(set.Body));
                 list.Add(new EquipRowViewModel(set.Arm));

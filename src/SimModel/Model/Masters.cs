@@ -81,7 +81,7 @@ namespace SimModel.Model
         public static Equipment GetEquipByName(string equipName)
         {
             string? name = equipName?.Trim();
-            var equips = Heads.Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(Decos);
+            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(Decos);
             return equips.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
         }
 

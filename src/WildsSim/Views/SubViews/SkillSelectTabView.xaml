@@ -63,13 +63,8 @@
                         <ctrl:FocusTextBox Width="115" Text="{Binding MinAttack.Value}"/>
                     </StackPanel>
                 </StackPanel>
-                
+
                 <StackPanel Grid.Column="1">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Width="50" Text="武器スロ"/>
-                        <ComboBox x:Name="weaponSlotsBox" ItemsSource="{Binding SlotMaster.Value, Mode=OneWay}" SelectedItem="{Binding WeaponSlots.Value}" Width="115" SelectedIndex="0">
-                        </ComboBox>
-                    </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Width="40" Text="防御力"/>
                         <ctrl:FocusTextBox Width="30" Text="{Binding Def.Value}" Margin="0,0,12,0"></ctrl:FocusTextBox>

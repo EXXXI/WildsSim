@@ -15,19 +15,24 @@ namespace SimModel.Model
         public List<Skill> Skills { get; set; } = new();
 
         /// <summary>
-        /// 武器スロ1つ目
+        /// 武器が指定されているか否か
         /// </summary>
-        public int WeaponSlot1 { get; set; }
+        public bool IsSpecificWeapon { get; set; }
 
         /// <summary>
-        /// 武器スロ2つ目
+        /// 武器名(武器指定時のみ有効)
         /// </summary>
-        public int WeaponSlot2 { get; set; }
+        public string WeaponName { get; set; }
 
         /// <summary>
-        /// 武器スロ3つ目
+        /// 武器種(武器非指定時のみ有効)
         /// </summary>
-        public int WeaponSlot3 { get; set; }
+        public WeaponType WeaponType { get; set; }
+
+        /// <summary>
+        /// 武器種(武器非指定時のみ有効)
+        /// </summary>
+        public int? MinAttack { get; set; }
 
         /// <summary>
         /// 防御力
@@ -125,7 +130,8 @@ namespace SimModel.Model
             {
                 string none = "なし";
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine($"武器スロ:{WeaponSlot1}-{WeaponSlot2}-{WeaponSlot3}");
+                // TODO: ★マイ検索条件あたりの変更時に検討
+                //sb.AppendLine($"武器スロ:{WeaponSlot1}-{WeaponSlot2}-{WeaponSlot3}");
                 sb.AppendLine($"防御力:{Def?.ToString() ?? none}");
                 sb.Append($"火:{Fire?.ToString() ?? none},");
                 sb.Append($"水:{Water?.ToString() ?? none},");
@@ -160,9 +166,10 @@ namespace SimModel.Model
                 Skill newSkill = new Skill(skill.Name, skill.Level, skill.IsFixed);
                 Skills.Add(newSkill);
             }
-            WeaponSlot1 = condition.WeaponSlot1;
-            WeaponSlot2 = condition.WeaponSlot2;
-            WeaponSlot3 = condition.WeaponSlot3;
+            IsSpecificWeapon = condition.IsSpecificWeapon;
+            WeaponName = condition.WeaponName;
+            WeaponType = condition.WeaponType;
+            MinAttack = condition.MinAttack; 
             Def = condition.Def;
             Fire = condition.Fire;
             Water = condition.Water;
