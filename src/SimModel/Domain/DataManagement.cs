@@ -23,8 +23,10 @@ namespace SimModel.Domain
         static internal Clude? AddExclude(string name)
         {
             Equipment? equip = Masters.GetEquipByName(name);
-            if (equip == null)
+            if ((equip == null) ||
+                ((equip is Weapon weapon) && (weapon.WeaponType == WeaponType.指定なし)))
             {
+                // スロット指定用の武器は除外しない
                 return null;
             }
             return AddClude(equip.Name, CludeKind.exclude);
@@ -38,9 +40,11 @@ namespace SimModel.Domain
         static internal Clude? AddInclude(string name)
         {
             Equipment? equip = Masters.GetEquipByName(name);
-            if (equip == null || equip.Kind == EquipKind.deco)
+            if ((equip == null) || 
+                (equip.Kind == EquipKind.deco) ||
+                (equip is Weapon weapon))
             {
-                // 装飾品は固定しない
+                // 装飾品と武器は固定しない
                 return null;
             }
 
@@ -149,6 +153,54 @@ namespace SimModel.Domain
         static internal void DeleteAllClude()
         {
             Masters.Cludes.Clear();
+
+            // マスタへ反映
+            FileOperation.SaveCludeCSV();
+        }
+
+        /// <summary>
+        /// 防具の除外・固定設定の全削除
+        /// </summary>
+        static internal void DeleteAllArmorClude()
+        {
+            // 武器だけ抽出
+            List<Clude> weaponCludes = new();
+            foreach (var clude in Masters.Cludes)
+            {
+                Equipment equip = Masters.GetEquipByName(clude.Name);
+                if ((equip != null) && (equip is Weapon))
+                {
+                    weaponCludes.Add(clude);
+                }
+            }
+
+            // 抽出したものと入れ替え
+            Masters.Cludes.Clear();
+            Masters.Cludes.AddRange(weaponCludes);
+
+            // マスタへ反映
+            FileOperation.SaveCludeCSV();
+        }
+
+        /// <summary>
+        /// 防具の除外・固定設定の全削除
+        /// </summary>
+        static internal void DeleteAllWeaponClude()
+        {
+            // 防具だけ抽出
+            List<Clude> armorCludes = new();
+            foreach (var clude in Masters.Cludes)
+            {
+                Equipment equip = Masters.GetEquipByName(clude.Name);
+                if ((equip != null) && (equip is not Weapon))
+                {
+                    armorCludes.Add(clude);
+                }
+            }
+
+            // 抽出したものと入れ替え
+            Masters.Cludes.Clear();
+            Masters.Cludes.AddRange(armorCludes);
 
             // マスタへ反映
             FileOperation.SaveCludeCSV();

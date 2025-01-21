@@ -224,6 +224,22 @@ namespace SimModel.Service
             DataManagement.DeleteAllClude();
         }
 
+        /// <summary>
+        /// 防具の除外・固定全解除
+        /// </summary>
+        public void DeleteAllArmorClude()
+        {
+            DataManagement.DeleteAllArmorClude();
+        }
+
+        /// <summary>
+        /// 武器の除外・固定全解除
+        /// </summary>
+        public void DeleteAllWeaponClude()
+        {
+            DataManagement.DeleteAllWeaponClude();
+        }
+
         // TODO: 現状未使用
         /// <summary>
         /// 指定レア度以下を全除外

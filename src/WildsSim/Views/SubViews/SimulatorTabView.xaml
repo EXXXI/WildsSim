@@ -27,6 +27,10 @@
             <DataGrid x:Name="grid" ItemsSource="{Binding SearchResult.Value, Mode=OneWay}" IsReadOnly="true" AutoGenerateColumns="False" SelectedItem="{Binding DetailSet.Value}">
                 <DataGrid.ContextMenu>
                     <ContextMenu>
+                        <MenuItem DataContext="{Binding DetailSet.Value.Weapon.Value}" Header="{Binding DispName.Value, Mode=OneWay}">
+                            <MenuItem Header="{Binding Description.Value, Mode=OneWay}"/>
+                            <MenuItem Header="この装備を除外" Command="{Binding ExcludeCommand}"/>
+                        </MenuItem>
                         <MenuItem DataContext="{Binding DetailSet.Value.Head.Value}" Header="{Binding DispName.Value, Mode=OneWay}">
                             <MenuItem Header="{Binding Description.Value, Mode=OneWay}"/>
                             <MenuItem Header="この装備を除外" Command="{Binding ExcludeCommand}"/>

@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Linq.Expressions;
+using Google.OrTools.ConstraintSolver;
+using Google.Protobuf.Collections;
 
 namespace WildsSim.ViewModels.SubViews
 {
@@ -17,9 +20,14 @@ namespace WildsSim.ViewModels.SubViews
     class CludeTabViewModel : ChildViewModelBase
     {
         /// <summary>
-        /// 除外・固定画面の表表示の各行のVM
+        /// 除外・固定画面の防具表形式表示の各行のVM
         /// </summary>
-        public ReactivePropertySlim<ObservableCollection<CludeGridRowViewModel>> ShowingEquips { get; } = new();
+        public ReactivePropertySlim<ObservableCollection<CludeGridArmorRowViewModel>> ShowingArmors { get; } = new();
+
+        /// <summary>
+        /// 除外・固定画面の武器表形式表示の各行のVM
+        /// </summary>
+        public ReactivePropertySlim<ObservableCollection<CludeGridWeaponRowViewModel>> ShowingWeapons { get; } = new();
 
         /// <summary>
         /// フィルタ用名前入力欄
@@ -35,6 +43,16 @@ namespace WildsSim.ViewModels.SubViews
         /// 除外固定をすべて解除するコマンド
         /// </summary>
         public ReactiveCommand DeleteAllCludeCommand { get; } = new ReactiveCommand();
+
+        /// <summary>
+        /// 防具の除外固定をすべて解除するコマンド
+        /// </summary>
+        public ReactiveCommand DeleteAllArmorCludeCommand { get; } = new ReactiveCommand();
+
+        /// <summary>
+        /// 武器の除外固定をすべて解除するコマンド
+        /// </summary>
+        public ReactiveCommand DeleteAllWeaponCludeCommand { get; } = new ReactiveCommand();
 
         /// <summary>
         /// フィルタをクリアするコマンド
@@ -53,6 +71,8 @@ namespace WildsSim.ViewModels.SubViews
         {
             // コマンドを設定
             DeleteAllCludeCommand.Subscribe(_ => DeleteAllClude());
+            DeleteAllArmorCludeCommand.Subscribe(_ => DeleteAllArmorClude());
+            DeleteAllWeaponCludeCommand.Subscribe(_ => DeleteAllWeaponClude());
             ClearFilterCommand.Subscribe(_ => ClearFilter());
             ApplyFilterCommand.Subscribe(_ => ApplyFilter());
         }
@@ -96,18 +116,26 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // 除外
-            Simulator.AddExclude(trueName);
+            Clude? done = Simulator.AddExclude(trueName);
 
             // 表の該当部分の更新
-            CludeGridCellViewModel? target = ShowingEquips.Value
-                .Select(vm => vm.FindByName(trueName))
+            CludeGridCellViewModel? target = 
+                ShowingArmors.Value.Select(vm => vm.FindByName(trueName))
+                .Union(ShowingWeapons.Value.Select(vm => vm.FindByName(trueName)))
                 .Where(vm => vm != null)
                 .FirstOrDefault();
             target?.ChangeIncludeSilent(false);
             target?.ChangeExcludeSilent(true);
 
             // ログ表示
-            SetStatusBar("除外登録完了：" + dispName);
+            if (done != null)
+            {
+                SetStatusBar("除外登録完了：" + dispName);
+            }
+            else
+            {
+                SetStatusBar(dispName + "は除外できません");
+            }
         }
 
         /// <summary>
@@ -133,10 +161,11 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // 固定
-            Simulator.AddInclude(trueName);
+            Clude? done = Simulator.AddInclude(trueName);
 
             // 表の該当部分の更新
-            CludeGridCellViewModel? target = ShowingEquips.Value
+            // 武器は固定しないので処理外
+            CludeGridCellViewModel? target = ShowingArmors.Value
                 .Select(vm => vm.FindByName(trueName))
                 .Where(vm => vm != null)
                 .FirstOrDefault();
@@ -145,7 +174,7 @@ namespace WildsSim.ViewModels.SubViews
 
             // 同じ部位の別の固定表示を解除
             EquipKind kind = target?.BaseEquip?.Kind ?? EquipKind.error;
-            CludeGridCellViewModel? otherInclude = ShowingEquips.Value
+            CludeGridCellViewModel? otherInclude = ShowingArmors.Value
                 .Select(vm => vm.FindByKind(kind))
                 .Where(vm => vm != null && vm.IsInclude.Value == true && vm.BaseEquip?.Name != target?.BaseEquip?.Name)
                 .FirstOrDefault();
@@ -153,7 +182,14 @@ namespace WildsSim.ViewModels.SubViews
             otherInclude?.ChangeExcludeSilent(false);
 
             // ログ表示
-            SetStatusBar("固定登録完了：" + dispName);
+            if (done != null)
+            {
+                SetStatusBar("固定登録完了：" + dispName);
+            }
+            else
+            {
+                SetStatusBar(dispName + "は固定できません");
+            }
         }
 
         /// <summary>
@@ -182,8 +218,9 @@ namespace WildsSim.ViewModels.SubViews
             Simulator.DeleteClude(trueName);
 
             // 表の該当部分の更新
-            CludeGridCellViewModel? target = ShowingEquips.Value
-                .Select(vm => vm.FindByName(trueName))
+            CludeGridCellViewModel? target =
+                ShowingArmors.Value.Select(vm => vm.FindByName(trueName))
+                .Union(ShowingWeapons.Value.Select(vm => vm.FindByName(trueName)))
                 .Where(vm => vm != null)
                 .FirstOrDefault();
             target?.ChangeIncludeSilent(false);
@@ -209,6 +246,36 @@ namespace WildsSim.ViewModels.SubViews
         }
 
         /// <summary>
+        /// 防具の除外・固定の全解除
+        /// </summary>
+        private void DeleteAllArmorClude()
+        {
+            // 解除
+            Simulator.DeleteAllArmorClude();
+
+            // 除外固定のマスタをまとめてリロード
+            LoadGridData();
+
+            // ログ表示
+            SetStatusBar("固定・除外の全解除完了");
+        }
+
+        /// <summary>
+        /// 武器の除外・固定の全解除
+        /// </summary>
+        private void DeleteAllWeaponClude()
+        {
+            // 解除
+            Simulator.DeleteAllWeaponClude();
+
+            // 除外固定のマスタをまとめてリロード
+            LoadGridData();
+
+            // ログ表示
+            SetStatusBar("固定・除外の全解除完了");
+        }
+
+        /// <summary>
         /// 装備のマスタ情報をVMにロード
         /// </summary>
         internal void LoadEquipsForClude()
@@ -223,6 +290,17 @@ namespace WildsSim.ViewModels.SubViews
         /// <param name="cludeOnly">設定されているもののみに絞る場合true</param>
         private void LoadGridData(string filterName = "", bool cludeOnly = false)
         {
+            LoadArmorGridData(filterName, cludeOnly);
+            LoadWeaponGridData(filterName, cludeOnly);
+        }
+
+        /// <summary>
+        /// 除外固定の表をリロードする(防具)
+        /// </summary>
+        /// <param name="filterName">文字列でフィルタする場合その文字列</param>
+        /// <param name="cludeOnly">設定されているもののみに絞る場合true</param>
+        private void LoadArmorGridData(string filterName, bool cludeOnly)
+        {
             // 表示対象
             var heads = Masters.Heads;
             var bodys = Masters.Bodys;
@@ -232,14 +310,19 @@ namespace WildsSim.ViewModels.SubViews
             var charms = Masters.Charms;
             var decos = Masters.Decos;
 
+            // 簡潔化のためにリスト化(護石と装飾品は特殊処理があるので別枠)
+            var armors = new List<Equipment>[]
+            {
+                heads, bodys, arms, waists, legs
+            };
+
             // 名称フィルタ
             if (!string.IsNullOrWhiteSpace(filterName))
             {
-                heads = heads.Where(x => x.DispName.Contains(filterName)).ToList();
-                bodys = bodys.Where(x => x.DispName.Contains(filterName)).ToList();
-                arms = arms.Where(x => x.DispName.Contains(filterName)).ToList();
-                waists = waists.Where(x => x.DispName.Contains(filterName)).ToList();
-                legs = legs.Where(x => x.DispName.Contains(filterName)).ToList();
+                for (int i = 0; i < armors.Length; i++)
+                {
+                    armors[i] = armors[i].Where(x => x.DispName.Contains(filterName)).ToList();
+                }
                 charms = charms.Where(x => x.DispName.Contains(filterName)).ToList();
                 decos = decos.Where(x => x.DispName.Contains(filterName)).ToList();
             }
@@ -247,48 +330,52 @@ namespace WildsSim.ViewModels.SubViews
             // 設定フィルタ
             if (cludeOnly)
             {
-                heads = heads.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
-                bodys = bodys.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
-                arms = arms.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
-                waists = waists.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
-                legs = legs.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
+                for (int i = 0; i < armors.Length; i++)
+                {
+                    armors[i] = armors[i].Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
+                }
                 charms = charms.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
                 decos = decos.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
 
             }
 
             // 一覧用の行データ格納場所
-            ObservableCollection<CludeGridRowViewModel> rows = new();
+            ObservableCollection<CludeGridArmorRowViewModel> rows = new();
 
             // 存在する仮番号をチェック
-            List<int> RowNos = new List<int>()
-                .Union(heads.Select(equip => equip.RowNo))
-                .Union(bodys.Select(equip => equip.RowNo))
-                .Union(arms.Select(equip => equip.RowNo))
-                .Union(waists.Select(equip => equip.RowNo))
-                .Union(legs.Select(equip => equip.RowNo))
-                .ToList();
-            RowNos.Sort();
+            IEnumerable<int> rowNos = new List<int>();
+            foreach (var equips in armors)
+            {
+                rowNos = rowNos.Union(equips.Select(equip => equip.RowNo));
+            }
+
+            List<int> rowNoList = rowNos.ToList();
+            rowNoList.Sort();
 
             // 仮番号ごとに行データを作成
-            foreach (var rowNo in RowNos)
+            foreach (var rowNo in rowNoList)
             {
-                var head = heads.Where(equip => equip.RowNo == rowNo);
-                var body = bodys.Where(equip => equip.RowNo == rowNo);
-                var arm = arms.Where(equip => equip.RowNo == rowNo);
-                var waist = waists.Where(equip => equip.RowNo == rowNo);
-                var leg = legs.Where(equip => equip.RowNo == rowNo);
-                int max = new int[] { head.Count(), body.Count(), arm.Count(), waist.Count(), leg.Count() }.Max();
+                List<IEnumerable<Equipment>> rowNoArmors = new();
+                int max = 0;
+                foreach (var equips in armors)
+                {
+                    var rowNoEquips = equips.Where(equip => equip.RowNo == rowNo);
+                    rowNoArmors.Add(rowNoEquips);
+                    max = Math.Max(max, rowNoEquips.Count());
+                }
 
                 // 同じ仮番号があったらその分行を増やす
                 for (int i = 0; i < max; i++)
                 {
-                    CludeGridRowViewModel row = new();
-                    row.Head.Value = new CludeGridCellViewModel(head.ElementAtOrDefault(i));
-                    row.Body.Value = new CludeGridCellViewModel(body.ElementAtOrDefault(i));
-                    row.Arm.Value = new CludeGridCellViewModel(arm.ElementAtOrDefault(i));
-                    row.Waist.Value = new CludeGridCellViewModel(waist.ElementAtOrDefault(i));
-                    row.Leg.Value = new CludeGridCellViewModel(leg.ElementAtOrDefault(i));
+                    CludeGridArmorRowViewModel row = new();
+                    var targetReactiveProperties = new ReactivePropertySlim<CludeGridCellViewModel>[]
+                    {
+                        row.Head, row.Body, row.Arm, row.Waist, row.Leg
+                    };
+                    for (int j = 0; j < rowNoArmors.Count; j++)
+                    {
+                        targetReactiveProperties[j].Value = new CludeGridCellViewModel(rowNoArmors[j].ElementAtOrDefault(i));
+                    }
                     // 護石と装飾品は単に順番に並べる
                     row.Charm.Value = new CludeGridCellViewModel(charms.ElementAtOrDefault(rows.Count));
                     row.Deco.Value = new CludeGridCellViewModel(decos.ElementAtOrDefault(rows.Count));
@@ -299,7 +386,7 @@ namespace WildsSim.ViewModels.SubViews
             // 防具が終わっても護石と装飾品がまだある場合は追加する
             while (rows.Count < Math.Max(charms.Count, decos.Count))
             {
-                CludeGridRowViewModel row = new();
+                CludeGridArmorRowViewModel row = new();
                 row.Head.Value = new CludeGridCellViewModel(null);
                 row.Body.Value = new CludeGridCellViewModel(null);
                 row.Arm.Value = new CludeGridCellViewModel(null);
@@ -311,7 +398,100 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // 表のリフレッシュ
-            ShowingEquips.ChangeCollection(rows);
+            ShowingArmors.ChangeCollection(rows);
+        }
+
+        /// <summary>
+        /// 除外固定の表をリロードする(武器)
+        /// </summary>
+        /// <param name="filterName">文字列でフィルタする場合その文字列</param>
+        /// <param name="cludeOnly">設定されているもののみに絞る場合true</param>
+        private void LoadWeaponGridData(string filterName, bool cludeOnly)
+        {
+            // 表示対象
+            var greatSwords = Masters.Weapons.Where(w => w.WeaponType == WeaponType.大剣).ToList();
+            var longSwords = Masters.Weapons.Where(w => w.WeaponType == WeaponType.太刀).ToList();
+            var swordAndShields = Masters.Weapons.Where(w => w.WeaponType == WeaponType.片手剣).ToList();
+            var dualBladeses = Masters.Weapons.Where(w => w.WeaponType == WeaponType.双剣).ToList();
+            var lances = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ランス).ToList();
+            var gunlances = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ガンランス).ToList();
+            var hammers = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ハンマー).ToList();
+            var huntingHorns = Masters.Weapons.Where(w => w.WeaponType == WeaponType.狩猟笛).ToList();
+            var switchAxes = Masters.Weapons.Where(w => w.WeaponType == WeaponType.スラッシュアックス).ToList();
+            var chargeBlades = Masters.Weapons.Where(w => w.WeaponType == WeaponType.チャージアックス).ToList();
+            var insectGlaives = Masters.Weapons.Where(w => w.WeaponType == WeaponType.操虫棍).ToList();
+            var lightBowguns = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ライトボウガン).ToList();
+            var heavyBowguns = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ヘビィボウガン).ToList();
+            var bows = Masters.Weapons.Where(w => w.WeaponType == WeaponType.弓).ToList();
+
+            // 簡潔化のためにリスト化
+            var weaponLists = new List<Weapon>[]
+            {
+                greatSwords, longSwords, swordAndShields, dualBladeses, lances, gunlances, hammers, huntingHorns, switchAxes, chargeBlades, insectGlaives, lightBowguns, heavyBowguns, bows
+            };
+
+            // 名称フィルタ
+            if (!string.IsNullOrWhiteSpace(filterName))
+            {
+                for (int i = 0; i < weaponLists.Length; i++)
+                {
+                    weaponLists[i] = weaponLists[i].Where(x => x.DispName.Contains(filterName)).ToList();
+                }
+            }
+
+            // 設定フィルタ
+            if (cludeOnly)
+            {
+                for (int i = 0; i < weaponLists.Length; i++)
+                {
+                    weaponLists[i] = weaponLists[i].Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
+                }
+            }
+
+            // 一覧用の行データ格納場所
+            ObservableCollection<CludeGridWeaponRowViewModel> rows = new();
+
+            // 存在する仮番号をチェック
+            IEnumerable<int> rowNos = new List<int>();
+            foreach (var weaponList in weaponLists)
+            {
+                rowNos = rowNos.Union(weaponList.Select(w => w.RowNo));
+            }
+
+            List<int> rowNoList = rowNos.ToList();
+            rowNoList.Sort();
+
+            // 仮番号ごとに行データを作成
+            foreach (var rowNo in rowNoList)
+            {
+                List<IEnumerable<Weapon>> rowNoWeapons = new();
+                int max = 0;
+                foreach (var weaponList in weaponLists)
+                {
+                    var rowNoEquips = weaponList.Where(w => w.RowNo == rowNo);
+                    rowNoWeapons.Add(rowNoEquips);
+                    max = Math.Max(max, rowNoEquips.Count());
+                }
+
+                // 同じ仮番号があったらその分行を増やす
+                for (int i = 0; i < max; i++)
+                {
+                    CludeGridWeaponRowViewModel row = new();
+                    var targetReactiveProperties = new ReactivePropertySlim<CludeGridCellViewModel>[]
+                    {
+                        row.GreatSword, row.LongSword, row.SwordAndShield, row.DualBlades, row.Lance, row.Gunlance, row.Hammer,
+                        row.HuntingHorn, row.SwitchAxe, row.ChargeBlade, row.InsectGlaive, row.LightBowgun, row.HeavyBowgun, row.Bow
+                    };
+                    for (int j = 0; j < rowNoWeapons.Count; j++)
+                    {
+                        targetReactiveProperties[j].Value = new CludeGridCellViewModel(rowNoWeapons[j].ElementAtOrDefault(i));
+                    }
+                    rows.Add(row);
+                }
+            }
+
+            // 表のリフレッシュ
+            ShowingWeapons.ChangeCollection(rows);
         }
     }
 }

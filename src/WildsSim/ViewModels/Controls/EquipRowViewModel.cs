@@ -63,7 +63,7 @@ namespace WildsSim.ViewModels.Controls
         {
             DispName.Value = equip.DispName;
             TrueKind = equip.Kind;
-            if (TrueKind.Equals(EquipKind.deco))
+            if (TrueKind.Equals(EquipKind.deco) || TrueKind.Equals(EquipKind.weapon))
             {
                 CanInclude.Value = false;
             }

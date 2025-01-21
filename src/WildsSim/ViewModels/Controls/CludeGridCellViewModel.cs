@@ -47,7 +47,7 @@ namespace WildsSim.ViewModels.Controls
         public ReactivePropertySlim<bool> IsEquipment { get; } = new();
 
         /// <summary>
-        /// 固定可能フラグ(装飾品は固定できない)
+        /// 固定可能フラグ(装飾品・武器は固定できない)
         /// </summary>
         public ReactivePropertySlim<bool> CanInclude { get; } = new(true);
 
@@ -98,8 +98,8 @@ namespace WildsSim.ViewModels.Controls
                 }
             }
 
-            // 装飾品は固定不可
-            CanInclude.Value = equip.Kind != EquipKind.deco;
+            // 装飾品・武器は固定不可
+            CanInclude.Value = (equip.Kind != EquipKind.deco) && (equip.Kind != EquipKind.weapon);
 
             // 背景色設定
             SetBackGround();
