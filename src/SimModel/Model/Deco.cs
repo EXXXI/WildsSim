@@ -10,7 +10,7 @@
         /// コンストラクタ
         /// </summary>
         /// <param name="kind"></param>
-        public Deco(EquipKind kind) : base(kind)
+        public Deco() : base(EquipKind.deco)
         {
         }
 

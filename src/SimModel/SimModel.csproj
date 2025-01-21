@@ -58,28 +58,31 @@
     <None Update="MHR_SKILL.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MHW_CHARM.csv">
+    <None Update="MHWilds_CHARM.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MHW_DECO.csv">
+    <None Update="MHWilds_DECO.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MHW_EQUIP_ARM.csv">
+    <None Update="MHWilds_WEAPON.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MHW_EQUIP_BODY.csv">
+    <None Update="MHWilds_EQUIP_ARM.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MHW_EQUIP_HEAD.csv">
+    <None Update="MHWilds_EQUIP_BODY.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MHW_EQUIP_LEG.csv">
+    <None Update="MHWilds_EQUIP_HEAD.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MHW_EQUIP_WST.csv">
+    <None Update="MHWilds_EQUIP_LEG.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="MHW_SKILL.csv">
+    <None Update="MHWilds_EQUIP_WST.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="MHWilds_SKILL.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="save\clude.csv">

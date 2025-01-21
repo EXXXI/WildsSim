@@ -40,6 +40,7 @@ namespace SimModel.Service
             FileOperation.LoadLegCSV();
             FileOperation.LoadCludeCSV();
             FileOperation.LoadDecoCSV();
+            FileOperation.LoadWeaponCSV();
 
             // セーブデータ類の読み込み
             FileOperation.MakeSaveFolder();
@@ -221,6 +222,22 @@ namespace SimModel.Service
         public void DeleteAllClude()
         {
             DataManagement.DeleteAllClude();
+        }
+
+        /// <summary>
+        /// 防具の除外・固定全解除
+        /// </summary>
+        public void DeleteAllArmorClude()
+        {
+            DataManagement.DeleteAllArmorClude();
+        }
+
+        /// <summary>
+        /// 武器の除外・固定全解除
+        /// </summary>
+        public void DeleteAllWeaponClude()
+        {
+            DataManagement.DeleteAllWeaponClude();
         }
 
         // TODO: 現状未使用

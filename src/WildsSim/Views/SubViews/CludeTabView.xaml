@@ -31,62 +31,174 @@
             <StackPanel  Margin="20,0,0,0">
                 <TextBlock>特殊操作(フィルタは解除されます)</TextBlock>
                 <Button Command="{Binding DeleteAllCludeCommand}" Margin="5,0,0,0">除外・固定を全て解除</Button>
+                <Button Command="{Binding DeleteAllArmorCludeCommand}" Margin="5,0,0,0">防具の除外・固定を全て解除</Button>
+                <Button Command="{Binding DeleteAllWeaponCludeCommand}" Margin="5,0,0,0">武器の除外・固定を全て解除</Button>
             </StackPanel>
         </StackPanel>
 
         <!-- 一覧 -->
-            <DataGrid Grid.Row="1" x:Name="grid" ItemsSource="{Binding ShowingEquips.Value, Mode=OneWay}" IsReadOnly="true" AutoGenerateColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True">
-            <DataGrid.Columns>
-                <DataGridTemplateColumn Header="頭">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <ctrl:CludeGridCell DataContext="{Binding Head.Value}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="胴">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <ctrl:CludeGridCell DataContext="{Binding Body.Value}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="腕">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <ctrl:CludeGridCell DataContext="{Binding Arm.Value}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="腰">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <ctrl:CludeGridCell DataContext="{Binding Waist.Value}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="足">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <ctrl:CludeGridCell DataContext="{Binding Leg.Value}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="護石">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <ctrl:CludeGridCell DataContext="{Binding Charm.Value}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="装飾品">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <ctrl:CludeGridCell DataContext="{Binding Deco.Value}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-            </DataGrid>
+        <TabControl Grid.Row="1">
+            <TabItem Header="防具">
+                <DataGrid ItemsSource="{Binding ShowingArmors.Value, Mode=OneWay}" IsReadOnly="true" AutoGenerateColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="頭">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Head.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="胴">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Body.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="腕">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Arm.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="腰">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Waist.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="足">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Leg.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="護石">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Charm.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="装飾品">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Deco.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            
+            <TabItem Header="武器">
+                <DataGrid ItemsSource="{Binding ShowingWeapons.Value, Mode=OneWay}" IsReadOnly="true" AutoGenerateColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="大剣">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding GreatSword.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="太刀">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding LongSword.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="片手剣">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding SwordAndShield.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="双剣">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding DualBlades.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="ランス">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Lance.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="ガンランス">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Gunlance.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="ハンマー">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Hammer.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="狩猟笛">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding HuntingHorn.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="スラッシュアックス">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding SwitchAxe.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="チャージアックス">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding ChargeBlade.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="操虫棍">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding InsectGlaive.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="ライトボウガン">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding LightBowgun.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="ヘビィボウガン">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding HeavyBowgun.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="弓">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ctrl:CludeGridCell DataContext="{Binding Bow.Value}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+        </TabControl>
     </Grid>
 </UserControl>

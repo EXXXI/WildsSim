@@ -14,6 +14,11 @@ namespace SimModel.Model
         public static List<Skill> Skills { get; set; } = new();
 
         /// <summary>
+        /// 武器マスタ
+        /// </summary>
+        public static List<Weapon> Weapons { get; set; } = new();
+
+        /// <summary>
         /// 頭装備マスタ
         /// </summary>
         public static List<Equipment> Heads { get; set; } = new();
@@ -76,7 +81,7 @@ namespace SimModel.Model
         public static Equipment GetEquipByName(string equipName)
         {
             string? name = equipName?.Trim();
-            var equips = Heads.Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(Decos);
+            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(Decos);
             return equips.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
         }
 

@@ -14,11 +14,6 @@ namespace SimModel.Model
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// 性別制限
-        /// </summary>
-        public Sex Sex { get; set; }
-
-        /// <summary>
         /// レア度
         /// </summary>
         public int Rare { get; set; }
@@ -37,6 +32,21 @@ namespace SimModel.Model
         /// スロット3つ目
         /// </summary>
         public int Slot3 { get; set; }
+
+        /// <summary>
+        /// スロットタイプ(0:防御スキルのみ,1:攻撃スキルのみ,2:両方可)1つ目
+        /// </summary>
+        public int SlotType1 { get; set; } = 0;
+
+        /// <summary>
+        /// スロットタイプ(0:防御スキルのみ,1:攻撃スキルのみ,2:両方可)2つ目
+        /// </summary>
+        public int SlotType2 { get; set; } = 0;
+
+        /// <summary>
+        /// スロットタイプ(0:防御スキルのみ,1:攻撃スキルのみ,2:両方可)3つ目
+        /// </summary>
+        public int SlotType3 { get; set; } = 0;
 
         /// <summary>
         /// 初期防御力
@@ -149,7 +159,7 @@ namespace SimModel.Model
 
                 StringBuilder sb = new StringBuilder();
                 sb.Append(DispName);
-                if (!Kind.Equals(EquipKind.deco) && !Kind.Equals(EquipKind.charm))
+                if (!Kind.Equals(EquipKind.deco))
                 {
                     sb.Append(',');
                     sb.Append(Slot1);
@@ -200,7 +210,7 @@ namespace SimModel.Model
                 if (!string.IsNullOrWhiteSpace(Name))
                 {
                     sb.Append(DispName);
-                    if (!Kind.Equals(EquipKind.deco) && !Kind.Equals(EquipKind.charm))
+                    if (!Kind.Equals(EquipKind.deco))
                     {
                         sb.Append(',');
                         sb.Append(Slot1);

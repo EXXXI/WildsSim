@@ -11,6 +11,7 @@
         <Style x:Key="subtabHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16" />
         </Style>
+        <BooleanToVisibilityConverter x:Key="BoolVisibilityConverter" />
     </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -36,21 +37,37 @@
             </ScrollViewer>
             <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="auto">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="230"/>
+                    <ColumnDefinition Width="290"/>
+                    <ColumnDefinition Width="190"/>
                     <ColumnDefinition Width="150"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Width="50" Text="武器スロ"/>
-                        <ComboBox x:Name="weaponSlotsBox" ItemsSource="{Binding SlotMaster.Value, Mode=OneWay}" SelectedItem="{Binding WeaponSlots.Value}" Width="115" SelectedIndex="0">
-                        </ComboBox>
+                        <TextBlock Width="65" Text="武器設定"/>
+                        <ComboBox Width="200" ItemsSource="{Binding CalcWeaponMaster.Value, Mode=OneWay}" SelectedItem="{Binding CalcWeapon.Value}" SelectedIndex="0" />
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding IsSlotOnly.Value, Converter={StaticResource BoolVisibilityConverter}}">
+                        <TextBlock Width="65" Text="武器選択"/>
+                        <ComboBox Width="200" ItemsSource="{Binding SlotWeapons.Value, Mode=OneWay}" SelectedItem="{Binding SelectedSlotWeapon.Value}" SelectedIndex="0" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding IsCalcWeapon.Value, Converter={StaticResource BoolVisibilityConverter}}">
+                        <TextBlock Width="65" Text="武器種選択"/>
+                        <ComboBox Width="200" ItemsSource="{Binding WeaponTypes.Value, Mode=OneWay}" SelectedItem="{Binding SelectedWeaponType.Value}" SelectedIndex="0" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding IsCalcWeapon.Value, Converter={StaticResource BoolVisibilityConverter}}">
+                        <TextBlock Width="65" Text="武器指定"/>
+                        <ComboBox Width="200" ItemsSource="{Binding Weapons.Value, Mode=OneWay}" SelectedItem="{Binding SelectedWeapon.Value}" SelectedIndex="0" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding ShowAttackCond.Value, Converter={StaticResource BoolVisibilityConverter}}">
+                        <TextBlock Width="65" Text="最低攻撃力"/>
+                        <ctrl:FocusTextBox Width="200" Text="{Binding MinAttack.Value}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Width="40" Text="防御力"/>
                         <ctrl:FocusTextBox Width="30" Text="{Binding Def.Value}" Margin="0,0,12,0"></ctrl:FocusTextBox>
-                        <TextBlock Width="30" Text="性別"/>
-                        <ComboBox ItemsSource="{Binding SexMaster.Value, Mode=OneWay}" SelectedItem="{Binding SelectedSex.Value}" Width="53" SelectedIndex="0">
-                        </ComboBox>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Width="12" Text="火"/>
@@ -70,7 +87,7 @@
                     </StackPanel>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1">
+                <StackPanel Grid.Column="2">
                     <Button x:Name="searchButton" Content="検索する" Command="{Binding SearchCommand}" />
                     <Button x:Name="searchExtraSkillButton" Content="追加スキル検索する" Command="{Binding SearchExtraSkillCommand}" />
                     <Button Content="検索条件をリセット" Command="{Binding ClearAllCommand}" />

@@ -20,6 +20,11 @@ namespace SimModel.Config
         private const string ConfCsv = "conf/logicConfig.csv";
 
         /// <summary>
+        /// スロットの最大の大きさ
+        /// </summary>
+        public int MaxSlotSize { get; set; }
+
+        /// <summary>
         /// 最近使ったスキルの記憶容量
         /// </summary>
         public int MaxRecentSkillCount { get; set; }
@@ -53,6 +58,7 @@ namespace SimModel.Config
 
             foreach (ICsvLine line in CsvReader.ReadFromText(csv))
             {
+                MaxSlotSize = ParseUtil.LoadConfigItem(line, @"スロットの最大の大きさ", 4);
                 MaxRecentSkillCount = ParseUtil.LoadConfigItem(line, @"最近使ったスキルの記憶容量", 20);
                 MaxEquipSkillCount = ParseUtil.LoadConfigItem(line, @"防具のスキル最大個数", 5);
                 MaxDecoSkillCount = ParseUtil.LoadConfigItem(line, @"装飾品のスキル最大個数", 2);

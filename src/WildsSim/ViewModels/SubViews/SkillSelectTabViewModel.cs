@@ -28,6 +28,22 @@ namespace WildsSim.ViewModels.SubViews
         const int ExSkillTabIndex = 1;
 
         /// <summary>
+        /// 武器指定方式のスロットのみ指定の選択肢
+        /// </summary>
+        const string SlotOnlyString = "武器はスロットのみ指定";
+
+        /// <summary>
+        /// 武器指定方式の武器検索の選択肢
+        /// </summary>
+        const string CalcWeaponString = "武器も計算に含める";
+
+        /// <summary>
+        /// 武器指定なしの選択肢
+        /// </summary>
+        const string SearchWeaponString = "指定しない(全武器から検索する)";
+
+
+        /// <summary>
         /// スロットの最大の大きさ
         /// </summary>
         private int MaxSlotSize { get; } = ViewConfig.Instance.MaxSlotSize;
@@ -56,16 +72,6 @@ namespace WildsSim.ViewModels.SubViews
         /// マイ検索条件表示部品のVM
         /// </summary>
         public ReactivePropertySlim<ObservableCollection<MyConditionRowViewModel>> MyConditionVMs { get; } = new();
-
-        /// <summary>
-        /// 武器スロ指定
-        /// </summary>
-        public ReactivePropertySlim<string> WeaponSlots { get; } = new();
-
-        /// <summary>
-        /// 性別指定
-        /// </summary>
-        public ReactivePropertySlim<string> SelectedSex { get; } = new();
 
         /// <summary>
         /// 防御力指定
@@ -108,14 +114,64 @@ namespace WildsSim.ViewModels.SubViews
         public ReactivePropertySlim<int> SelectedTabIndex { get; } = new();
 
         /// <summary>
-        /// スロット選択の選択肢
+        /// 武器指定方式の選択肢
         /// </summary>
-        public ReactivePropertySlim<ObservableCollection<string>> SlotMaster { get; } = new();
+        public ReactivePropertySlim<ObservableCollection<string>> CalcWeaponMaster { get; } = new();
 
         /// <summary>
-        /// 性別選択の選択肢
+        /// 武器指定方式の選択中選択肢
         /// </summary>
-        public ReactivePropertySlim<ObservableCollection<string>> SexMaster { get; } = new();
+        public ReactivePropertySlim<string> CalcWeapon { get; } = new();
+
+        /// <summary>
+        /// 武器を計算に入れるフラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> IsCalcWeapon { get; } = new();
+
+        /// <summary>
+        /// 武器はスロットのみ指定するフラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> IsSlotOnly { get; } = new();
+
+        /// <summary>
+        /// 最低攻撃力の表示をするフラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> ShowAttackCond { get; } = new();
+
+        /// <summary>
+        /// スロット武器選択の選択肢
+        /// </summary>
+        public ReactivePropertySlim<ObservableCollection<string>> SlotWeapons { get; } = new();
+
+        /// <summary>
+        /// 選択中スロット武器
+        /// </summary>
+        public ReactivePropertySlim<string> SelectedSlotWeapon { get; } = new();
+
+        /// <summary>
+        /// 武器種の選択肢
+        /// </summary>
+        public ReactivePropertySlim<ObservableCollection<string>> WeaponTypes { get; } = new();
+
+        /// <summary>
+        /// 選択中武器種
+        /// </summary>
+        public ReactivePropertySlim<string> SelectedWeaponType { get; } = new();
+
+        /// <summary>
+        /// 武器の選択肢
+        /// </summary>
+        public ReactivePropertySlim<ObservableCollection<string>> Weapons { get; } = new();
+
+        /// <summary>
+        /// 選択中武器
+        /// </summary>
+        public ReactivePropertySlim<string> SelectedWeapon { get; } = new();
+
+        /// <summary>
+        /// 最低攻撃力
+        /// </summary>
+        public ReactivePropertySlim<string> MinAttack { get; } = new();
 
         /// <summary>
         /// 検索コマンド
@@ -150,27 +206,20 @@ namespace WildsSim.ViewModels.SubViews
                     .Select(g => new SkillLevelSelectorContainerViewModel(g.Key, g))
             ));
 
-            // スロットの選択肢を生成し、画面に反映
-            ObservableCollection<string> slots = new();
-            for (int i = 0; i <= MaxSlotSize; i++)
-            {
-                for (int j = 0; j <= i; j++)
-                {
-                    for (int k = 0; k <= j; k++)
-                    {
-                        slots.Add(string.Join('-', i, j, k));
-                    }
-                }
-            }
-            SlotMaster.Value = slots;
-            WeaponSlots.Value = "0-0-0";
+            // 武器指定方式の選択肢を生成し、画面に反映
+            CalcWeaponMaster.Value = new(){ SlotOnlyString, CalcWeaponString };
+            CalcWeapon.Value = SlotOnlyString;
 
-            // 性別の選択肢
-            ObservableCollection<string> sexes = new();
-            sexes.Add(Sex.male.Str());
-            sexes.Add(Sex.female.Str());
-            SexMaster.Value = sexes;
-            SelectedSex.Value = ViewConfig.Instance.DefaultSex.Str();
+            // スロット武器選択の選択肢を生成し、画面に反映
+            SlotWeapons.Value = new(Masters.Weapons.
+                Where(w => w.WeaponType == WeaponType.指定なし).
+                Select(w => w.Name).
+                ToList());
+            SelectedSlotWeapon.Value = SlotWeapons.Value[0];
+
+            // 武器種の選択肢を生成し、画面に反映
+            WeaponTypes.Value = new(Enum.GetNames(typeof(WeaponType)).Where(s => s != WeaponType.指定なし.ToString()));
+            SelectedWeaponType.Value = WeaponTypes.Value[0];
 
             // 頑張り度を設定
             Limit.Value = DefaultLimit;
@@ -187,6 +236,9 @@ namespace WildsSim.ViewModels.SubViews
             SearchExtraSkillCommand = isFree.ToAsyncReactiveCommand().WithSubscribe(async () => await SearchExtraSkill()).AddTo(Disposable);
             ClearAllCommand.Subscribe(_ => ClearSearchCondition());
             AddMyConditionCommand.Subscribe(_ => AddMyCondition());
+            CalcWeapon.Subscribe(_ => ChangeIsCalcWeapon());
+            SelectedWeaponType.Subscribe(_ => ChangeWeapons());
+            SelectedWeapon.Subscribe(_ => ChangeShowAttackCond());
         }
 
         /// <summary>
@@ -291,7 +343,11 @@ namespace WildsSim.ViewModels.SubViews
             {
                 vm.ClearAll();
             }
-            WeaponSlots.Value = "0-0-0";
+            // TODO: 各プルダウンの初期化がちょっと雑な指定なので時間があれば再検討
+            SelectedWeapon.Value = Weapons.Value[0];
+            SelectedWeaponType.Value = WeaponTypes.Value[0];
+            CalcWeapon.Value = CalcWeaponMaster.Value[0];
+            MinAttack.Value = string.Empty;
             Def.Value = string.Empty;
             Fire.Value = string.Empty;
             Water.Value = string.Empty;
@@ -359,8 +415,7 @@ namespace WildsSim.ViewModels.SubViews
                 vm.TryAddSkill(mySet.Skills);
             }
 
-            // スロット情報反映
-            WeaponSlots.Value = mySet.WeaponSlotDisp;
+            // TODO: 武器情報も反映すべき？指定かどうかが分からないので一旦なし
         }
 
         /// <summary>
@@ -376,11 +431,33 @@ namespace WildsSim.ViewModels.SubViews
                 vm.TryAddSkill(condition.Skills);
             }
 
-            // スロット情報反映
-            WeaponSlots.Value = condition.WeaponSlot1 + "-" + condition.WeaponSlot2 + "-" + condition.WeaponSlot3;
-
-            // 性別を反映
-            SelectedSex.Value = condition.Sex.Str();
+            // 武器情報反映
+            if (condition.IsSpecificWeapon)
+            {
+                if (condition.WeaponType == WeaponType.指定なし)
+                {
+                    // スロットのみ指定
+                    CalcWeapon.Value = SlotOnlyString;
+                    SelectedSlotWeapon.Value = condition.WeaponName;
+                    MinAttack.Value = string.Empty;
+                }
+                else
+                {
+                    // 武器指定
+                    CalcWeapon.Value = CalcWeaponString;
+                    SelectedWeaponType.Value = condition.WeaponType.ToString();
+                    SelectedWeapon.Value = condition.WeaponName;
+                    MinAttack.Value = string.Empty;
+                }
+            }
+            else
+            {
+                // 武器種のみ指定
+                CalcWeapon.Value = CalcWeaponString;
+                SelectedWeaponType.Value = condition.WeaponType.ToString();
+                SelectedWeapon.Value = SearchWeaponString;
+                MinAttack.Value = condition.MinAttack?.ToString() ?? string.Empty;
+            }
 
             // 防御力・耐性を反映
             Def.Value = condition.Def?.ToString() ?? string.Empty;
@@ -416,6 +493,53 @@ namespace WildsSim.ViewModels.SubViews
         }
 
         /// <summary>
+        /// 武器指定方式の選択肢を元に、表示を切り替える
+        /// </summary>
+        private void ChangeIsCalcWeapon()
+        {
+            if (CalcWeapon.Value == SlotOnlyString)
+            {
+                IsCalcWeapon.Value = false;
+                IsSlotOnly.Value = true;
+            }
+            else
+            {
+                IsCalcWeapon.Value = true;
+                IsSlotOnly.Value = false;
+            }
+            ChangeShowAttackCond();
+        }
+
+        /// <summary>
+        /// 武器種の選択をもとに、武器一覧を切り替える
+        /// </summary>
+        private void ChangeWeapons()
+        {
+            string selected = SelectedWeaponType.Value;
+            ObservableCollection<string> weapons = new();
+            weapons.Add(SearchWeaponString);
+            weapons.AddRange(Masters.Weapons.Where(w => w.WeaponType.ToString() == selected).Select(w => w.Name).ToList());
+            Weapons.Value = weapons;
+            SelectedWeapon.Value = weapons[0];
+            ChangeShowAttackCond();
+        }
+
+        /// <summary>
+        /// 最低攻撃力の表示を切り替える
+        /// </summary>
+        private void ChangeShowAttackCond()
+        {
+            if (IsCalcWeapon.Value && (SelectedWeapon.Value == SearchWeaponString))
+            {
+                ShowAttackCond.Value = true;
+            }
+            else
+            {
+                ShowAttackCond.Value = false;
+            }
+        }
+
+        /// <summary>
         /// 検索条件インスタンスを作成
         /// </summary>
         /// <returns>検索条件</returns>
@@ -428,17 +552,27 @@ namespace WildsSim.ViewModels.SubViews
                 .SelectMany(vm => vm.SelectedSkills())
                 .ToList();
 
-            // 武器スロ条件を整理
-            string[] splited = WeaponSlots.Value.Split('-');
-            condition.WeaponSlot1 = int.Parse(splited[0]);
-            condition.WeaponSlot2 = int.Parse(splited[1]);
-            condition.WeaponSlot3 = int.Parse(splited[2]);
-
-            // 性別を整理
-            condition.Sex = Sex.male;
-            if (SelectedSex.Value.Equals(Sex.female.Str()))
+            // 武器条件を整理
+            if (IsSlotOnly.Value)
             {
-                condition.Sex = Sex.female;
+                condition.IsSpecificWeapon = true;
+                condition.WeaponName = SelectedSlotWeapon.Value;
+                condition.WeaponType = WeaponType.指定なし;
+            }
+            if (IsCalcWeapon.Value)
+            {
+                if (SelectedWeapon.Value == SearchWeaponString)
+                {
+                    condition.IsSpecificWeapon = false;
+                    condition.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), SelectedWeaponType.Value);
+                    condition.MinAttack = ParseOrNull(MinAttack.Value);
+                }
+                else
+                {
+                    condition.IsSpecificWeapon = true;
+                    condition.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), SelectedWeaponType.Value);
+                    condition.WeaponName = SelectedWeapon.Value;
+                }
             }
 
             // 防御力・耐性を整理
