@@ -216,7 +216,8 @@ namespace SimModel.Domain
                 equip.Slot1 = ParseUtil.Parse(line[@"スロット1"]);
                 equip.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
                 equip.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
-                if (kind == EquipKind.charm)
+                // TODO: 仮の実装として、防具もスロットタイプを指定できるようにしている。製品版の仕様次第で変更
+                if (line.HasColumn(@"スロット1タイプ"))// if (kind == EquipKind.charm)
                 {
                     equip.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
                     equip.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
