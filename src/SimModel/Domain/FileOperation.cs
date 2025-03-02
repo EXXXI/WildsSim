@@ -212,24 +212,20 @@ namespace SimModel.Domain
             {
                 Equipment equip = new Equipment(kind);
                 equip.Name = line[@"名前"];
-                equip.Rare = ParseUtil.Parse(line[@"レア度"]);
-                equip.Slot1 = ParseUtil.Parse(line[@"スロット1"]);
-                equip.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
-                equip.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
-                // TODO: 仮の実装として、防具もスロットタイプを指定できるようにしている。製品版の仕様次第で変更
-                if (line.HasColumn(@"スロット1タイプ"))// if (kind == EquipKind.charm)
+                equip.Rare = ParseUtil.Parse(line[@"レア度"]); 
+                if (kind != EquipKind.charm)
                 {
-                    equip.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
-                    equip.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
-                    equip.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
+                    equip.Slot1 = ParseUtil.Parse(line[@"スロット1"]);
+                    equip.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
+                    equip.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
+                    equip.Mindef = ParseUtil.Parse(line[@"初期防御力"]);
+                    equip.Maxdef = ParseUtil.Parse(line[@"最終防御力"], equip.Mindef); // 読み込みに失敗した場合は初期防御力と同値とみなす
+                    equip.Fire = ParseUtil.Parse(line[@"火耐性"]);
+                    equip.Water = ParseUtil.Parse(line[@"水耐性"]);
+                    equip.Thunder = ParseUtil.Parse(line[@"雷耐性"]);
+                    equip.Ice = ParseUtil.Parse(line[@"氷耐性"]);
+                    equip.Dragon = ParseUtil.Parse(line[@"龍耐性"]);
                 }
-                equip.Mindef = ParseUtil.Parse(line[@"初期防御力"]);
-                equip.Maxdef = ParseUtil.Parse(line[@"最終防御力"], equip.Mindef); // 読み込みに失敗した場合は初期防御力と同値とみなす
-                equip.Fire = ParseUtil.Parse(line[@"火耐性"]);
-                equip.Water = ParseUtil.Parse(line[@"水耐性"]);
-                equip.Thunder = ParseUtil.Parse(line[@"雷耐性"]);
-                equip.Ice = ParseUtil.Parse(line[@"氷耐性"]);
-                equip.Dragon = ParseUtil.Parse(line[@"龍耐性"]);
                 equip.RowNo = ParseUtil.Parse(line[@"仮番号"], int.MaxValue);
                 List<Skill> skills = new List<Skill>();
                 for (int i = 1; i <= LogicConfig.Instance.MaxEquipSkillCount; i++)
@@ -243,6 +239,13 @@ namespace SimModel.Domain
                     skills.Add(new Skill(skill, ParseUtil.Parse(level)));
                 }
                 equip.Skills = skills;
+                //// 防具のスロットタイプ指定
+                //if (line.HasColumn(@"スロット1タイプ"))// if (kind == EquipKind.charm)
+                //{
+                //    equip.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
+                //    equip.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
+                //    equip.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
+                //}
 
                 equipments.Add(equip);
             }
@@ -297,16 +300,9 @@ namespace SimModel.Domain
                 }
 
                 // カテゴリ
-                if (equip.Slot1 == 4)
+                if (skills.Count > 1)
                 {
-                    if (skills.Count < 2)
-                    {
-                        equip.DecoCateory = "4スロ単一スキル";
-                    }
-                    else
-                    {
-                        equip.DecoCateory = $"4スロ{skills[1].Name}複合";
-                    }
+                    equip.DecoCateory = $"{skills[0].Name}複合";
                 }
                 else
                 {

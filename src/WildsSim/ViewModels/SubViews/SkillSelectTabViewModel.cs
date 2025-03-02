@@ -13,6 +13,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Automation;
 
 namespace WildsSim.ViewModels.SubViews
 {
@@ -415,7 +416,22 @@ namespace WildsSim.ViewModels.SubViews
                 vm.TryAddSkill(mySet.Skills);
             }
 
-            // TODO: 武器情報も反映すべき？指定かどうかが分からないので一旦なし
+            // 武器情報反映
+            if (mySet.Weapon.WeaponType == WeaponType.指定なし)
+            {
+                // スロットのみ指定
+                CalcWeapon.Value = SlotOnlyString;
+                SelectedSlotWeapon.Value = mySet.Weapon.Name;
+                MinAttack.Value = string.Empty;
+            }
+            else
+            {
+                // 武器指定
+                CalcWeapon.Value = CalcWeaponString;
+                SelectedWeaponType.Value = mySet.Weapon.WeaponType.ToString();
+                SelectedWeapon.Value = mySet.Weapon.Name;
+                MinAttack.Value = string.Empty;
+            }
         }
 
         /// <summary>
