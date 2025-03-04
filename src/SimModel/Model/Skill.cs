@@ -81,7 +81,7 @@ namespace SimModel.Model
                 {
                     return string.Empty;
                 }
-                return SpecificNames.ContainsKey(Level) ? SpecificNames[Level] : $"{Name}Lv{Level}";
+                return SpecificNames.ContainsKey(Level) ? $"{SpecificNames[Level]}({Name}Lv{Level})" : $"{Name}Lv{Level}";
             }
         }
     }
