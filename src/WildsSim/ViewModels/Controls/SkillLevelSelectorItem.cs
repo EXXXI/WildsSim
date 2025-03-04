@@ -1,6 +1,7 @@
 ﻿using SimModel.Model;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace WildsSim.ViewModels.Controls
 {
@@ -38,7 +39,7 @@ namespace WildsSim.ViewModels.Controls
             items.Add(new SkillLevelSelectorItem(baseSkill.Name, 0));
             for (int i = 1; i <= baseSkill.Level; i++)
             {
-                string dispName = baseSkill.SpecificNames.ContainsKey(i) ? baseSkill.SpecificNames[i] : $"{baseSkill.Name}Lv{i}";
+                string dispName = baseSkill.SpecificNames.ContainsKey(i) ? $"{baseSkill.SpecificNames[i]}({baseSkill.Name}Lv{i})" : $"{baseSkill.Name}Lv{i}";
                 items.Add(new SkillLevelSelectorItem(dispName, i));
             }
             return items;
