@@ -106,6 +106,11 @@ namespace WildsSim.ViewModels.Controls
         /// <param name="v">レベル</param>
         internal void SelectLevel(int v)
         {
+            if(!Levels.Value.Where(skill => skill.Level == v).Any())
+            {
+                SelectLevel(v - 1);
+                return;
+            }
             SelectedLevel.Value = Levels.Value.Where(skill => skill.Level == v).First();
         }
 
