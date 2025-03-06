@@ -148,7 +148,7 @@ namespace SimModel.Model
                 foreach (var skill in Skills)
                 {
                     sb.AppendLine();
-                    sb.Append($"{skill.Name}Lv{skill.Level}{(skill.IsFixed ? "(固定)" : string.Empty)}");
+                    sb.Append($"{skill.Description}{(skill.IsFixed ? "(固定)" : string.Empty)}");
                 }
                 return sb.ToString();
             }

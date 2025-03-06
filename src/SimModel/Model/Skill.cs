@@ -8,6 +8,10 @@ namespace SimModel.Model
     /// </summary>
     public record Skill
     {
+        /// <summary>
+        /// 表示レベルを制限するカテゴリ名
+        /// </summary>
+        private static readonly List<string> DisplayRestrictCategories = new() { "グループスキル", "シリーズスキル" };
 
         /// <summary>
         /// スキル名
@@ -84,5 +88,15 @@ namespace SimModel.Model
                 return SpecificNames.ContainsKey(Level) ? $"{SpecificNames[Level]}({Name}Lv{Level})" : $"{Name}Lv{Level}";
             }
         }
+
+        /// <summary>
+        /// 表示レベルを制限するか否か
+        /// </summary>
+        /// <param name="level">インスタンスと違うレベルを調べたい場合入力</param>
+        /// <returns>制限する場合true</returns>
+        public bool IsHideLevel(int? level = null)
+        {
+            return DisplayRestrictCategories.Contains(Category) && !SpecificNames.ContainsKey(level ?? Level);
+        } 
     }
 }
