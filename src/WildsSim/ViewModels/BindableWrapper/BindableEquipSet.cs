@@ -1,7 +1,9 @@
 ﻿using Reactive.Bindings;
 using SimModel.Model;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 
 namespace WildsSim.ViewModels.BindableWrapper
 {
@@ -124,6 +126,18 @@ namespace WildsSim.ViewModels.BindableWrapper
             SkillsDisp.Value = set.SkillsDispMultiLine;
             Description.Value = set.Description;
             Original = set;
+
+            // 名前変更時に保存と再読み込みの処理を実施
+            // 初回生成分はSkip
+            Name.Skip(1).Subscribe(_ => ChangeName());
+        }
+
+        /// <summary>
+        /// マイセット名前変更
+        /// </summary>
+        private void ChangeName()
+        {
+            MySetTabVM.ChangeName(Name.Value);
         }
 
         /// <summary>

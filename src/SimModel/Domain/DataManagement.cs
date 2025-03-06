@@ -368,5 +368,19 @@ namespace SimModel.Domain
             deco.DecoCount = count;
             FileOperation.SaveDecoCountJson();
         }
+
+        /// <summary>
+        /// マイセットの順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        internal static void MoveMySet(int dropIndex, int targetIndex)
+        {
+            EquipSet set = Masters.MySets[dropIndex];
+            Masters.MySets.RemoveAt(dropIndex);
+            Masters.MySets.Insert(targetIndex, set);
+
+            FileOperation.SaveMySetCSV();
+        }
     }
 }

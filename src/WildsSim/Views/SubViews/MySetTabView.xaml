@@ -16,7 +16,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- マイセット一覧 -->
-        <DataGrid x:Name="grid" Grid.Column="0" ItemsSource="{Binding MySetList.Value, Mode=OneWay}" IsReadOnly="true" AutoGenerateColumns="False" SelectedItem="{Binding MyDetailSet.Value}">
+        <ctrl:RowDraggableDataGrid x:Name="grid" Grid.Column="0" ItemsSource="{Binding MySetList.Value, Mode=OneWay}" IsReadOnly="False" AutoGenerateColumns="False" SelectedItem="{Binding MyDetailSet.Value}" RowChangedCommand="{Binding RowChangedCommand}">
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem DataContext="{Binding MyDetailSet.Value.Weapon.Value}" Header="{Binding DispName.Value, Mode=OneWay}">
@@ -55,7 +55,7 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="防御" Binding="{Binding Maxdef.Value, Mode=OneWay}" />
                 <DataGridTextColumn Header="武器" Binding="{Binding Weapon.Value.DetailDispName.Value, Mode=OneWay}" />
-                <DataGridTextColumn Header="名前" Binding="{Binding Name.Value, Mode=OneWay}" />
+                <DataGridTextColumn Header="名前" Binding="{Binding Name.Value}" />
                 <DataGridTextColumn Header="発動スキル" Binding="{Binding SkillsDisp.Value, Mode=OneWay}" />
                 <DataGridTextColumn Header="火" Binding="{Binding Fire.Value, Mode=OneWay}" />
                 <DataGridTextColumn Header="水" Binding="{Binding Water.Value, Mode=OneWay}" />
@@ -70,7 +70,7 @@
                 <DataGridTextColumn Header="護石" Binding="{Binding Charm.Value.DispName.Value, Mode=OneWay}" />
                 <DataGridTextColumn Header="装飾品" Binding="{Binding DecoNameCSV.Value, Mode=OneWay}" />
             </DataGrid.Columns>
-        </DataGrid>
+        </ctrl:RowDraggableDataGrid>
         
         <!-- 右ペイン -->
         <Grid Grid.Column="1">
