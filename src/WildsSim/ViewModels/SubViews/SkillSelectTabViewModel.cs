@@ -43,7 +43,6 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         const string SearchWeaponString = "指定しない(全武器から検索する)";
 
-
         /// <summary>
         /// スロットの最大の大きさ
         /// </summary>
@@ -305,8 +304,11 @@ namespace WildsSim.ViewModels.SubViews
 
             // 追加スキル表示用VMをセット
             var groups = result.GroupBy(skill => skill.Name);
-            ExtraSkillVMs.ChangeCollection(new ObservableCollection<SkillAdderViewModel>(
-                groups.Select(group => new SkillAdderViewModel(group.Key, group.Select(skill => skill.Level)))));
+            ObservableCollection<SkillAdderViewModel> newVMs = new(
+                groups.Select(group => new SkillAdderViewModel(group.Key, group.Where(skill => !skill.IsHideLevel()).Select(skill => skill.Level)))
+                .Where(vm => vm.Range.Value.Count > 0)
+                );
+            ExtraSkillVMs.ChangeCollection(newVMs);
 
             // ビジーフラグ解除
             IsBusy.Value = false;
@@ -378,11 +380,11 @@ namespace WildsSim.ViewModels.SubViews
                 (r, s) => new
                 {
                     Name = s.Name,
-                    Range = Enumerable.Range(1, s.Level)
+                    Range = Enumerable.Range(1, s.Level).Where(l => !s.IsHideLevel(l))
                 });
 
             RecentSkillVMs.ChangeCollection(new ObservableCollection<SkillAdderViewModel>(
-                recentSkills.Select(skill => new SkillAdderViewModel(skill.Name,skill.Range))));
+                recentSkills.Select(skill => new SkillAdderViewModel(skill.Name, skill.Range))));
         }
 
         /// <summary>

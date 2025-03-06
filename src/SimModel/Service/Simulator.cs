@@ -354,5 +354,16 @@ namespace SimModel.Service
         {
             DataManagement.SaveDecoCount(deco, count);
         }
+
+
+        /// <summary>
+        /// マイセットの順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        public void MoveMySet(int dropIndex, int targetIndex)
+        {
+            DataManagement.MoveMySet(dropIndex, targetIndex);
+        }
     }
 }

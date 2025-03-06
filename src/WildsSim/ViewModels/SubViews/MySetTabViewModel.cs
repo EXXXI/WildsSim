@@ -51,6 +51,11 @@ namespace WildsSim.ViewModels.SubViews
         public ReactiveCommand ChangeNameCommand { get; } = new ReactiveCommand();
 
         /// <summary>
+        /// マイセットのドラッグコマンド
+        /// </summary>
+        public ReactiveCommand RowChangedCommand { get; } = new ReactiveCommand();
+
+        /// <summary>
         /// コンストラクタ
         /// </summary>
         public MySetTabViewModel()
@@ -68,12 +73,13 @@ namespace WildsSim.ViewModels.SubViews
             DeleteMySetCommand.Subscribe(_ => DeleteMySet());
             InputMySetConditionCommand.Subscribe(_ => InputMySetCondition());
             ChangeNameCommand.Subscribe(_ => ChangeName());
+            RowChangedCommand.Subscribe(indexpair => RowChanged(indexpair as (int, int)?));
         }
 
         /// <summary>
         /// マイセットの名前変更
         /// </summary>
-        private void ChangeName()
+        public void ChangeName(string? name = null)
         {
             if (MyDetailSet.Value == null)
             {
@@ -83,10 +89,16 @@ namespace WildsSim.ViewModels.SubViews
             // TODO: これだけだと不安だからID欲しくない？
             // 選択状態復帰用
             string description = MyDetailSet.Value.Description.Value;
-            string name = MyDetailName.Value;
+            string setName = name ?? MyDetailName.Value;
+
+            // 変更されているか確認
+            if (setName == MyDetailSet.Value.Original.Name)
+            {
+                return;
+            }
 
             // 変更
-            MyDetailSet.Value.Original.Name = name;
+            MyDetailSet.Value.Original.Name = setName;
             Simulator.SaveMySet();
 
             // マイセットマスタのリロード
@@ -95,7 +107,7 @@ namespace WildsSim.ViewModels.SubViews
             // 選択状態が解除されてしまうのでDetailSetを再選択
             foreach (var mySet in MySetList.Value)
             {
-                if (mySet.Name.Value == name && mySet.Description.Value == description)
+                if (mySet.Name.Value == setName && mySet.Description.Value == description)
                 {
                     MyDetailSet.Value = mySet;
                 }
@@ -154,6 +166,19 @@ namespace WildsSim.ViewModels.SubViews
 
             // ログ表示
             SetStatusBar("マイセット反映完了：" + set.Name);
+        }
+
+        /// <summary>
+        /// 順番入れ替え
+        /// </summary>
+        /// <param name="indexpair">(int dropIndex, int targetIndex)</param>
+        private void RowChanged((int dropIndex, int targetIndex)? indexpair)
+        {
+            if (indexpair != null)
+            {
+                MySetList.Value.Move(indexpair.Value.dropIndex, indexpair.Value.targetIndex);
+                Simulator.MoveMySet(indexpair.Value.dropIndex, indexpair.Value.targetIndex);
+            }
         }
 
         /// <summary>
