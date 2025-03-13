@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <PlatformTarget>x64</PlatformTarget>
@@ -24,10 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Csv" Version="2.0.93" />
-    <PackageReference Include="Google.OrTools" Version="9.11.4210" />
-	<PackageReference Include="NLog" Version="5.3.4" />
-	<PackageReference Include="ReactiveProperty" Version="9.6.0" />
+    <PackageReference Include="Csv" Version="2.0.128" />
+    <PackageReference Include="Google.OrTools" Version="9.12.4544" />
+	<PackageReference Include="NLog" Version="5.4.0" />
+	<PackageReference Include="ReactiveProperty" Version="9.7.0" />
   </ItemGroup>
 
   <ItemGroup>
