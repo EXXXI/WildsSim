@@ -210,6 +210,13 @@ namespace SimModel.Domain
             var x = CsvReader.ReadFromText(csv);
             foreach (ICsvLine line in x)
             {
+                // 入手不可データは読み飛ばす
+                string period = line[@"入手時期"];
+                if (period == "99")
+                {
+                    continue;
+                }
+
                 Equipment equip = new Equipment(kind);
                 equip.Name = line[@"名前"];
                 equip.Rare = ParseUtil.Parse(line[@"レア度"]); 
@@ -262,6 +269,13 @@ namespace SimModel.Domain
 
             foreach (ICsvLine line in CsvReader.ReadFromText(csv))
             {
+                // 入手不可データは読み飛ばす
+                string period = line[@"入手時期"];
+                if (period == "99")
+                {
+                    continue;
+                }
+
                 Deco equip = new Deco();
                 equip.Name = line[@"名前"];
                 equip.Rare = ParseUtil.Parse(line[@"レア度"]);
