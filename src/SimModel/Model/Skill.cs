@@ -11,7 +11,7 @@ namespace SimModel.Model
         /// <summary>
         /// 表示レベルを制限するカテゴリ名
         /// </summary>
-        private static readonly List<string> DisplayRestrictCategories = new() { "グループスキル", "シリーズスキル" };
+        public static readonly List<string> DisplayRestrictCategories = new() { "グループスキル", "シリーズスキル" };
 
         /// <summary>
         /// スキル名

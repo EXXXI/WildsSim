@@ -2,6 +2,7 @@
 using SimModel.Model;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace SimModel.Domain
@@ -274,7 +275,16 @@ namespace SimModel.Domain
                 if (skill.IsFixed)
                 {
                     string key = SkillRowPrefix + skill.Name;
-                    Constraints.Add(key, SimSolver.MakeConstraint(skill.Level, skill.Level, key));
+                    double ub = skill.Level;
+                    if (Skill.DisplayRestrictCategories.Contains(skill.Category))
+                    {
+                        ub = double.PositiveInfinity;
+                        if (skill.SpecificNames.Where(n => n.Key > skill.Level).Any())
+                        {
+                            ub = skill.SpecificNames.Where(n => n.Key > skill.Level).Min(n => n.Key) - 1;
+                        }
+                    }
+                    Constraints.Add(key, SimSolver.MakeConstraint(skill.Level, ub, key));
                 }
                 else
                 {
