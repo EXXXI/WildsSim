@@ -233,6 +233,9 @@ namespace SimModel.Domain
                     equip.Ice = ParseUtil.Parse(line[@"氷耐性"]);
                     equip.Dragon = ParseUtil.Parse(line[@"龍耐性"]);
                 }
+                // TODO: 次回作ではこうならないようにワンセットの機能をデフォで入れておく
+                // 互換性のため、lineが"ワンセット"を要素に持っていることを確認
+                equip.IsOneSet = line.HasColumn(@"ワンセット") && (line[@"ワンセット"] == "1");
                 equip.RowNo = ParseUtil.Parse(line[@"仮番号"], int.MaxValue);
                 List<Skill> skills = new List<Skill>();
                 for (int i = 1; i <= LogicConfig.Instance.MaxEquipSkillCount; i++)
