@@ -43,6 +43,7 @@ namespace SimModel.Domain
         const string SetRowPrefix = "set_";
         const string CludeRowPrefix = "clude_";
         const string EquipColPrefix = "equip_";
+        const string OneSetRowPrefix = "oneset_";
 
         /// <summary>
         /// 検索条件
@@ -304,6 +305,18 @@ namespace SimModel.Domain
                 string key = CludeRowPrefix + clude.Name;
                 Constraints.Add(key, SimSolver.MakeConstraint(fix, fix, key));
             }
+
+            // ワンセット防具設定
+            var oneSetNoList = Heads.Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
+                .Where(e => e.IsOneSet)
+                .Select(e => e.RowNo)
+                .Distinct()
+                .ToList();
+            foreach (int oneSetNo in oneSetNoList)
+            {
+                string key = OneSetRowPrefix + oneSetNo;
+                Constraints.Add(key, SimSolver.MakeConstraint(0.0, 0.0, key));
+            }
         }
 
         /// <summary>
@@ -496,6 +509,12 @@ namespace SimModel.Domain
                         Constraints[SkillRowPrefix + condSkill.Name].SetCoefficient(xvar, equipSkill.Level);
                     }
                 }
+            }
+
+            // ワンセット防具情報
+            if (equip.IsOneSet)
+            {
+                Constraints[OneSetRowPrefix + equip.RowNo].SetCoefficient(xvar, equip.Kind == EquipKind.head ? 4 : -1);
             }
         }
 

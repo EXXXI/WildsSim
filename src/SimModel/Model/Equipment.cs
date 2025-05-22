@@ -84,7 +84,12 @@ namespace SimModel.Model
         public int Dragon { get; set; }
 
         /// <summary>
-        /// 仮番号(除外固定画面用)
+        /// 仮番号(除外固定画面・ワンセット防具用)
+        /// </summary>
+        public bool IsOneSet { get; set; } = false;
+
+        /// <summary>
+        /// 仮番号(除外固定画面・ワンセット防具用)
         /// </summary>
         public int RowNo { get; set; } = int.MaxValue;
 
