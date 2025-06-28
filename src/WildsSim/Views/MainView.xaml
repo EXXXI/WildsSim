@@ -43,6 +43,13 @@
 
             <TabItem>
                 <TabItem.Header>
+                    <TextBlock Text="護石設定" Style="{StaticResource ResourceKey=tabHeader}" />
+                </TabItem.Header>
+                <subviews:CharmTabView DataContext="{Binding CharmTabVM.Value, Mode=OneWay}"/>
+            </TabItem>
+
+            <TabItem>
+                <TabItem.Header>
                     <TextBlock Text="装飾品設定" Style="{StaticResource ResourceKey=tabHeader}" />
                 </TabItem.Header>
                 <subviews:DecoTabView DataContext="{Binding DecoTabVM.Value, Mode=OneWay}"/>
