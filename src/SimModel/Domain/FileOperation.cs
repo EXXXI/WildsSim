@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using static Google.Protobuf.WellKnownTypes.Field.Types;
 using static System.Reflection.Metadata.BlobBuilder;
@@ -34,6 +35,7 @@ namespace SimModel.Domain
         private const string MySetCsv = SaveFolder + "/myset.csv";
         private const string RecentSkillCsv = SaveFolder + "/recentSkill.csv";
         private const string ConditionCsv = SaveFolder + "/condition.csv";
+        private const string AdditionalCharmCsv = SaveFolder + "/additionalCharm.csv";
 
         private const string SkillMasterHeaderName = @"スキル系統";
         private const string SkillMasterHeaderRequiredPoints = @"必要ポイント";
@@ -218,8 +220,8 @@ namespace SimModel.Domain
                 }
 
                 Equipment equip = new Equipment(kind);
-                equip.Name = line[@"名前"];
-                equip.Rare = ParseUtil.Parse(line[@"レア度"]); 
+                    equip.Name = line[@"名前"];
+                equip.Rare = ParseUtil.Parse(line[@"レア度"]);
                 if (kind != EquipKind.charm)
                 {
                     equip.Slot1 = ParseUtil.Parse(line[@"スロット1"]);
@@ -252,9 +254,9 @@ namespace SimModel.Domain
                 //// 防具のスロットタイプ指定
                 //if (line.HasColumn(@"スロット1タイプ"))// if (kind == EquipKind.charm)
                 //{
-                //    equip.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
-                //    equip.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
-                //    equip.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
+                //    charm.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
+                //    charm.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
+                //    charm.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
                 //}
 
                 equipments.Add(equip);
@@ -425,6 +427,9 @@ namespace SimModel.Domain
             string[] header = new string[] { "武器", "頭", "胴", "腕", "腰", "足", "護石", "装飾品", "名前" };
             string export = CsvWriter.WriteToText(header, body);
             File.WriteAllText(MySetCsv, export);
+
+            // マイセット利用状況の反映のため護石を再書き込み
+            SaveAdditionalCharmCSV();
         }
 
         /// <summary>
@@ -456,6 +461,9 @@ namespace SimModel.Domain
                 set.Name = line[@"名前"];
                 Masters.MySets.Add(set);
             }
+
+            // マイセット利用状況の反映のため護石を再書き込み
+            SaveAdditionalCharmCSV();
         }
 
         /// <summary>
@@ -560,6 +568,96 @@ namespace SimModel.Domain
 
                 Masters.MyConditions.Add(condition);
             }
+        }
+
+        /// <summary>
+        /// 追加護石書き込み
+        /// </summary>
+        internal static void SaveAdditionalCharmCSV()
+        {
+            List<string[]> body = new();
+            foreach (var charm in Masters.AdditionalCharms)
+            {
+                List<string> bodyStrings = new List<string>();
+                bodyStrings.Add(charm.Slot1.ToString());
+                bodyStrings.Add(charm.Slot2.ToString());
+                bodyStrings.Add(charm.Slot3.ToString());
+                bodyStrings.Add(charm.SlotType1.ToString());
+                bodyStrings.Add(charm.SlotType2.ToString());
+                bodyStrings.Add(charm.SlotType3.ToString());
+                for (int i = 0; i < LogicConfig.Instance.MaxCharmSkillCount; i++)
+                {
+                    bodyStrings.Add(charm.Skills.Count > i ? charm.Skills[i].Name : string.Empty);
+                    bodyStrings.Add(charm.Skills.Count > i ? charm.Skills[i].Level.ToString() : string.Empty);
+                }
+                bodyStrings.Add(charm.Name);
+                bodyStrings.Add(Masters.MySets.Where(set => charm.Name.Equals(set.Charm.Name)).Any() ? "マイセット登録中" : string.Empty);
+                body.Add(bodyStrings.ToArray());
+            }
+
+            List<string> headStrings = new List<string>();
+            headStrings.Add("スロット1");
+            headStrings.Add("スロット2");
+            headStrings.Add("スロット3");
+            headStrings.Add("スロット1タイプ");
+            headStrings.Add("スロット2タイプ");
+            headStrings.Add("スロット3タイプ");
+            for (int i = 1; i <= LogicConfig.Instance.MaxCharmSkillCount; i++)
+            {
+                headStrings.Add("スキル系統" + i);
+                headStrings.Add("スキル値" + i);
+            }
+            headStrings.Add("内部管理ID");
+            headStrings.Add("マイセット登録有無");
+            string[] header = headStrings.ToArray();
+
+            string export = CsvWriter.WriteToText(header, body);
+            File.WriteAllText(AdditionalCharmCsv, export);
+        }
+
+        /// <summary>
+        /// 追加護石読み込み
+        /// </summary>
+        internal static void LoadAdditionalCharmCSV()
+        {
+            Masters.AdditionalCharms = new();
+            string csv = ReadAllText(AdditionalCharmCsv);
+            var x = CsvReader.ReadFromText(csv);
+            foreach (ICsvLine line in x)
+            {
+                Equipment charm = new Equipment(EquipKind.charm);
+                charm.Name = line[@"内部管理ID"];
+                if (string.IsNullOrWhiteSpace(charm.Name))
+                {
+                    // GUIDを発行してIDとする
+                    charm.Name = Guid.NewGuid().ToString();
+                }
+                charm.Slot1 = ParseUtil.Parse(line[@"スロット1"]);
+                charm.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
+                charm.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
+                charm.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
+                charm.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
+                charm.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
+                List<Skill> skills = new List<Skill>();
+                for (int i = 1; i <= LogicConfig.Instance.MaxCharmSkillCount; i++)
+                {
+                    string skill = line[@"スキル系統" + i];
+                    string level = line[@"スキル値" + i];
+                    if (string.IsNullOrWhiteSpace(skill))
+                    {
+                        break;
+                    }
+                    skills.Add(new Skill(skill, ParseUtil.Parse(level)));
+                }
+                charm.Skills = skills;
+
+                charm.SetCharmDispName();
+
+                Masters.AdditionalCharms.Add(charm);
+            }
+
+            // GUIDの反映のためSaveが必要だが、マイセット読み込み後に実施するためここでは行わない
+            // SaveAdditionalCharmCSV();
         }
 
         /// <summary>

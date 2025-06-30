@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Text;
 
 namespace SimModel.Model
@@ -228,6 +230,86 @@ namespace SimModel.Model
 
                 return sb.ToString();
             }
+        }
+
+        /// <summary>
+        /// 護石の表示名を設定する
+        /// </summary>
+        public void SetCharmDispName()
+        {
+            if (Kind != EquipKind.charm)
+            {
+                // 護石以外は処理しない
+                return;
+            }
+
+            StringBuilder dispName = new();
+            foreach (var skill in Skills)
+            {
+                dispName.Append(skill.Name);
+                if (skill.Level > 0)
+                {
+                    dispName.Append($"Lv{skill.Level}");
+                }
+                dispName.Append(", ");
+            }
+            dispName.Append(Slot1);
+            if (Slot1 != 0)
+            {
+                switch (SlotType1)
+                {
+                    case 0: // 防御スキルのみ
+                        dispName.Append("(防)");
+                        break;
+                    case 1: // 武器スキルのみ
+                        dispName.Append("(武)");
+                        break;
+                    case 2: // 両対応
+                        dispName.Append("(両)");
+                        break;
+                    default:
+                        break;
+                }
+            }
+            dispName.Append("-");
+            dispName.Append(Slot2);
+            if (Slot2 != 0)
+            {
+                switch (SlotType2)
+                {
+                    case 0: // 防御スキルのみ
+                        dispName.Append("(防)");
+                        break;
+                    case 1: // 武器スキルのみ
+                        dispName.Append("(武)");
+                        break;
+                    case 2: // 両対応
+                        dispName.Append("(両)");
+                        break;
+                    default:
+                        break;
+                }
+            }
+            dispName.Append("-");
+            dispName.Append(Slot3);
+            if (Slot3 != 0)
+            {
+                switch (SlotType3)
+                {
+                    case 0: // 防御スキルのみ
+                        dispName.Append("(防)");
+                        break;
+                    case 1: // 武器スキルのみ
+                        dispName.Append("(武)");
+                        break;
+                    case 2: // 両対応
+                        dispName.Append("(両)");
+                        break;
+                    default:
+                        break;
+                }
+            }
+            DispName = dispName.ToString();
         }
     }
 }

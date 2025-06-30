@@ -40,6 +40,11 @@ namespace SimModel.Config
         public int MaxDecoSkillCount { get; set; }
 
         /// <summary>
+        /// 追加護石のスキル最大個数
+        /// </summary>
+        public int MaxCharmSkillCount { get; set; }
+
+        /// <summary>
         /// 最大並列処理数
         /// </summary>
         public int MaxDegreeOfParallelism { get; set; }
@@ -62,6 +67,7 @@ namespace SimModel.Config
                 MaxRecentSkillCount = ParseUtil.LoadConfigItem(line, @"最近使ったスキルの記憶容量", 20);
                 MaxEquipSkillCount = ParseUtil.LoadConfigItem(line, @"防具のスキル最大個数", 5);
                 MaxDecoSkillCount = ParseUtil.LoadConfigItem(line, @"装飾品のスキル最大個数", 2);
+                MaxCharmSkillCount = ParseUtil.LoadConfigItem(line, @"追加護石のスキル最大個数", 2);
                 MaxDegreeOfParallelism = ParseUtil.LoadConfigItem(line, @"最大並列処理数", 4);
             }
         }

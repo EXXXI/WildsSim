@@ -1,5 +1,6 @@
 ﻿using SimModel.Config;
 using SimModel.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -211,8 +212,15 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="set">マイセット</param>
         /// <returns>追加したマイセット</returns>
-        static internal EquipSet AddMySet(EquipSet set)
+        static internal EquipSet? AddMySet(EquipSet set)
         {
+            // 削除できる装備(護石)について、マスタに存在しているかチェック
+            if (set.Charm != null &&
+                !Masters.Charms.Union(Masters.AdditionalCharms).Any(c => c.Name.Equals(set.Charm.Name)))
+            {
+                return null;
+            }
+
             // 追加
             Masters.MySets.Add(set);
 
@@ -381,6 +389,63 @@ namespace SimModel.Domain
             Masters.MySets.Insert(targetIndex, set);
 
             FileOperation.SaveMySetCSV();
+        }
+
+        /// <summary>
+        /// 護石の追加
+        /// </summary>
+        /// <param name="charm">護石</param>
+        internal static void AddCharm(Equipment charm)
+        {
+            // 追加
+            Masters.AdditionalCharms.Add(charm);
+
+            // マスタへ反映
+            FileOperation.SaveAdditionalCharmCSV();
+        }
+
+        /// <summary>
+        /// 護石の削除
+        /// </summary>
+        /// <param name="condition">検索条件</param>
+        internal static void DeleteCharm(Equipment charm)
+        {
+            // 除外・固定設定があったら削除
+            DeleteClude(charm.Name);
+
+            // この護石を使っているマイセットがあったら削除
+            List<EquipSet> delMySets = new();
+            foreach (var set in Masters.MySets)
+            {
+                if (set.Charm.Name != null && set.Charm.Name.Equals(charm.Name))
+                {
+                    delMySets.Add(set);
+                }
+            }
+            foreach (var set in delMySets)
+            {
+                DeleteMySet(set);
+            }
+
+            // 削除
+            Masters.AdditionalCharms.Remove(charm);
+
+            // マスタへ反映
+            FileOperation.SaveAdditionalCharmCSV();
+        }
+
+        /// <summary>
+        /// 護石の順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        internal static void MoveCharm(int dropIndex, int targetIndex)
+        {
+            Equipment charm = Masters.AdditionalCharms[dropIndex];
+            Masters.AdditionalCharms.RemoveAt(dropIndex);
+            Masters.AdditionalCharms.Insert(targetIndex, charm);
+
+            FileOperation.SaveAdditionalCharmCSV();
         }
     }
 }
