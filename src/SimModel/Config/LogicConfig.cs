@@ -45,6 +45,11 @@ namespace SimModel.Config
         public int MaxDegreeOfParallelism { get; set; }
 
         /// <summary>
+        /// 入手不可装備の利用有無
+        /// </summary>
+        public bool AllowUnavailableEquipments { get; set; }
+
+        /// <summary>
         /// マイセットのデフォルト名
         /// </summary>
         public string DefaultMySetName { get; } = "マイセット";
@@ -63,6 +68,7 @@ namespace SimModel.Config
                 MaxEquipSkillCount = ParseUtil.LoadConfigItem(line, @"防具のスキル最大個数", 5);
                 MaxDecoSkillCount = ParseUtil.LoadConfigItem(line, @"装飾品のスキル最大個数", 2);
                 MaxDegreeOfParallelism = ParseUtil.LoadConfigItem(line, @"最大並列処理数", 4);
+                AllowUnavailableEquipments = ParseUtil.LoadConfigItem(line, @"入手不可装備の利用有無", false);
             }
         }
 
