@@ -109,7 +109,8 @@ namespace WildsSim.ViewModels.SubViews
         /// <param name="dispName">表示名</param>
         internal void AddExclude(string trueName, string dispName)
         {
-            if (string.IsNullOrEmpty(trueName))
+            if (string.IsNullOrEmpty(trueName) ||
+                Masters.GetEquipByName(trueName).Name != trueName)
             {
                 // 装備無しなら何もせず終了
                 return;
@@ -154,7 +155,8 @@ namespace WildsSim.ViewModels.SubViews
         /// <param name="dispName">表示名</param>
         internal void AddInclude(string trueName, string dispName)
         {
-            if (string.IsNullOrEmpty(trueName))
+            if (string.IsNullOrEmpty(trueName) ||
+                Masters.GetEquipByName(trueName).Name != trueName)
             {
                 // 装備無しなら何もせず終了
                 return;
@@ -307,7 +309,7 @@ namespace WildsSim.ViewModels.SubViews
             var arms = Masters.Arms;
             var waists = Masters.Waists;
             var legs = Masters.Legs;
-            var charms = Masters.Charms;
+            var charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
             var decos = Masters.Decos;
 
             // 簡潔化のためにリスト化(護石と装飾品は特殊処理があるので別枠)

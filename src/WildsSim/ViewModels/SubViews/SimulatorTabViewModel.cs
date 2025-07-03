@@ -170,7 +170,13 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // 追加
-            Simulator.AddMySet(set);
+            EquipSet? added = Simulator.AddMySet(set);
+
+            if (added == null)
+            {
+                // 追加できなかった場合は何もせず終了
+                return;
+            }
 
             // マイセットマスタのリロード
             MySetTabVM.LoadMySets();
