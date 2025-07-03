@@ -1,4 +1,6 @@
 ﻿using Csv;
+using Google.OrTools.ConstraintSolver;
+using Google.Protobuf.Collections;
 using NLog;
 using SimModel.Config;
 using SimModel.Model;
@@ -8,6 +10,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Xml.Linq;
 using static Google.Protobuf.WellKnownTypes.Field.Types;
 using static System.Reflection.Metadata.BlobBuilder;
 
@@ -76,6 +79,14 @@ namespace SimModel.Domain
                 Skill skill = Masters.Skills.First(s => s.Name == item.Name);
                 skill.SpecificNames.Add(item.Level, item.Specific);
             }
+
+            // どの防具・護石・武器にも存在しないスキルの場合除外
+            // TODO: AdditionalCharms実装後、要見直し
+            var equips = Masters.Weapons.Union(Masters.Heads).Union(Masters.Bodys).Union(Masters.Arms)
+                .Union(Masters.Waists).Union(Masters.Legs).Union(Masters.Charms).Union(Masters.Decos);
+            Masters.Skills = Masters.Skills.Where(skill =>
+                equips.Any(e => e.Skills.Any(s => s.Name == skill.Name)))
+                .ToList();
         }
 
         /// <summary>
@@ -113,6 +124,13 @@ namespace SimModel.Domain
             var x = CsvReader.ReadFromText(csv);
             foreach (ICsvLine line in x)
             {
+                // 入手不可データは読み飛ばす
+                string period = line[@"入手時期"];
+                if (period == "99" && !LogicConfig.Instance.AllowUnavailableEquipments)
+                {
+                    continue;
+                }
+
                 Weapon weapon = new Weapon();
                 weapon.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), line[@"武器種"]);
                 weapon.Name = line[@"名前"];
@@ -212,7 +230,7 @@ namespace SimModel.Domain
             {
                 // 入手不可データは読み飛ばす
                 string period = line[@"入手時期"];
-                if (period == "99")
+                if (period == "99" && !LogicConfig.Instance.AllowUnavailableEquipments)
                 {
                     continue;
                 }
@@ -274,7 +292,7 @@ namespace SimModel.Domain
             {
                 // 入手不可データは読み飛ばす
                 string period = line[@"入手時期"];
-                if (period == "99")
+                if (period == "99" && !LogicConfig.Instance.AllowUnavailableEquipments)
                 {
                     continue;
                 }
