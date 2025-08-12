@@ -75,6 +75,11 @@ namespace WildsSim.ViewModels
         public ReactivePropertySlim<CludeTabViewModel> CludeTabVM { get; } = new();
 
         /// <summary>
+        /// 護石画面のVM
+        /// </summary>
+        public ReactivePropertySlim<CharmTabViewModel> CharmTabVM { get; } = new();
+
+        /// <summary>
         /// 装飾品設定画面のVM
         /// </summary>
         public ReactivePropertySlim<DecoTabViewModel> DecoTabVM { get; } = new();
@@ -119,6 +124,7 @@ namespace WildsSim.ViewModels
             SkillSelectTabVM.Value = new SkillSelectTabViewModel();
             SimulatorTabVM.Value = new SimulatorTabViewModel();
             CludeTabVM.Value = new CludeTabViewModel();
+            CharmTabVM.Value = new CharmTabViewModel();
             DecoTabVM.Value = new DecoTabViewModel();
             MySetTabVM.Value = new MySetTabViewModel();
             LicenseTabVM.Value = new LicenseTabViewModel();
@@ -166,6 +172,8 @@ namespace WildsSim.ViewModels
         {
             // 除外固定画面用のVMの設定
             CludeTabVM.Value.LoadEquipsForClude();
+            // 護石画面用のVMの設定
+            CharmTabVM.Value.LoadEquipsForCharm();
         }
 
         /// <summary>

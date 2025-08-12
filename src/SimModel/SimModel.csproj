@@ -88,6 +88,9 @@
     <None Update="save\clude.csv">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Update="save\additionalCharm.csv">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
     <None Update="save\myset.csv">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>

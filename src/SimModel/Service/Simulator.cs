@@ -37,14 +37,15 @@ namespace SimModel.Service
             FileOperation.LoadArmCSV();
             FileOperation.LoadWaistCSV();
             FileOperation.LoadLegCSV();
+            FileOperation.LoadCharmCSV();
             FileOperation.LoadDecoCSV();
             FileOperation.LoadWeaponCSV();
-            FileOperation.LoadCludeCSV();
             FileOperation.LoadSkillCSV();
 
             // セーブデータ類の読み込み
             FileOperation.MakeSaveFolder();
-            FileOperation.LoadCharmCSV();
+            FileOperation.LoadAdditionalCharmCSV();
+            FileOperation.LoadCludeCSV();
             FileOperation.LoadRecentSkillCSV();
             FileOperation.LoadMyConditionCSV();
             FileOperation.LoadMySetCSV();
@@ -255,7 +256,7 @@ namespace SimModel.Service
         /// </summary>
         /// <param name="set">マイセット</param>
         /// <returns>登録セット</returns>
-        public EquipSet AddMySet(EquipSet set)
+        public EquipSet? AddMySet(EquipSet set)
         {
             return DataManagement.AddMySet(set);
         }
@@ -355,7 +356,6 @@ namespace SimModel.Service
             DataManagement.SaveDecoCount(deco, count);
         }
 
-
         /// <summary>
         /// マイセットの順番入れ替え
         /// </summary>
@@ -364,6 +364,34 @@ namespace SimModel.Service
         public void MoveMySet(int dropIndex, int targetIndex)
         {
             DataManagement.MoveMySet(dropIndex, targetIndex);
+        }
+
+        /// <summary>
+        /// 護石登録
+        /// </summary>
+        /// <param name="charm">登録対象</param>
+        public void AddCharm(Equipment charm)
+        {
+            DataManagement.AddCharm(charm);
+        }
+
+        /// <summary>
+        /// 護石削除
+        /// </summary>
+        /// <param name="condition">削除対象</param>
+        public void DeleteCharm(Equipment charm)
+        {
+            DataManagement.DeleteCharm(charm);
+        }
+
+        /// <summary>
+        /// 護石の順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        public void MoveCharm(int dropIndex, int targetIndex)
+        {
+            DataManagement.MoveCharm(dropIndex, targetIndex);
         }
     }
 }

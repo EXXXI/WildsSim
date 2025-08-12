@@ -34,6 +34,11 @@ namespace WildsSim.ViewModels
         protected CludeTabViewModel CludeTabVM { get => MainVM.CludeTabVM.Value; }
 
         /// <summary>
+        /// 護石画面のVM
+        /// </summary>
+        protected CharmTabViewModel CharmTabVM { get => MainVM.CharmTabVM.Value; }
+
+        /// <summary>
         /// マイセット画面のVM
         /// </summary>
         protected MySetTabViewModel MySetTabVM { get => MainVM.MySetTabVM.Value; }

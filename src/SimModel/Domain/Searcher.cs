@@ -106,6 +106,11 @@ namespace SimModel.Domain
         private List<Equipment> Legs { get; set; }
 
         /// <summary>
+        /// 検索対象の護石一覧
+        /// </summary>
+        private List<Equipment> Charms { get; set; }
+
+        /// <summary>
         /// コンストラクタ：検索条件を指定する
         /// </summary>
         /// <param name="condition"></param>
@@ -133,6 +138,7 @@ namespace SimModel.Domain
             Arms = Masters.Arms;
             Waists = Masters.Waists;
             Legs = Masters.Legs;
+            Charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
 
             SimSolver = Solver.CreateSolver("SCIP");
 
@@ -207,7 +213,7 @@ namespace SimModel.Domain
         {
             // 各装備は0個以上で整数
             var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
-                .Union(Masters.Charms).Union(Masters.Decos);
+                .Union(Charms).Union(Masters.Decos);
             foreach (var equip in equips)
             {
                 string key = EquipColPrefix + equip.Name;
@@ -330,7 +336,7 @@ namespace SimModel.Domain
 
             // 各装備の防御力が、目的関数における各装備の項の係数となる
             var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
-                .Union(Masters.Charms).Union(Masters.Decos);
+                .Union(Charms).Union(Masters.Decos);
             foreach (var equip in equips)
             {
                 string key = EquipColPrefix + equip.Name;
@@ -386,7 +392,7 @@ namespace SimModel.Domain
         {
             // 防具データ
             var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
-                .Union(Masters.Charms).Union(Masters.Decos);
+                .Union(Charms).Union(Masters.Decos);
             foreach (var equip in equips)
             {
                 string key = EquipColPrefix + equip.Name;
