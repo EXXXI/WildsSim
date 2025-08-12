@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SimModel.Model
@@ -49,6 +50,11 @@ namespace SimModel.Model
         public static List<Equipment> Charms { get; set; } = new();
 
         /// <summary>
+        /// 追加護石マスタ
+        /// </summary>
+        public static List<Equipment> AdditionalCharms { get; set; } = new();
+
+        /// <summary>
         /// 装飾品マスタ
         /// </summary>
         public static List<Deco> Decos { get; set; } = new();
@@ -81,8 +87,24 @@ namespace SimModel.Model
         public static Equipment GetEquipByName(string equipName)
         {
             string? name = equipName?.Trim();
-            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(Decos);
+            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos);
             return equips.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
+        }
+
+        /// <summary>
+        /// スキル名がマスタに存在するかチェック
+        /// </summary>
+        /// <param name="value">スキル名</param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static bool IsSkillName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+            string name = value.Trim();
+            return Skills.Any(skill => skill.Name == name);
         }
 
         /// <summary>

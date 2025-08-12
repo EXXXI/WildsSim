@@ -1,0 +1,63 @@
+﻿<UserControl x:Class="WildsSim.Views.SubViews.CharmTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:WildsSim.Views.SubViews" xmlns:ctrl="clr-namespace:WildsSim.Views.Controls" xmlns:subviews="clr-namespace:WildsSim.ViewModels.SubViews" d:DataContext="{d:DesignInstance Type=subviews:CharmTabViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid  ShowGridLines="True">
+
+        <!-- グリッド設定 -->
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="180"/>
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+
+        <!-- 登録 -->
+        <StackPanel Grid.Row="0" Grid.Column="0">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding CharmSkillSelectorVMs.Value, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ctrl:SkillSelector/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Width="50" Text="スロット1"/>
+                <ComboBox ItemsSource="{Binding SlotSizeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding Slot1.Value}" Width="40" SelectedIndex="0"/>
+                <ComboBox ItemsSource="{Binding SlotTypeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding SlotType1.Value}" Width="70" SelectedIndex="0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Width="50" Text="スロット2"/>
+                <ComboBox ItemsSource="{Binding SlotSizeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding Slot2.Value}" Width="40" SelectedIndex="0"/>
+                <ComboBox ItemsSource="{Binding SlotTypeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding SlotType2.Value}" Width="70" SelectedIndex="0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Width="50" Text="スロット3"/>
+                <ComboBox ItemsSource="{Binding SlotSizeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding Slot3.Value}" Width="40" SelectedIndex="0"/>
+                <ComboBox ItemsSource="{Binding SlotTypeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding SlotType3.Value}" Width="70" SelectedIndex="0"/>
+            </StackPanel>
+            <Button x:Name="charmAddButton" Content="登録する" Command="{Binding AddCharmCommand}" />
+        </StackPanel>
+
+        <!-- 一覧 -->
+        <ctrl:RowDraggableDataGrid Grid.Row="0" Grid.Column="1" x:Name="grid" ItemsSource="{Binding Charms.Value, Mode=OneWay}" IsReadOnly="true" AutoGenerateColumns="False" RowChangedCommand="{Binding RowChangedCommand}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="詳細" Binding="{Binding DispName.Value, Mode=OneWay}" />
+                <DataGridTemplateColumn IsReadOnly="True" Header="削除">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding DeleteCommand}">削除</Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </ctrl:RowDraggableDataGrid>
+    </Grid>
+</UserControl>
