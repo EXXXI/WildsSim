@@ -110,7 +110,7 @@ namespace WildsSim.ViewModels.SubViews
             Slot1.Value = "0";
             Slot2.Value = "0";
             Slot3.Value = "0";
-            SlotTypeMaster.Value = ["防具用", "武器用", "両対応"];
+            SlotTypeMaster.Value = ["防具用", "武器用"];
             SlotType1.Value = "防具用";
             SlotType2.Value = "防具用";
             SlotType3.Value = "防具用";
