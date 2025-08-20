@@ -597,34 +597,84 @@ namespace SimModel.Domain
             foreach (var charm in Masters.AdditionalCharms)
             {
                 List<string> bodyStrings = new List<string>();
+                for (int i = 0; i < LogicConfig.Instance.MaxCharmSkillCount; i++)
+                {
+                    bodyStrings.Add(charm.Skills.Count > i ? charm.Skills[i].Name : string.Empty);
+                    bodyStrings.Add(charm.Skills.Count > i ? charm.Skills[i].Level.ToString() : string.Empty);
+                }
+                // 泣きシミュフォーマット対応
+                List<int> wSlot = new();
+                List<int> aSlot = new();
+                if (charm.SlotType1 == 1)
+                {
+                    wSlot.Add(charm.Slot1);
+                }
+                else if (charm.SlotType1 == 0)
+                {
+                    aSlot.Add(charm.Slot1);
+                }
+                if (charm.SlotType2 == 1)
+                {
+                    wSlot.Add(charm.Slot2);
+                }
+                else if (charm.SlotType2 == 0)
+                {
+                    aSlot.Add(charm.Slot2);
+                }
+                if (charm.SlotType3 == 1)
+                {
+                    wSlot.Add(charm.Slot3);
+                }
+                else if (charm.SlotType3 == 0)
+                {
+                    aSlot.Add(charm.Slot3);
+                }
+                while (wSlot.Count < 3)
+                {
+                    wSlot.Add(0);
+                }
+                while (aSlot.Count < 3)
+                {
+                    aSlot.Add(0);
+                }
+                foreach (int i in aSlot)
+                {
+                    bodyStrings.Add(i.ToString());
+                }
+                foreach (int i in wSlot)
+                {
+                    bodyStrings.Add(i.ToString());
+                }
+
                 bodyStrings.Add(charm.Slot1.ToString());
                 bodyStrings.Add(charm.Slot2.ToString());
                 bodyStrings.Add(charm.Slot3.ToString());
                 bodyStrings.Add(charm.SlotType1.ToString());
                 bodyStrings.Add(charm.SlotType2.ToString());
                 bodyStrings.Add(charm.SlotType3.ToString());
-                for (int i = 0; i < LogicConfig.Instance.MaxCharmSkillCount; i++)
-                {
-                    bodyStrings.Add(charm.Skills.Count > i ? charm.Skills[i].Name : string.Empty);
-                    bodyStrings.Add(charm.Skills.Count > i ? charm.Skills[i].Level.ToString() : string.Empty);
-                }
                 bodyStrings.Add(charm.Name);
                 bodyStrings.Add(Masters.MySets.Where(set => charm.Name.Equals(set.Charm.Name)).Any() ? "マイセット登録中" : string.Empty);
                 body.Add(bodyStrings.ToArray());
             }
 
             List<string> headStrings = new List<string>();
+            for (int i = 1; i <= LogicConfig.Instance.MaxCharmSkillCount; i++)
+            {
+                headStrings.Add("スキル系統" + i);
+                headStrings.Add("スキル値" + i);
+            }
+            headStrings.Add("(泣用防具スロ1)");
+            headStrings.Add("(泣用防具スロ2)");
+            headStrings.Add("(泣用防具スロ3)");
+            headStrings.Add("(泣用武器スロ1)");
+            headStrings.Add("(泣用武器スロ2)");
+            headStrings.Add("(泣用武器スロ3)");
             headStrings.Add("スロット1");
             headStrings.Add("スロット2");
             headStrings.Add("スロット3");
             headStrings.Add("スロット1タイプ");
             headStrings.Add("スロット2タイプ");
             headStrings.Add("スロット3タイプ");
-            for (int i = 1; i <= LogicConfig.Instance.MaxCharmSkillCount; i++)
-            {
-                headStrings.Add("スキル系統" + i);
-                headStrings.Add("スキル値" + i);
-            }
             headStrings.Add("内部管理ID");
             headStrings.Add("マイセット登録有無");
             string[] header = headStrings.ToArray();
@@ -644,18 +694,76 @@ namespace SimModel.Domain
             foreach (ICsvLine line in x)
             {
                 Equipment charm = new Equipment(EquipKind.charm);
-                charm.Name = line[@"内部管理ID"];
-                if (string.IsNullOrWhiteSpace(charm.Name))
+                try
                 {
-                    // GUIDを発行してIDとする
+                    charm.Name = line[@"内部管理ID"];
+                    if (string.IsNullOrWhiteSpace(charm.Name))
+                    {
+                        charm.Name = Guid.NewGuid().ToString();
+                    }
+                }
+                catch (InvalidOperationException)
+                {
                     charm.Name = Guid.NewGuid().ToString();
                 }
-                charm.Slot1 = ParseUtil.Parse(line[@"スロット1"]);
-                charm.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
-                charm.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
-                charm.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
-                charm.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
-                charm.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
+
+                try
+                {
+                    charm.Slot1 = ParseUtil.Parse(line[@"スロット1"]);
+                    charm.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
+                    charm.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
+                    charm.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
+                    charm.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
+                    charm.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
+                }
+                catch (InvalidOperationException)
+                {
+                    // 泣きシミュフォーマット対応
+                    List<(int, int)> slotsData = new();
+                    int w1 = ParseUtil.Parse(line[@"(泣用武器スロ1)"]);
+                    if (w1 != 0)
+                    {
+                        slotsData.Add((w1, 1));
+                    }
+                    int w2 = ParseUtil.Parse(line[@"(泣用武器スロ2)"]);
+                    if (w2 != 0)
+                    {
+                        slotsData.Add((w2, 1));
+                    }
+                    int w3 = ParseUtil.Parse(line[@"(泣用武器スロ3)"]);
+                    if (w3 != 0)
+                    {
+                        slotsData.Add((w3, 1));
+                    }
+                    int a1 = ParseUtil.Parse(line[@"(泣用防具スロ1)"]);
+                    if (a1 != 0)
+                    {
+                        slotsData.Add((a1, 0));
+                    }
+                    int a2 = ParseUtil.Parse(line[@"(泣用防具スロ2)"]);
+                    if (a2 != 0)
+                    {
+                        slotsData.Add((a2, 0));
+                    }
+                    int a3 = ParseUtil.Parse(line[@"(泣用防具スロ3)"]);
+                    if (a3 != 0)
+                    {
+                        slotsData.Add((a3, 0));
+                    }
+                    if (slotsData.Count >= 1)
+                    {
+                        (charm.Slot1, charm.SlotType1) = slotsData[0];
+                    }
+                    if (slotsData.Count >= 2)
+                    {
+                        (charm.Slot2, charm.SlotType2) = slotsData[1];
+                    }
+                    if (slotsData.Count >= 3)
+                    {
+                        (charm.Slot3, charm.SlotType3) = slotsData[2];
+                    }
+                }
+
                 List<Skill> skills = new List<Skill>();
                 for (int i = 1; i <= LogicConfig.Instance.MaxCharmSkillCount; i++)
                 {
