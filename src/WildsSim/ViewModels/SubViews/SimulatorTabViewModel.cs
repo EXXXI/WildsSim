@@ -5,6 +5,7 @@ using SimModel.Service;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using WildsSim.Util;
@@ -44,9 +45,19 @@ namespace WildsSim.ViewModels.SubViews
         public ReactivePropertySlim<bool> IsRemaining { get; } = new(false);
 
         /// <summary>
+        /// 護石検索可能フラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> IsNoResult { get; } = new(false);
+
+        /// <summary>
         /// もっと検索コマンド
         /// </summary>
         public AsyncReactiveCommand SearchMoreCommand { get; private set; }
+
+        /// <summary>
+        /// 護石検索コマンド
+        /// </summary>
+        public AsyncReactiveCommand SearchCharmCommand { get; private set; }
 
         /// <summary>
         /// マイセット追加コマンド
@@ -79,6 +90,7 @@ namespace WildsSim.ViewModels.SubViews
             // コマンドを設定
             ReadOnlyReactivePropertySlim<bool> isFree = MainVM.IsFree;
             SearchMoreCommand = isFree.ToAsyncReactiveCommand().WithSubscribe(async () => await SearchMore()).AddTo(Disposable);
+            SearchCharmCommand = isFree.ToAsyncReactiveCommand().WithSubscribe(async () => await SearchCharm()).AddTo(Disposable);
             AddMySetCommand.Subscribe(() => AddMySet());
             ExcludeCommand.Subscribe(x => Exclude(x as BindableEquipment));
             IncludeCommand.Subscribe(x => Include(x as BindableEquipment));
@@ -95,6 +107,7 @@ namespace WildsSim.ViewModels.SubViews
             SearchResult.ChangeCollection(BindableEquipSet.BeBindableList(result));
             DetailSet.Value = SearchResult.Value.Count > 0 ? SearchResult.Value[0] : null;
             IsRemaining.Value = remain;
+            IsNoResult.Value = !remain && result.Count == 0;
             Limit = limit;
         }
 
@@ -130,6 +143,38 @@ namespace WildsSim.ViewModels.SubViews
             else
             {
                 SetStatusBar($"もっと検索完了：{result.Count}件");
+            }
+        }
+
+        /// <summary>
+        /// もっと検索
+        /// </summary>
+        /// <returns></returns>
+        async private Task SearchCharm()
+        {
+            // ステータスバー
+            SetStatusBar($"護石検索開始・・・");
+
+            // ビジーフラグ
+            IsBusy.Value = true;
+
+            // 追加スキル検索
+            List<Equipment> result = await Task.Run(() => Simulator.SearchCharm(MainVM.Progress));
+            MainVM.Progress.Value = 0;
+            List<EquipSet> showDatas = result.Select(charm => new EquipSet() { Charm = charm}).ToList();
+            SearchResult.ChangeCollection(BindableEquipSet.BeBindableList(showDatas));
+
+            // ビジーフラグ解除
+            IsBusy.Value = false;
+
+            // ログ表示
+            if (Simulator.IsCanceling)
+            {
+                SetStatusBar("処理中断：中断時の検索状態を表示します");
+            }
+            else
+            {
+                SetStatusBar("護石検索完了");
             }
         }
 

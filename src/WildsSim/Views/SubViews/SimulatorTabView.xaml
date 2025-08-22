@@ -88,6 +88,17 @@
                 </StackPanel>
                 <Button Content="もっと検索する" Command="{Binding SearchMoreCommand}" Width="100"/>
             </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Visibility="{Binding IsNoResult.Value, Converter={StaticResource BoolVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock>
+                        検索結果は0件でした。
+                    </TextBlock>
+                    <TextBlock>
+                        護石検索を行いたい場合は右のボタンを押してください。
+                    </TextBlock>
+                </StackPanel>
+                <Button Content="護石検索" Command="{Binding SearchCharmCommand}" Width="100"/>
+            </StackPanel>
         </Grid>
         <!-- 右ペイン -->
         <Grid Grid.Column="1">

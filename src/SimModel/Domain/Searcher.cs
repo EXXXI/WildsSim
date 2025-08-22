@@ -138,7 +138,16 @@ namespace SimModel.Domain
             Arms = Masters.Arms;
             Waists = Masters.Waists;
             Legs = Masters.Legs;
-            Charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
+            if (condition.FixCharm == null)
+            {
+                // 通常
+                Charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
+            }
+            else
+            {
+                // 護石検索用
+                Charms = new List<Equipment>() { condition.FixCharm };
+            }
 
             SimSolver = Solver.CreateSolver("SCIP");
 

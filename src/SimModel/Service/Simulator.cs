@@ -1,7 +1,9 @@
 ﻿using SimModel.Config;
 using SimModel.Domain;
 using SimModel.Model;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SimModel.Service
@@ -41,6 +43,8 @@ namespace SimModel.Service
             FileOperation.LoadDecoCSV();
             FileOperation.LoadWeaponCSV();
             FileOperation.LoadSkillCSV();
+            FileOperation.LoadAdditionalCharmComboCSV();
+            FileOperation.LoadAdditionalCharmGroupCSV();
 
             // セーブデータ類の読み込み
             FileOperation.MakeSaveFolder();
@@ -114,8 +118,9 @@ namespace SimModel.Service
 
             // 全スキル全レベルを走査
             Parallel.ForEach(Masters.Skills,
-                new ParallelOptions { 
-                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism 
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
                 },
                 () => new List<Skill>(),
                 (skill, loop, subResult) =>
@@ -158,7 +163,7 @@ namespace SimModel.Service
                         {
                             progress.Value += 1.0 / Masters.Skills.Count;
                         }
-                        
+
                     }
 
                     return subResult;
@@ -186,6 +191,199 @@ namespace SimModel.Service
             }
 
             return sortedSkills;
+        }
+
+        /// <summary>
+        /// 護石検索
+        /// </summary>
+        /// <returns>検索結果</returns>
+        public List<Equipment> SearchCharm(Reactive.Bindings.ReactivePropertySlim<double>? progress = null)
+        {
+            ResetIsCanceling();
+
+            // プログレスバー
+            if (progress != null)
+            {
+                progress.Value = 0.0;
+            }
+
+            // 検索対象の護石をリストアップ
+            List<Equipment> targetCharms = new();
+            var condSkills = Searcher.Condition.Skills.Where(skill => skill.Level != 0);
+            foreach (var combo in Masters.AdditionalCharmCombos)
+            {
+                var skill1List = Masters.AdditionalCharmGroups[combo.Group1].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                var skill2List = Masters.AdditionalCharmGroups[combo.Group2].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                var skill3List = Masters.AdditionalCharmGroups[combo.Group3].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                foreach (var skill1 in skill1List)
+                {
+                    foreach (var skill2 in skill2List)
+                    {
+                        foreach (var skill3 in skill3List)
+                        {
+                            Equipment charm = new()
+                            {
+                                Name = Guid.NewGuid().ToString(), // 一時的な名前
+                                Kind = EquipKind.charm,
+                                Rare = combo.Rare,
+                                Slot1 = combo.Slot1,
+                                Slot2 = combo.Slot2,
+                                Slot3 = combo.Slot3,
+                                SlotType1 = combo.SlotType1,
+                                SlotType2 = combo.SlotType2,
+                                SlotType3 = combo.SlotType3
+                            };
+                            if (skill1 != null)
+                            {
+                                charm.Skills.Add(new Skill(skill1.Name, skill1.Level));
+                            }
+                            if (skill2 != null && !charm.Skills.Any(s => s.Name == skill2.Name))
+                            {
+                                charm.Skills.Add(new Skill(skill2.Name, skill2.Level));
+                            }
+                            if (skill3 != null && !charm.Skills.Any(s => s.Name == skill3.Name))
+                            {
+                                charm.Skills.Add(new Skill(skill3.Name, skill3.Level));
+                            }
+                            charm.SetCharmDispName();
+                            // 同じ性能の護石が既に登録されていないかチェック
+                            bool isExist = false;
+                            foreach (var exist in targetCharms)
+                            {
+                                if(IsSameCharm(charm, exist))
+                                {
+                                    isExist = true;
+                                    break;
+                                }
+                            }
+                            if (isExist) 
+                            {
+                                continue;
+                            }
+                            targetCharms.Add(charm);
+                        }
+                    }
+                }
+            }
+
+            // 護石の除外・固定を一時解除
+            List<Clude> charmCludes = new();
+            foreach (var clude in Masters.Cludes)
+            {
+                Equipment equip = Masters.GetEquipByName(clude.Name);
+                if (equip.Kind == EquipKind.charm)
+                {
+                    charmCludes.Add(clude);
+                    DataManagement.DeleteClude(clude.Name);
+                }
+            }
+
+            // 走査
+            List<Equipment> resultCharms = new();
+            Parallel.ForEach(targetCharms,
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
+                },
+                () => new List<Equipment>(),
+                (targetCharm, loop, subResult) =>
+                {
+                    // 中断チェック
+                    // TODO: もし時間がかかるようならCancelToken等でちゃんとループを終了させること
+                    if (IsCanceling)
+                    {
+                        return subResult;
+                    }
+
+                    // 検索条件をコピー
+                    SearchCondition exCondition = new(Searcher.Condition);
+
+                    // 護石を検索条件に追加
+                    exCondition.FixCharm = targetCharm;
+
+                    // 頑張り度1で検索
+                    using Searcher exSearcher = new Searcher(exCondition);
+                    exSearcher.ExecSearch(1);
+
+                    // 1件でもヒットすれば結果に追加
+                    if (exSearcher.ResultSets.Count > 0)
+                    {
+                        subResult.Add(targetCharm);
+                    }
+
+                    // プログレスバー
+                    if (progress != null)
+                    {
+                        lock (progress)
+                        {
+                            progress.Value += 1.0 / targetCharms.Count;
+                        }
+
+                    }
+
+                    return subResult;
+                },
+                (finalResult) =>
+                {
+                    lock (resultCharms)
+                    {
+                        resultCharms.AddRange(finalResult);
+                    }
+                }
+            );
+
+            // 護石の除外・固定を戻す
+            foreach (var clude in charmCludes)
+            {
+                if (clude.Kind == CludeKind.exclude)
+                {
+                    DataManagement.AddExclude(clude.Name);
+                }
+                else
+                {
+                    DataManagement.AddInclude(clude.Name);
+                }
+            }
+
+            // 下位互換の護石で済む場合削除
+
+
+            return resultCharms;
+        }
+
+        /// <summary>
+        /// 同じ性能の護石かチェック
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        private bool IsSameCharm(Equipment left, Equipment right)
+        {
+            if (left.Skills.Count != right.Skills.Count) { return false; }
+            if (left.Slot1 != right.Slot1) { return false; }
+            if (left.Slot2 != right.Slot2) { return false; }
+            if (left.Slot3 != right.Slot3) { return false; }
+            if (left.SlotType1 != right.SlotType1) { return false; }
+            if (left.SlotType2 != right.SlotType2) { return false; }
+            if (left.SlotType3 != right.SlotType3) { return false; }
+            foreach (var skill in left.Skills)
+            {
+                if (!right.Skills.Any(s => s.Name == skill.Name && s.Level == skill.Level))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 互換の護石かチェック
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns>上位互換</returns>
+        private Equipment TryGetUpperCharm(Equipment left, Equipment right)
+        {
         }
 
         /// <summary>

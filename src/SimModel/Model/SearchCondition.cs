@@ -75,6 +75,11 @@ namespace SimModel.Model
         public string DispName { get; set; }
 
         /// <summary>
+        /// 護石検索用固定護石
+        /// </summary>
+        public Equipment? FixCharm { get; set; } = null;
+
+        /// <summary>
         /// CSV用スキル形式
         /// </summary>
         public string SkillCSV

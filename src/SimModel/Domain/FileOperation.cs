@@ -39,6 +39,8 @@ namespace SimModel.Domain
         private const string RecentSkillCsv = SaveFolder + "/recentSkill.csv";
         private const string ConditionCsv = SaveFolder + "/condition.csv";
         private const string AdditionalCharmCsv = SaveFolder + "/additionalCharm.csv";
+        private const string AdditionalCharmComboCsv = "MHWilds_CHARMCOMBO.csv";
+        private const string AdditionalCharmGroupCsv = "MHWilds_GROUP.csv";
 
         private const string SkillMasterHeaderName = @"スキル系統";
         private const string SkillMasterHeaderRequiredPoints = @"必要ポイント";
@@ -784,6 +786,54 @@ namespace SimModel.Domain
 
             // GUIDの反映のためSaveが必要だが、マイセット読み込み後に実施するためここでは行わない
             // SaveAdditionalCharmCSV();
+        }
+
+        /// <summary>
+        /// 護石検索用組み合わせ読み込み
+        /// </summary>
+        internal static void LoadAdditionalCharmComboCSV()
+        {
+            Masters.AdditionalCharmCombos = new();
+            string csv = ReadAllText(AdditionalCharmComboCsv);
+            var x = CsvReader.ReadFromText(csv);
+            foreach (ICsvLine line in x)
+            {
+                CharmCombo combo = new();
+                combo.Rare = ParseUtil.Parse(line[@"レア度"]);
+                combo.Group1 = ParseUtil.Parse(line[@"グループ1"]);
+                combo.Group2 = ParseUtil.Parse(line[@"グループ2"]);
+                combo.Group3 = ParseUtil.Parse(line[@"グループ3"]);
+                combo.Slot1 = ParseUtil.Parse(line[@"スロット1"]);
+                combo.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
+                combo.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
+                combo.SlotType1 = ParseUtil.Parse(line[@"スロット1タイプ"]);
+                combo.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
+                combo.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
+
+                Masters.AdditionalCharmCombos.Add(combo);
+            }
+        }
+
+        /// <summary>
+        /// 護石検索用グループ情報読み込み
+        /// </summary>
+        internal static void LoadAdditionalCharmGroupCSV()
+        {
+            Masters.AdditionalCharmGroups = new();
+            Masters.AdditionalCharmGroups.Add(0, new());
+            string csv = ReadAllText(AdditionalCharmGroupCsv);
+            var x = CsvReader.ReadFromText(csv);
+            foreach (ICsvLine line in x)
+            {
+                int group = ParseUtil.Parse(line[@"グループ"]);
+                if (!Masters.AdditionalCharmGroups.ContainsKey(group))
+                {
+                    Masters.AdditionalCharmGroups.Add(group, new());
+                }
+                List<Skill> groupSkills = Masters.AdditionalCharmGroups[group];
+                Skill skill = new Skill(line[@"スキル名"], ParseUtil.Parse(line[@"レベル"]));
+                groupSkills.Add(skill);
+            }
         }
 
         /// <summary>
