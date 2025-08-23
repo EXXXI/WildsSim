@@ -139,6 +139,11 @@ namespace WildsSim.ViewModels.SubViews
         public ReactivePropertySlim<bool> ShowAttackCond { get; } = new();
 
         /// <summary>
+        /// 理論値護石使用フラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> IsUsingBestCharm { get; } = new(false);
+
+        /// <summary>
         /// スロット武器選択の選択肢
         /// </summary>
         public ReactivePropertySlim<ObservableCollection<string>> SlotWeapons { get; } = new();
@@ -604,6 +609,9 @@ namespace WildsSim.ViewModels.SubViews
             // 名前・ID
             condition.ID = Guid.NewGuid().ToString();
             condition.DispName = "検索条件";
+
+            // 理論値護石使用フラグ
+            condition.IsBestCharmSearch = IsUsingBestCharm.Value;
 
             return condition;
         }

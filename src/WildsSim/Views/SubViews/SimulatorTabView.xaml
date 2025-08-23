@@ -94,7 +94,13 @@
                         検索結果は0件でした。
                     </TextBlock>
                     <TextBlock>
-                        護石検索を行いたい場合は右のボタンを押してください。
+                        どんな護石があれば今回検索したスキルを実現できるか検索したい場合は右のボタンを押してください。
+                    </TextBlock>
+                    <TextBlock>
+                        該当する護石(光おま)と、その護石での実現例(各護石1つずつ)が検索されます。
+                    </TextBlock>
+                    <TextBlock>
+                        ※この機能で表示される護石は除外固定・マイセット登録不可
                     </TextBlock>
                 </StackPanel>
                 <Button Content="護石検索" Command="{Binding SearchCharmCommand}" Width="100"/>

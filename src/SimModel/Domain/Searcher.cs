@@ -140,8 +140,16 @@ namespace SimModel.Domain
             Legs = Masters.Legs;
             if (condition.FixCharm == null)
             {
-                // 通常
-                Charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
+                if (condition.IsBestCharmSearch)
+                {
+                    // 理論値護石検索
+                    Charms = Masters.Charms.Union(Masters.AdditionalCharms).Union(condition.MakeRelatedCharms()).ToList();
+                }
+                else
+                {
+                    // 通常
+                    Charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
+                }
             }
             else
             {
@@ -551,6 +559,11 @@ namespace SimModel.Domain
 
                     // 存在チェック
                     Equipment? equip = Masters.GetEquipByName(name);
+                    if (equip == null || string.IsNullOrWhiteSpace(equip.Name))
+                    {
+                        // 即席の理論値護石はマスタに存在しないため、護石を再検索
+                        equip = Charms.FirstOrDefault(c => c.Name == name);
+                    }
                     if (equip == null || string.IsNullOrWhiteSpace(equip.Name))
                     {
                         // 存在しない装備名の場合無視

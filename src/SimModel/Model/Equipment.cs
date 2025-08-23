@@ -106,6 +106,11 @@ namespace SimModel.Model
         public EquipKind Kind { get; set; }
 
         /// <summary>
+        /// 仮想装備フラグ(理論値護石)
+        /// </summary>
+        public bool IsVirtual { get; set; } = false;
+
+        /// <summary>
         /// デフォルトコンストラクタ
         /// </summary>
         public Equipment()
@@ -244,6 +249,10 @@ namespace SimModel.Model
             }
 
             StringBuilder dispName = new();
+            if (IsVirtual)
+            {
+                dispName.Append("(仮) ");
+            }
             foreach (var skill in Skills)
             {
                 dispName.Append(skill.Name);

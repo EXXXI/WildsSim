@@ -107,7 +107,7 @@ namespace WildsSim.ViewModels.SubViews
             SearchResult.ChangeCollection(BindableEquipSet.BeBindableList(result));
             DetailSet.Value = SearchResult.Value.Count > 0 ? SearchResult.Value[0] : null;
             IsRemaining.Value = remain;
-            IsNoResult.Value = !remain && result.Count == 0;
+            IsNoResult.Value = !remain && result.Count == 0 && !Simulator.IsBestCharmSearch;
             Limit = limit;
         }
 
@@ -159,13 +159,13 @@ namespace WildsSim.ViewModels.SubViews
             IsBusy.Value = true;
 
             // 追加スキル検索
-            List<Equipment> result = await Task.Run(() => Simulator.SearchCharm(MainVM.Progress));
+            List<EquipSet> result = await Task.Run(() => Simulator.SearchCharm(MainVM.Progress));
             MainVM.Progress.Value = 0;
-            List<EquipSet> showDatas = result.Select(charm => new EquipSet() { Charm = charm}).ToList();
-            SearchResult.ChangeCollection(BindableEquipSet.BeBindableList(showDatas));
+            SearchResult.ChangeCollection(BindableEquipSet.BeBindableList(result));
 
             // ビジーフラグ解除
             IsBusy.Value = false;
+            IsNoResult.Value = false;
 
             // ログ表示
             if (Simulator.IsCanceling)

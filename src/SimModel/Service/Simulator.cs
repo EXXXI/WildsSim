@@ -29,6 +29,11 @@ namespace SimModel.Service
         public bool IsCanceling { get; private set; } = false;
 
         /// <summary>
+        /// 理論値護石での検索中か否か
+        /// </summary>
+        public bool IsBestCharmSearch { get { return Searcher?.Condition?.IsBestCharmSearch ?? false; } }
+
+        /// <summary>
         /// データ読み込み
         /// </summary>
         public void LoadData()
@@ -197,7 +202,7 @@ namespace SimModel.Service
         /// 護石検索
         /// </summary>
         /// <returns>検索結果</returns>
-        public List<Equipment> SearchCharm(Reactive.Bindings.ReactivePropertySlim<double>? progress = null)
+        public List<EquipSet> SearchCharm(Reactive.Bindings.ReactivePropertySlim<double>? progress = null)
         {
             ResetIsCanceling();
 
@@ -208,63 +213,8 @@ namespace SimModel.Service
             }
 
             // 検索対象の護石をリストアップ
-            List<Equipment> targetCharms = new();
-            var condSkills = Searcher.Condition.Skills.Where(skill => skill.Level != 0);
-            foreach (var combo in Masters.AdditionalCharmCombos)
-            {
-                var skill1List = Masters.AdditionalCharmGroups[combo.Group1].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
-                var skill2List = Masters.AdditionalCharmGroups[combo.Group2].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
-                var skill3List = Masters.AdditionalCharmGroups[combo.Group3].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
-                foreach (var skill1 in skill1List)
-                {
-                    foreach (var skill2 in skill2List)
-                    {
-                        foreach (var skill3 in skill3List)
-                        {
-                            Equipment charm = new()
-                            {
-                                Name = Guid.NewGuid().ToString(), // 一時的な名前
-                                Kind = EquipKind.charm,
-                                Rare = combo.Rare,
-                                Slot1 = combo.Slot1,
-                                Slot2 = combo.Slot2,
-                                Slot3 = combo.Slot3,
-                                SlotType1 = combo.SlotType1,
-                                SlotType2 = combo.SlotType2,
-                                SlotType3 = combo.SlotType3
-                            };
-                            if (skill1 != null)
-                            {
-                                charm.Skills.Add(new Skill(skill1.Name, skill1.Level));
-                            }
-                            if (skill2 != null && !charm.Skills.Any(s => s.Name == skill2.Name))
-                            {
-                                charm.Skills.Add(new Skill(skill2.Name, skill2.Level));
-                            }
-                            if (skill3 != null && !charm.Skills.Any(s => s.Name == skill3.Name))
-                            {
-                                charm.Skills.Add(new Skill(skill3.Name, skill3.Level));
-                            }
-                            charm.SetCharmDispName();
-                            // 同じ性能の護石が既に登録されていないかチェック
-                            bool isExist = false;
-                            foreach (var exist in targetCharms)
-                            {
-                                if(IsSameCharm(charm, exist))
-                                {
-                                    isExist = true;
-                                    break;
-                                }
-                            }
-                            if (isExist) 
-                            {
-                                continue;
-                            }
-                            targetCharms.Add(charm);
-                        }
-                    }
-                }
-            }
+            SearchCondition condition = Searcher.Condition;
+            List<Equipment> targetCharms = condition.MakeRelatedCharms();
 
             // 護石の除外・固定を一時解除
             List<Clude> charmCludes = new();
@@ -279,13 +229,13 @@ namespace SimModel.Service
             }
 
             // 走査
-            List<Equipment> resultCharms = new();
+            List<EquipSet> resultSets = new();
             Parallel.ForEach(targetCharms,
                 new ParallelOptions
                 {
                     MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
                 },
-                () => new List<Equipment>(),
+                () => new List<EquipSet>(),
                 (targetCharm, loop, subResult) =>
                 {
                     // 中断チェック
@@ -308,7 +258,7 @@ namespace SimModel.Service
                     // 1件でもヒットすれば結果に追加
                     if (exSearcher.ResultSets.Count > 0)
                     {
-                        subResult.Add(targetCharm);
+                        subResult.Add(exSearcher.ResultSets[0]);
                     }
 
                     // プログレスバー
@@ -325,9 +275,9 @@ namespace SimModel.Service
                 },
                 (finalResult) =>
                 {
-                    lock (resultCharms)
+                    lock (resultSets)
                     {
-                        resultCharms.AddRange(finalResult);
+                        resultSets.AddRange(finalResult);
                     }
                 }
             );
@@ -346,44 +296,136 @@ namespace SimModel.Service
             }
 
             // 下位互換の護石で済む場合削除
+            List<EquipSet> filtered = new();
+            foreach (var left in resultSets)
+            {
+                bool hasUpper = false;
+                foreach (var right in resultSets)
+                {
+                    // 同じ護石は除外
+                    if (left == right)
+                    {
+                        continue;
+                    }
+                    // 上位互換の護石があるか確認
+                    if (IsLeftUpperCharm(left.Charm, right.Charm))
+                    {
+                        hasUpper = true;
+                        break;
+                    }
+                }
+                if (!hasUpper)
+                {
+                    filtered.Add(left);
+                }
+            }
 
-
-            return resultCharms;
+            return filtered;
         }
 
         /// <summary>
-        /// 同じ性能の護石かチェック
+        /// 第一引数の護石が第二引数の護石の上位互換の場合true
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
         /// <returns></returns>
-        private bool IsSameCharm(Equipment left, Equipment right)
+        private bool IsLeftUpperCharm(Equipment left, Equipment right)
         {
-            if (left.Skills.Count != right.Skills.Count) { return false; }
-            if (left.Slot1 != right.Slot1) { return false; }
-            if (left.Slot2 != right.Slot2) { return false; }
-            if (left.Slot3 != right.Slot3) { return false; }
-            if (left.SlotType1 != right.SlotType1) { return false; }
-            if (left.SlotType2 != right.SlotType2) { return false; }
-            if (left.SlotType3 != right.SlotType3) { return false; }
-            foreach (var skill in left.Skills)
+            // スキルチェック
+            foreach (var skill in right.Skills)
             {
-                if (!right.Skills.Any(s => s.Name == skill.Name && s.Level == skill.Level))
+                if (!left.Skills.Any(s => s.Name == skill.Name) ||
+                    left.Skills.Any(s => s.Name == skill.Name && s.Level < skill.Level))
+                {
+                    return false;
+                }
+            }
+
+            // スロット整理
+            int[] wSlotDataLeft = [0, 0, 0, 0];
+            int[] aSlotDataLeft = [0, 0, 0, 0];
+            for (int i = 0; i < left.Slot1; i++)
+            {
+                if (left.SlotType1 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            for (int i = 0; i < left.Slot2; i++)
+            {
+                if (left.SlotType2 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            for (int i = 0; i < left.Slot3; i++)
+            {
+                if (left.SlotType3 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            int[] wSlotDataRight = [0, 0, 0, 0];
+            int[] aSlotDataRight = [0, 0, 0, 0];
+            for (int i = 0; i < right.Slot1; i++)
+            {
+                if (right.SlotType1 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+            for (int i = 0; i < right.Slot2; i++)
+            {
+                if (right.SlotType2 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+            for (int i = 0; i < right.Slot3; i++)
+            {
+                if (right.SlotType3 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+
+            // スロットチェック
+            for (int i = 0; i < 4; i++)
+            {
+                if (wSlotDataLeft[i] < wSlotDataRight[i])
+                {
+                    return false;
+                }
+                if (aSlotDataLeft[i] < aSlotDataRight[i])
                 {
                     return false;
                 }
             }
             return true;
-        }
-
-        /// <summary>
-        /// 互換の護石かチェック
-        /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
-        /// <returns>上位互換</returns>
-        private Equipment TryGetUpperCharm(Equipment left, Equipment right)
-        {
         }
 
         /// <summary>
