@@ -61,7 +61,13 @@
     <None Update="MHWilds_CHARM.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="MHWilds_GROUP_SHININGCHARM.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="MHWilds_DECO.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="MHWilds_COMBO_SHININGCHARM.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="MHWilds_WEAPON.csv">

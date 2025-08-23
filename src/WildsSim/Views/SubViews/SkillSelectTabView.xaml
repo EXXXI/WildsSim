@@ -38,7 +38,7 @@
             <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="auto">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="290"/>
-                    <ColumnDefinition Width="190"/>
+                    <ColumnDefinition Width="230"/>
                     <ColumnDefinition Width="150"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
@@ -84,6 +84,12 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Width="50" Text="頑張り度"/>
                         <ctrl:FocusTextBox x:Name="limitBox" Width="115" Text="{Binding Limit.Value}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Content="理論値護石(光おま)を検索対象にする" IsChecked="{Binding IsUsingBestCharm.Value}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="※理論値護石は除外固定・マイセット登録不可" />
                     </StackPanel>
                 </StackPanel>
 

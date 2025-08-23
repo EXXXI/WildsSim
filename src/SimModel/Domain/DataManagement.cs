@@ -30,6 +30,11 @@ namespace SimModel.Domain
                 // スロット指定用の武器は除外しない
                 return null;
             }
+            if (equip.IsVirtual)
+            {
+                // 仮想装備は処理しない
+                return null;
+            }
             return AddClude(equip.Name, CludeKind.exclude);
         }
 
@@ -46,6 +51,11 @@ namespace SimModel.Domain
                 (equip is Weapon weapon))
             {
                 // 装飾品と武器は固定しない
+                return null;
+            }
+            if (equip.IsVirtual)
+            {
+                // 仮想装備は処理しない
                 return null;
             }
 
