@@ -55,6 +55,16 @@ namespace SimModel.Model
         public static List<Equipment> AdditionalCharms { get; set; } = new();
 
         /// <summary>
+        /// 追加護石組み合わせマスタ
+        /// </summary>
+        public static List<CharmCombo> ShiningCharmCombos { get; set; } = new();
+
+        /// <summary>
+        /// 追加護石スキル情報マスタ
+        /// </summary>
+        public static Dictionary<int, List<Skill>> ShiningCharmGroups { get; set; } = new();
+
+        /// <summary>
         /// 装飾品マスタ
         /// </summary>
         public static List<Deco> Decos { get; set; } = new();

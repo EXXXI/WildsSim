@@ -1,7 +1,9 @@
 ﻿using SimModel.Config;
 using SimModel.Domain;
 using SimModel.Model;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SimModel.Service
@@ -27,6 +29,11 @@ namespace SimModel.Service
         public bool IsCanceling { get; private set; } = false;
 
         /// <summary>
+        /// 理論値護石での検索中か否か
+        /// </summary>
+        public bool IsBestCharmSearch { get { return Searcher?.Condition?.IsBestCharmSearch ?? false; } }
+
+        /// <summary>
         /// データ読み込み
         /// </summary>
         public void LoadData()
@@ -41,6 +48,8 @@ namespace SimModel.Service
             FileOperation.LoadDecoCSV();
             FileOperation.LoadWeaponCSV();
             FileOperation.LoadSkillCSV();
+            FileOperation.LoadAdditionalCharmComboCSV();
+            FileOperation.LoadAdditionalCharmGroupCSV();
 
             // セーブデータ類の読み込み
             FileOperation.MakeSaveFolder();
@@ -114,8 +123,9 @@ namespace SimModel.Service
 
             // 全スキル全レベルを走査
             Parallel.ForEach(Masters.Skills,
-                new ParallelOptions { 
-                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism 
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
                 },
                 () => new List<Skill>(),
                 (skill, loop, subResult) =>
@@ -158,7 +168,7 @@ namespace SimModel.Service
                         {
                             progress.Value += 1.0 / Masters.Skills.Count;
                         }
-                        
+
                     }
 
                     return subResult;
@@ -186,6 +196,236 @@ namespace SimModel.Service
             }
 
             return sortedSkills;
+        }
+
+        /// <summary>
+        /// 護石検索
+        /// </summary>
+        /// <returns>検索結果</returns>
+        public List<EquipSet> SearchCharm(Reactive.Bindings.ReactivePropertySlim<double>? progress = null)
+        {
+            ResetIsCanceling();
+
+            // プログレスバー
+            if (progress != null)
+            {
+                progress.Value = 0.0;
+            }
+
+            // 検索対象の護石をリストアップ
+            SearchCondition condition = Searcher.Condition;
+            List<Equipment> targetCharms = condition.MakeRelatedCharms();
+
+            // 護石の除外・固定を一時解除
+            List<Clude> charmCludes = new();
+            foreach (var clude in Masters.Cludes)
+            {
+                Equipment equip = Masters.GetEquipByName(clude.Name);
+                if (equip.Kind == EquipKind.charm)
+                {
+                    charmCludes.Add(clude);
+                    DataManagement.DeleteClude(clude.Name);
+                }
+            }
+
+            // 走査
+            List<EquipSet> resultSets = new();
+            Parallel.ForEach(targetCharms,
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
+                },
+                () => new List<EquipSet>(),
+                (targetCharm, loop, subResult) =>
+                {
+                    // 中断チェック
+                    // TODO: もし時間がかかるようならCancelToken等でちゃんとループを終了させること
+                    if (IsCanceling)
+                    {
+                        return subResult;
+                    }
+
+                    // 検索条件をコピー
+                    SearchCondition exCondition = new(Searcher.Condition);
+
+                    // 護石を検索条件に追加
+                    exCondition.FixCharm = targetCharm;
+
+                    // 頑張り度1で検索
+                    using Searcher exSearcher = new Searcher(exCondition);
+                    exSearcher.ExecSearch(1);
+
+                    // 1件でもヒットすれば結果に追加
+                    if (exSearcher.ResultSets.Count > 0)
+                    {
+                        subResult.Add(exSearcher.ResultSets[0]);
+                    }
+
+                    // プログレスバー
+                    if (progress != null)
+                    {
+                        lock (progress)
+                        {
+                            progress.Value += 1.0 / targetCharms.Count;
+                        }
+
+                    }
+
+                    return subResult;
+                },
+                (finalResult) =>
+                {
+                    lock (resultSets)
+                    {
+                        resultSets.AddRange(finalResult);
+                    }
+                }
+            );
+
+            // 護石の除外・固定を戻す
+            foreach (var clude in charmCludes)
+            {
+                if (clude.Kind == CludeKind.exclude)
+                {
+                    DataManagement.AddExclude(clude.Name);
+                }
+                else
+                {
+                    DataManagement.AddInclude(clude.Name);
+                }
+            }
+
+            // 下位互換の護石で済む場合削除
+            List<EquipSet> filtered = new();
+            foreach (var left in resultSets)
+            {
+                bool hasUpper = false;
+                foreach (var right in resultSets)
+                {
+                    // 同じ護石は除外
+                    if (left == right)
+                    {
+                        continue;
+                    }
+                    // 上位互換の護石があるか確認
+                    if (IsLeftUpperCharm(left.Charm, right.Charm))
+                    {
+                        hasUpper = true;
+                        break;
+                    }
+                }
+                if (!hasUpper)
+                {
+                    filtered.Add(left);
+                }
+            }
+
+            return filtered;
+        }
+
+        /// <summary>
+        /// 第一引数の護石が第二引数の護石の上位互換の場合true
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        private bool IsLeftUpperCharm(Equipment left, Equipment right)
+        {
+            // スキルチェック
+            foreach (var skill in right.Skills)
+            {
+                if (!left.Skills.Any(s => s.Name == skill.Name) ||
+                    left.Skills.Any(s => s.Name == skill.Name && s.Level < skill.Level))
+                {
+                    return false;
+                }
+            }
+
+            // スロット整理
+            int[] wSlotDataLeft = [0, 0, 0, 0];
+            int[] aSlotDataLeft = [0, 0, 0, 0];
+            for (int i = 0; i < left.Slot1; i++)
+            {
+                if (left.SlotType1 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            for (int i = 0; i < left.Slot2; i++)
+            {
+                if (left.SlotType2 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            for (int i = 0; i < left.Slot3; i++)
+            {
+                if (left.SlotType3 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            int[] wSlotDataRight = [0, 0, 0, 0];
+            int[] aSlotDataRight = [0, 0, 0, 0];
+            for (int i = 0; i < right.Slot1; i++)
+            {
+                if (right.SlotType1 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+            for (int i = 0; i < right.Slot2; i++)
+            {
+                if (right.SlotType2 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+            for (int i = 0; i < right.Slot3; i++)
+            {
+                if (right.SlotType3 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+
+            // スロットチェック
+            for (int i = 0; i < 4; i++)
+            {
+                if (wSlotDataLeft[i] < wSlotDataRight[i])
+                {
+                    return false;
+                }
+                if (aSlotDataLeft[i] < aSlotDataRight[i])
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>
