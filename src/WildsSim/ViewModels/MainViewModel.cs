@@ -136,7 +136,7 @@ namespace WildsSim.ViewModels
             CancelCommand = IsBusy.ToReactiveCommand().WithSubscribe(() => Cancel());
 
             // ログ表示
-            StatusBarText.Value = "モンハンワールドスキルシミュレータ for Windows";
+            StatusBarText.Value = "モンハンワイルズスキルシミュレータ for Windows";
         }
 
         /// <summary>
