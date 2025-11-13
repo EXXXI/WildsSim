@@ -248,7 +248,8 @@ namespace SimModel.Domain
                     equip.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
                     equip.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
                     equip.Mindef = ParseUtil.Parse(line[@"初期防御力"]);
-                    equip.Maxdef = ParseUtil.Parse(line[@"最終防御力"], equip.Mindef); // 読み込みに失敗した場合は初期防御力と同値とみなす
+                    int maxdef = CalcMaxdef(equip.Rare, equip.Mindef, equip.Kind);
+                    equip.Maxdef = ParseUtil.Parse(line[@"最終防御力"], maxdef); // 指定がある場合指定を優先
                     equip.Fire = ParseUtil.Parse(line[@"火耐性"]);
                     equip.Water = ParseUtil.Parse(line[@"水耐性"]);
                     equip.Thunder = ParseUtil.Parse(line[@"雷耐性"]);
@@ -281,6 +282,34 @@ namespace SimModel.Domain
 
                 equipments.Add(equip);
             }
+        }
+
+        /// <summary>
+        /// 最大防御力をレア度から算出する
+        /// </summary>
+        /// <param name="rare">レア度</param>
+        /// <param name="mindef">最低防御力</param>
+        /// <param name="kind">防具種類</param>
+        /// <returns>レア度から算出した最大防御力</returns>
+        private static int CalcMaxdef(int rare, int mindef, EquipKind kind)
+        {
+            // TODO: レア度ごとのデータは外出ししたい
+            if (kind == EquipKind.charm)
+            {
+                return mindef;
+            }
+            return rare switch
+            {
+                1 => mindef + 20,
+                2 => mindef + 20,
+                3 => mindef + 16,
+                4 => mindef + 14,
+                5 => mindef + 38,
+                6 => mindef + 30,
+                7 => mindef + 20,
+                8 => mindef + 18,
+                _ => mindef,
+            };
         }
 
         /// <summary>
