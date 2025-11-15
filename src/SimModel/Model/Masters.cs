@@ -90,6 +90,11 @@ namespace SimModel.Model
         public static List<SearchCondition> MyConditions { get; set; } = new();
 
         /// <summary>
+        /// 防御力差分マスタ
+        /// </summary>
+        public static Dictionary<int, DefUpgrade> DefUpgrades { get; set; } = new();
+
+        /// <summary>
         /// 装備名から装備を取得
         /// </summary>
         /// <param name="equipName">装備名</param>

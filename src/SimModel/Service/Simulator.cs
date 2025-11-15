@@ -39,6 +39,7 @@ namespace SimModel.Service
         public void LoadData()
         {
             // マスタデータ類の読み込み
+            FileOperation.LoadDefUpgradeCSV();
             FileOperation.LoadHeadCSV();
             FileOperation.LoadBodyCSV();
             FileOperation.LoadArmCSV();
