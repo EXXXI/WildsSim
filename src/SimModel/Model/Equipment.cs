@@ -61,6 +61,11 @@ namespace SimModel.Model
         public int Maxdef { get; set; }
 
         /// <summary>
+        /// 限界突破防御力
+        /// </summary>
+        public int TranscendingDef { get; set; }
+
+        /// <summary>
         /// 火耐性
         /// </summary>
         public int Fire { get; set; }

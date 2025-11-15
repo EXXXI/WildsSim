@@ -41,6 +41,7 @@ namespace SimModel.Domain
         private const string AdditionalCharmCsv = SaveFolder + "/additionalCharm.csv";
         private const string ShiningCharmComboCsv = "MHWilds_COMBO_SHININGCHARM.csv";
         private const string ShiningCharmGroupCsv = "MHWilds_GROUP_SHININGCHARM.csv";
+        private const string DefUpgradeCsv = "MHWilds_DEF_UPGRADE.csv";
 
         private const string SkillMasterHeaderName = @"スキル系統";
         private const string SkillMasterHeaderRequiredPoints = @"必要ポイント";
@@ -250,6 +251,8 @@ namespace SimModel.Domain
                     equip.Mindef = ParseUtil.Parse(line[@"初期防御力"]);
                     int maxdef = CalcMaxdef(equip.Rare, equip.Mindef, equip.Kind);
                     equip.Maxdef = ParseUtil.Parse(line[@"最終防御力"], maxdef); // 指定がある場合指定を優先
+                    int transcendingDef = CalcTranscendingDef(equip.Rare, equip.Maxdef, equip.Kind);
+                    equip.TranscendingDef = transcendingDef;
                     equip.Fire = ParseUtil.Parse(line[@"火耐性"]);
                     equip.Water = ParseUtil.Parse(line[@"水耐性"]);
                     equip.Thunder = ParseUtil.Parse(line[@"雷耐性"]);
@@ -293,23 +296,37 @@ namespace SimModel.Domain
         /// <returns>レア度から算出した最大防御力</returns>
         private static int CalcMaxdef(int rare, int mindef, EquipKind kind)
         {
-            // TODO: レア度ごとのデータは外出ししたい
             if (kind == EquipKind.charm)
             {
                 return mindef;
             }
-            return rare switch
+            bool getted = Masters.DefUpgrades.TryGetValue(rare, out DefUpgrade? defUpgrade);
+            if (getted && defUpgrade != null)
             {
-                1 => mindef + 20,
-                2 => mindef + 20,
-                3 => mindef + 16,
-                4 => mindef + 14,
-                5 => mindef + 38,
-                6 => mindef + 30,
-                7 => mindef + 20,
-                8 => mindef + 18,
-                _ => mindef,
-            };
+                return mindef + defUpgrade.UpgradeDef;
+            }
+            return mindef;
+        }
+
+        /// <summary>
+        /// 限界突破防御力をレア度から算出する
+        /// </summary>
+        /// <param name="rare">レア度</param>
+        /// <param name="maxdef">最大防御力</param>
+        /// <param name="kind">防具種類</param>
+        /// <returns>レア度から算出した限界突破防御力</returns>
+        private static int CalcTranscendingDef(int rare, int maxdef, EquipKind kind)
+        {
+            if (kind == EquipKind.charm)
+            {
+                return maxdef;
+            }
+            bool getted = Masters.DefUpgrades.TryGetValue(rare, out DefUpgrade? defUpgrade);
+            if (getted && defUpgrade != null)
+            {
+                return maxdef + defUpgrade.TranscendingDef;
+            }
+            return maxdef;
         }
 
         /// <summary>
@@ -862,6 +879,26 @@ namespace SimModel.Domain
                 List<Skill> groupSkills = Masters.ShiningCharmGroups[group];
                 Skill skill = new Skill(line[@"スキル名"], ParseUtil.Parse(line[@"レベル"]));
                 groupSkills.Add(skill);
+            }
+        }
+
+        /// <summary>
+        /// 防御力強化差分読み込み
+        /// </summary>
+        internal static void LoadDefUpgradeCSV()
+        {
+            Masters.DefUpgrades = new();
+            string csv = ReadAllText(DefUpgradeCsv);
+            var x = CsvReader.ReadFromText(csv);
+            foreach (ICsvLine line in x)
+            {
+                int rare = ParseUtil.Parse(line[@"レア度"]);
+                int upgrade = ParseUtil.Parse(line[@"最大強化"]);
+                int transcending = ParseUtil.Parse(line[@"限界突破強化"]);
+                if (rare != 0)
+                {
+                    Masters.DefUpgrades.Add(rare, new(upgrade, transcending));
+                }
             }
         }
 
