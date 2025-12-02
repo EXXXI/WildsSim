@@ -122,7 +122,7 @@ namespace SimModel.Domain
             if (condition.IsSpecificWeapon)
             {
                 Weapons = new();
-                Weapon? weapon = Masters.Weapons.Where(w => w.Name == condition.WeaponName).FirstOrDefault();
+                Weapon? weapon = Masters.Weapons.Union(Masters.Artians).Where(w => w.Name == condition.WeaponName).FirstOrDefault();
                 if (weapon != null)
                 {
                     Weapons.Add(weapon);
@@ -130,7 +130,7 @@ namespace SimModel.Domain
             }
             else
             {
-                Weapons = Masters.Weapons.Where(w => w.WeaponType == condition.WeaponType).ToList();
+                Weapons = Masters.Weapons.Union(Masters.Artians).Where(w => w.WeaponType == condition.WeaponType).ToList();
             }
 
             Heads = Masters.Heads;

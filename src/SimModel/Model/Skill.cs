@@ -34,6 +34,11 @@ namespace SimModel.Model
         public string Category { get; init; }
 
         /// <summary>
+        /// スキルのカテゴリ
+        /// </summary>
+        public bool CanWithArtian { get; init; } = false;
+
+        /// <summary>
         /// シリーズスキル等、レベルに特殊な名称がある場合ここに格納
         /// </summary>
         public Dictionary<int, string> SpecificNames { get; }
@@ -44,8 +49,8 @@ namespace SimModel.Model
         /// <param name="name">スキル名</param>
         /// <param name="level">レベル</param>
         /// <param name="isFixed">固定検索フラグ</param>
-        public Skill(string name, int level, bool isFixed = false) 
-            : this(name, level, Masters.Skills.Where(s => s.Name == name).FirstOrDefault()?.Category, isFixed) { }
+        public Skill(string name, int level, bool isFixed = false, bool canWithArtian = false) 
+            : this(name, level, Masters.Skills.Where(s => s.Name == name).FirstOrDefault()?.Category, isFixed, canWithArtian) { }
 
         /// <summary>
         /// コンストラクタ
@@ -54,11 +59,12 @@ namespace SimModel.Model
         /// <param name="level">レベル</param>
         /// <param name="category">カテゴリ</param>
         /// <param name="isFixed">固定検索フラグ</param>
-        public Skill(string name, int level, string? category, bool isFixed = false)
+        public Skill(string name, int level, string? category, bool isFixed = false, bool canWithArtian = false)
         {
             Name = name;
             Level = level;
             IsFixed = isFixed;
+            CanWithArtian = canWithArtian;
             Category = string.IsNullOrEmpty(category) ? @"未分類" : category;
             SpecificNames = Masters.Skills.Where(s => s.Name == name).Select(s => s.SpecificNames).FirstOrDefault() ?? new();
         }

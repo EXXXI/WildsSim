@@ -411,20 +411,21 @@ namespace WildsSim.ViewModels.SubViews
         private void LoadWeaponGridData(string filterName, bool cludeOnly)
         {
             // 表示対象
-            var greatSwords = Masters.Weapons.Where(w => w.WeaponType == WeaponType.大剣).ToList();
-            var longSwords = Masters.Weapons.Where(w => w.WeaponType == WeaponType.太刀).ToList();
-            var swordAndShields = Masters.Weapons.Where(w => w.WeaponType == WeaponType.片手剣).ToList();
-            var dualBladeses = Masters.Weapons.Where(w => w.WeaponType == WeaponType.双剣).ToList();
-            var lances = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ランス).ToList();
-            var gunlances = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ガンランス).ToList();
-            var hammers = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ハンマー).ToList();
-            var huntingHorns = Masters.Weapons.Where(w => w.WeaponType == WeaponType.狩猟笛).ToList();
-            var switchAxes = Masters.Weapons.Where(w => w.WeaponType == WeaponType.スラッシュアックス).ToList();
-            var chargeBlades = Masters.Weapons.Where(w => w.WeaponType == WeaponType.チャージアックス).ToList();
-            var insectGlaives = Masters.Weapons.Where(w => w.WeaponType == WeaponType.操虫棍).ToList();
-            var lightBowguns = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ライトボウガン).ToList();
-            var heavyBowguns = Masters.Weapons.Where(w => w.WeaponType == WeaponType.ヘビィボウガン).ToList();
-            var bows = Masters.Weapons.Where(w => w.WeaponType == WeaponType.弓).ToList();
+            var weapons = Masters.Weapons.Union(Masters.Artians);
+            var greatSwords = weapons.Where(w => w.WeaponType == WeaponType.大剣).ToList();
+            var longSwords = weapons.Where(w => w.WeaponType == WeaponType.太刀).ToList();
+            var swordAndShields = weapons.Where(w => w.WeaponType == WeaponType.片手剣).ToList();
+            var dualBladeses = weapons.Where(w => w.WeaponType == WeaponType.双剣).ToList();
+            var lances = weapons.Where(w => w.WeaponType == WeaponType.ランス).ToList();
+            var gunlances = weapons.Where(w => w.WeaponType == WeaponType.ガンランス).ToList();
+            var hammers = weapons.Where(w => w.WeaponType == WeaponType.ハンマー).ToList();
+            var huntingHorns = weapons.Where(w => w.WeaponType == WeaponType.狩猟笛).ToList();
+            var switchAxes = weapons.Where(w => w.WeaponType == WeaponType.スラッシュアックス).ToList();
+            var chargeBlades = weapons.Where(w => w.WeaponType == WeaponType.チャージアックス).ToList();
+            var insectGlaives = weapons.Where(w => w.WeaponType == WeaponType.操虫棍).ToList();
+            var lightBowguns = weapons.Where(w => w.WeaponType == WeaponType.ライトボウガン).ToList();
+            var heavyBowguns = weapons.Where(w => w.WeaponType == WeaponType.ヘビィボウガン).ToList();
+            var bows = weapons.Where(w => w.WeaponType == WeaponType.弓).ToList();
 
             // 簡潔化のためにリスト化
             var weaponLists = new List<Weapon>[]

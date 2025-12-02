@@ -55,6 +55,12 @@ namespace SimModel.Config
         public bool AllowUnavailableEquipments { get; set; }
 
         /// <summary>
+        /// アーティアのスキル数
+        /// (現状2固定としてファイルへの外出しはしない)
+        /// </summary>
+        public int ArtianSkillCount { get; set; } = 2;
+
+        /// <summary>
         /// マイセットのデフォルト名
         /// </summary>
         public string DefaultMySetName { get; } = "マイセット";

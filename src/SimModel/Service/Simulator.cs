@@ -55,6 +55,7 @@ namespace SimModel.Service
             // セーブデータ類の読み込み
             FileOperation.MakeSaveFolder();
             FileOperation.LoadAdditionalCharmCSV();
+            FileOperation.LoadArtianCSV();
             FileOperation.LoadCludeCSV();
             FileOperation.LoadRecentSkillCSV();
             FileOperation.LoadMyConditionCSV();
