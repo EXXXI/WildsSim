@@ -180,7 +180,7 @@ namespace WildsSim.ViewModels
             CludeTabVM.Value.LoadEquipsForClude();
             // 護石画面用のVMの設定
             CharmTabVM.Value.LoadEquipsForCharm();
-            // 護石画面用のVMの設定
+            // アーティア画面用のVMの設定
             ArtianTabVM.Value.LoadEquipsForArtian();
         }
 
