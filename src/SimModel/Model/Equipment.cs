@@ -35,6 +35,54 @@ namespace SimModel.Model
         /// </summary>
         public int Slot3 { get; set; }
 
+        private int? transcendingSlot1 = null;
+        private int? transcendingSlot2 = null;
+        private int? transcendingSlot3 = null;
+        /// <summary>
+        /// 限界突破スロット1つ目
+        /// </summary>
+        public int TranscendingSlot1
+        {
+            get
+            {
+                if (transcendingSlot1 == null)
+                {
+                    CalcTranscendingSlots();
+                }
+                return transcendingSlot1.Value;
+            }
+        }
+
+        /// <summary>
+        /// 限界突破スロット2つ目
+        /// </summary>
+        public int TranscendingSlot2
+        {
+            get
+            {
+                if (transcendingSlot2 == null)
+                {
+                    CalcTranscendingSlots();
+                }
+                return transcendingSlot2.Value;
+            }
+        }
+
+        /// <summary>
+        /// 限界突破スロット3つ目
+        /// </summary>
+        public int TranscendingSlot3
+        {
+            get
+            {
+                if (transcendingSlot3 == null)
+                {
+                    CalcTranscendingSlots();
+                }
+                return transcendingSlot3.Value;
+            }
+        }
+
         /// <summary>
         /// スロットタイプ(0:防御スキルのみ,1:攻撃スキルのみ,2:両方可)1つ目
         /// </summary>
@@ -139,7 +187,8 @@ namespace SimModel.Model
         /// <summary>
         /// 表示用装備名(特殊処理が必要な場合、保持してそれを利用)
         /// </summary>
-        public string DispName { 
+        public string DispName
+        {
             get
             {
                 return string.IsNullOrWhiteSpace(dispName) ? Name : dispName;
@@ -184,11 +233,22 @@ namespace SimModel.Model
                     sb.Append(Slot2);
                     sb.Append('-');
                     sb.Append(Slot3);
+                    if (IsTranscendingSlotTarget)
+                    {
+                        sb.Append('→');
+                        sb.Append(TranscendingSlot1);
+                        sb.Append('-');
+                        sb.Append(TranscendingSlot2);
+                        sb.Append('-');
+                        sb.Append(TranscendingSlot3);
+                    }
                     sb.Append('\n');
                     sb.Append("防御:");
                     sb.Append(Mindef);
                     sb.Append('→');
                     sb.Append(Maxdef);
+                    sb.Append('→');
+                    sb.Append(TranscendingDef);
                     sb.Append(',');
                     sb.Append("火:");
                     sb.Append(Fire);
@@ -235,6 +295,15 @@ namespace SimModel.Model
                         sb.Append(Slot2);
                         sb.Append('-');
                         sb.Append(Slot3);
+                        if (IsTranscendingSlotTarget)
+                        {
+                            sb.Append('→');
+                            sb.Append(TranscendingSlot1);
+                            sb.Append('-');
+                            sb.Append(TranscendingSlot2);
+                            sb.Append('-');
+                            sb.Append(TranscendingSlot3);
+                        }
                     }
                 }
 
@@ -324,6 +393,44 @@ namespace SimModel.Model
                 }
             }
             DispName = dispName.ToString();
+        }
+
+
+        /// <summary>
+        /// 限界突破スロット計算
+        /// </summary>
+        private void CalcTranscendingSlots()
+        {
+            if (!IsTranscendingSlotTarget)
+            {
+                // 防具5部位以外、レア5,6以外は処理しない
+                transcendingSlot1 = Slot1;
+                transcendingSlot2 = Slot2;
+                transcendingSlot3 = Slot3;
+                return;
+            }
+
+            // 仮説1：各スロットを上限3まで1ずつ増加させる
+            transcendingSlot1 = Math.Min(Slot1 + 1, 3);
+            transcendingSlot2 = Math.Min(Slot2 + 1, 3);
+            transcendingSlot3 = Math.Min(Slot3 + 1, 3);
+        }
+
+        /// <summary>
+        /// スロット限界突破対象防具かどうか
+        /// </summary>
+        private bool IsTranscendingSlotTarget
+        {
+            get
+            {
+                // 5部位のどれか、かつ、レア5～6
+                return (Kind == EquipKind.head ||
+                        Kind == EquipKind.body ||
+                        Kind == EquipKind.arm ||
+                        Kind == EquipKind.waist ||
+                        Kind == EquipKind.leg) &&
+                       (Rare == 5 || Rare == 6);
+            }
         }
     }
 }

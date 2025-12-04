@@ -67,6 +67,11 @@ namespace SimModel.Model
         public int? Dragon { get; set; }
 
         /// <summary>
+        /// 限界突破強化フラグ
+        /// </summary>
+        public bool IsTranscending { get; set; } = true;
+
+        /// <summary>
         /// マイ検索条件保存用ID
         /// </summary>
         public string ID { get; set; }
@@ -142,6 +147,14 @@ namespace SimModel.Model
             {
                 string none = "なし";
                 StringBuilder sb = new StringBuilder();
+                if (IsTranscending)
+                {
+                    sb.AppendLine("限界突破強化:あり");
+                }
+                else
+                {
+                    sb.AppendLine("限界突破強化:なし");
+                }
                 if (IsSpecificWeapon)
                 {
                     sb.AppendLine($"武器:{WeaponName}");

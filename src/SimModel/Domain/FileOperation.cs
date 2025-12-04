@@ -491,9 +491,9 @@ namespace SimModel.Domain
             List<string[]> body = new List<string[]>();
             foreach (var set in Masters.MySets)
             {
-                body.Add(new string[] { set.Weapon.Name, set.Head.Name, set.Body.Name, set.Arm.Name, set.Waist.Name, set.Leg.Name, set.Charm.Name, set.DecoNameCSV, set.Name });
+                body.Add(new string[] { set.Weapon.Name, set.Head.Name, set.Body.Name, set.Arm.Name, set.Waist.Name, set.Leg.Name, set.Charm.Name, set.DecoNameCSV, set.Name, set.IsTranscending ? "1" : "" });
             }
-            string[] header = new string[] { "武器", "頭", "胴", "腕", "腰", "足", "護石", "装飾品", "名前" };
+            string[] header = new string[] { "武器", "頭", "胴", "腕", "腰", "足", "護石", "装飾品", "名前", "限界突破有無" };
             string export = CsvWriter.WriteToText(header, body);
             File.WriteAllText(MySetCsv, export);
 
@@ -529,6 +529,8 @@ namespace SimModel.Domain
                 set.Charm.Kind = EquipKind.charm;
                 set.DecoNameCSV = line[@"装飾品"];
                 set.Name = line[@"名前"];
+                // 互換性のため、lineが"限界突破有無"を要素に持っていることを確認
+                set.IsTranscending = line.HasColumn(@"限界突破有無") && (line[@"限界突破有無"] == "1");
                 Masters.MySets.Add(set);
             }
 
@@ -596,10 +598,11 @@ namespace SimModel.Domain
                 bodyStrings.Add(condition.Ice?.ToString() ?? "null");
                 bodyStrings.Add(condition.Dragon?.ToString() ?? "null");
                 bodyStrings.Add(condition.SkillCSV);
+                bodyStrings.Add(condition.IsTranscending ? "1" : string.Empty);
                 body.Add(bodyStrings.ToArray());
             }
 
-            string[] header = new string[] { "ID", "名前", "武器指定有無", "武器名", "武器種", "攻撃力", "防御力", "火耐性", "水耐性", "雷耐性", "氷耐性", "龍耐性", "スキル"};
+            string[] header = new string[] { "ID", "名前", "武器指定有無", "武器名", "武器種", "攻撃力", "防御力", "火耐性", "水耐性", "雷耐性", "氷耐性", "龍耐性", "スキル", "限界突破有無" };
             string export = CsvWriter.WriteToText(header, body);
             File.WriteAllText(ConditionCsv, export);
         }
@@ -636,6 +639,8 @@ namespace SimModel.Domain
                 condition.Ice = line[@"氷耐性"] == "null" ? null : ParseUtil.Parse(line[@"氷耐性"]);
                 condition.Dragon = line[@"龍耐性"] == "null" ? null : ParseUtil.Parse(line[@"龍耐性"]);
                 condition.SkillCSV = line[@"スキル"];
+                // 互換性のため、lineが"限界突破有無"を要素に持っていない場合、デフォルトで限界突破有りとする
+                condition.IsTranscending = (!line.HasColumn(@"限界突破有無")) || (line[@"限界突破有無"] == "1");
 
                 Masters.MyConditions.Add(condition);
             }

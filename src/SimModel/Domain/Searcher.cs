@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Windows;
 
 namespace SimModel.Domain
 {
@@ -387,7 +388,14 @@ namespace SimModel.Domain
             int score = 0;
 
             // 防御力
-            score += equip.Maxdef;
+            if (Condition.IsTranscending)
+            {
+                score += equip.TranscendingDef;
+            }
+            else
+            {
+                score += equip.Maxdef;
+            }
 
             // スロット数
             score *= 20;
@@ -548,6 +556,11 @@ namespace SimModel.Domain
         private EquipSet? MakeSet()
         {
             EquipSet equipSet = new();
+            if (Condition.IsTranscending)
+            {
+                equipSet.IsTranscending = true;
+            }
+
             bool hasData = false;
             foreach (var keyValuePair in Variables)
             {
@@ -697,26 +710,43 @@ namespace SimModel.Domain
         /// <param name="isCountWeapon">武器スキルを数える場合true</param>
         /// <param name="isCountArmor">防具スキルを数える場合true</param>
         /// <returns>GLPK用のスロット値</returns>
-        private static int[] SlotCalc(Equipment equip, bool isCountWeapon, bool isCountArmor)
+        private int[] SlotCalc(Equipment equip, bool isCountWeapon, bool isCountArmor)
         {
+            int slot1, slot2, slot3;
+            // 限界特化強化時を反映するかどうか判別
+            if (Condition.IsTranscending)
+            {
+                // 限界突破時
+                slot1 = equip.TranscendingSlot1;
+                slot2 = equip.TranscendingSlot2;
+                slot3 = equip.TranscendingSlot3;
+            }
+            else
+            {
+                // 通常時
+                slot1 = equip.Slot1;
+                slot2 = equip.Slot2;
+                slot3 = equip.Slot3;
+            }
+
             int[] slotCond = new int[4];
             if ((isCountWeapon && equip.SlotType1 != 0) || (isCountArmor && equip.SlotType1 != 1))
             {
-                for (int i = 0; i < equip.Slot1; i++)
+                for (int i = 0; i < slot1; i++)
                 {
                     slotCond[i]++;
                 }
             }
             if ((isCountWeapon && equip.SlotType2 != 0) || (isCountArmor && equip.SlotType2 != 1))
             {
-                for (int i = 0; i < equip.Slot2; i++)
+                for (int i = 0; i < slot2; i++)
                 {
                     slotCond[i]++;
                 }
             }
             if ((isCountWeapon && equip.SlotType3 != 0) || (isCountArmor && equip.SlotType3 != 1))
             {
-                for (int i = 0; i < equip.Slot3; i++)
+                for (int i = 0; i < slot3; i++)
                 {
                     slotCond[i]++;
                 }

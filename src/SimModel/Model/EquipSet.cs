@@ -61,6 +61,11 @@ namespace SimModel.Model
         public string Name { get; set; } = LogicConfig.Instance.DefaultMySetName;
 
         /// <summary>
+        /// 限界突破有無
+        /// </summary>
+        public bool IsTranscending { get; set; } = false;
+
+        /// <summary>
         /// 合計パラメータ計算用装備一覧
         /// </summary>
         private List<Equipment> Equipments
@@ -109,7 +114,14 @@ namespace SimModel.Model
                 int ret = 0;
                 foreach (var equip in Equipments)
                 {
-                    ret += equip.Maxdef;
+                    if (IsTranscending)
+                    {
+                        ret += equip.TranscendingDef;
+                    }
+                    else
+                    {
+                        ret += equip.Maxdef;
+                    }
                 }
                 return ret;
             }
@@ -221,6 +233,7 @@ namespace SimModel.Model
                 return ret;
             }
         }
+
 
 
         /// <summary>
@@ -441,6 +454,10 @@ namespace SimModel.Model
                 sb.Append(Mindef);
                 sb.Append('→');
                 sb.Append(Maxdef);
+                if (IsTranscending)
+                {
+                    sb.Append("(限界突破)");
+                }
                 sb.Append(',');
                 sb.Append("火:");
                 sb.Append(Fire);
