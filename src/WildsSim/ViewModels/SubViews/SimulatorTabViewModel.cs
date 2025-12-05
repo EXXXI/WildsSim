@@ -147,7 +147,7 @@ namespace WildsSim.ViewModels.SubViews
         }
 
         /// <summary>
-        /// もっと検索
+        /// 護石検索
         /// </summary>
         /// <returns></returns>
         async private Task SearchCharm()
