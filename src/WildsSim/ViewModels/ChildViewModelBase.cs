@@ -39,6 +39,11 @@ namespace WildsSim.ViewModels
         protected CharmTabViewModel CharmTabVM { get => MainVM.CharmTabVM.Value; }
 
         /// <summary>
+        /// アーティア画面のVM
+        /// </summary>
+        protected ArtianTabViewModel ArtianTabVM { get => MainVM.ArtianTabVM.Value; }
+
+        /// <summary>
         /// マイセット画面のVM
         /// </summary>
         protected MySetTabViewModel MySetTabVM { get => MainVM.MySetTabVM.Value; }

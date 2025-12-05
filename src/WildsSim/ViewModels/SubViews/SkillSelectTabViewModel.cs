@@ -144,6 +144,11 @@ namespace WildsSim.ViewModels.SubViews
         public ReactivePropertySlim<bool> IsUsingBestCharm { get; } = new(false);
 
         /// <summary>
+        /// 理論値アーティア使用フラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> IsUsingBestArtian { get; } = new(false);
+
+        /// <summary>
         /// スロット武器選択の選択肢
         /// </summary>
         public ReactivePropertySlim<ObservableCollection<string>> SlotWeapons { get; } = new();
@@ -177,6 +182,11 @@ namespace WildsSim.ViewModels.SubViews
         /// 最低攻撃力
         /// </summary>
         public ReactivePropertySlim<string> MinAttack { get; } = new();
+
+        /// <summary>
+        /// 限界突破強化使用フラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> IsTranscending { get; } = new(true);
 
         /// <summary>
         /// 検索コマンド
@@ -244,6 +254,16 @@ namespace WildsSim.ViewModels.SubViews
             CalcWeapon.Subscribe(_ => ChangeIsCalcWeapon());
             SelectedWeaponType.Subscribe(_ => ChangeWeapons());
             SelectedWeapon.Subscribe(_ => ChangeShowAttackCond());
+            IsUsingBestArtian.Subscribe(_ => PrepareBestArtianSearch());
+        }
+
+        private void PrepareBestArtianSearch()
+        {
+            if (IsUsingBestArtian.Value)
+            {
+                CalcWeapon.Value = CalcWeaponString;
+                SelectedWeapon.Value = SearchWeaponString;
+            }
         }
 
         /// <summary>
@@ -439,6 +459,9 @@ namespace WildsSim.ViewModels.SubViews
                 SelectedWeapon.Value = mySet.Weapon.Name;
                 MinAttack.Value = string.Empty;
             }
+
+            // 限界突破強化有無
+            IsTranscending.Value = mySet.IsTranscending;
         }
 
         /// <summary>
@@ -489,6 +512,9 @@ namespace WildsSim.ViewModels.SubViews
             Thunder.Value = condition.Thunder?.ToString() ?? string.Empty;
             Ice.Value = condition.Ice?.ToString() ?? string.Empty;
             Dragon.Value = condition.Dragon?.ToString() ?? string.Empty;
+
+            // 限界突破強化有無
+            IsTranscending.Value = condition.IsTranscending;
 
             // ログ表示
             SetStatusBar($"マイ検索条件反映完了：{condition.DispName}");
@@ -606,12 +632,16 @@ namespace WildsSim.ViewModels.SubViews
             condition.Ice = ParseOrNull(Ice.Value);
             condition.Dragon = ParseOrNull(Dragon.Value);
 
+            // 限界突破強化有無
+            condition.IsTranscending = IsTranscending.Value;
+
             // 名前・ID
             condition.ID = Guid.NewGuid().ToString();
             condition.DispName = "検索条件";
 
-            // 理論値護石使用フラグ
+            // 理論値検索フラグ
             condition.IsBestCharmSearch = IsUsingBestCharm.Value;
+            condition.IsBestArtianSearch = IsUsingBestArtian.Value;
 
             return condition;
         }

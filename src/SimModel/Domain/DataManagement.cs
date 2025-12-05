@@ -224,9 +224,14 @@ namespace SimModel.Domain
         /// <returns>追加したマイセット</returns>
         static internal EquipSet? AddMySet(EquipSet set)
         {
-            // 削除できる装備(護石)について、マスタに存在しているかチェック
+            // 削除できる装備(護石・アーティア)について、マスタに存在しているかチェック
             if (set.Charm != null &&
                 !Masters.Charms.Union(Masters.AdditionalCharms).Any(c => c.Name.Equals(set.Charm.Name)))
+            {
+                return null;
+            }
+            if (set.Weapon != null &&
+                !Masters.Weapons.Union(Masters.Artians).Any(c => c.Name.Equals(set.Weapon.Name)))
             {
                 return null;
             }
@@ -456,6 +461,63 @@ namespace SimModel.Domain
             Masters.AdditionalCharms.Insert(targetIndex, charm);
 
             FileOperation.SaveAdditionalCharmCSV();
+        }
+
+        /// <summary>
+        /// アーティアの追加
+        /// </summary>
+        /// <param name="artian">アーティア</param>
+        internal static void AddArtian(Weapon artian)
+        {
+            // 追加
+            Masters.Artians.Add(artian);
+
+            // マスタへ反映
+            FileOperation.SaveArtianCSV();
+        }
+
+        /// <summary>
+        /// アーティアの順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        internal static void MoveArtian(int dropIndex, int targetIndex)
+        {
+            Weapon artian = Masters.Artians[dropIndex];
+            Masters.Artians.RemoveAt(dropIndex);
+            Masters.Artians.Insert(targetIndex, artian);
+
+            FileOperation.SaveArtianCSV();
+        }
+
+        /// <summary>
+        /// アーティアの削除
+        /// </summary>
+        /// <param name="artian">アーティア</param>
+        internal static void DeleteArtian(Weapon artian)
+        {
+            // 除外・固定設定があったら削除
+            DeleteClude(artian.Name);
+
+            // この護石を使っているマイセットがあったら削除
+            List<EquipSet> delMySets = new();
+            foreach (var set in Masters.MySets)
+            {
+                if (set.Weapon.Name != null && set.Weapon.Name.Equals(artian.Name))
+                {
+                    delMySets.Add(set);
+                }
+            }
+            foreach (var set in delMySets)
+            {
+                DeleteMySet(set);
+            }
+
+            // 削除
+            Masters.Artians.Remove(artian);
+
+            // マスタへ反映
+            FileOperation.SaveArtianCSV();
         }
     }
 }

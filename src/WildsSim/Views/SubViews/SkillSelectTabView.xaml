@@ -86,10 +86,7 @@
                         <ctrl:FocusTextBox x:Name="limitBox" Width="115" Text="{Binding Limit.Value}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <CheckBox Content="理論値護石(光おま)を検索対象にする" IsChecked="{Binding IsUsingBestCharm.Value}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="※理論値護石は除外固定・マイセット登録不可" />
+                        <CheckBox Content="限界突破強化を使用する" IsChecked="{Binding IsTranscending.Value}"/>
                     </StackPanel>
                 </StackPanel>
 
@@ -192,6 +189,26 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </Grid>
+            </TabItem>
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="特殊検索オプション" Style="{StaticResource ResourceKey=subtabHeader}" />
+                </TabItem.Header>
+                <StackPanel>
+                    <CheckBox Content="理論値護石検索(光おま)" IsChecked="{Binding IsUsingBestCharm.Value}"/>
+                    <TextBlock TextWrapping="Wrap">
+                            出現し得る護石を全て所持している仮定で検索を行います。<LineBreak/>
+                            この機能で検索結果に出る理論値護石は、除外・固定・マイセット登録ができません。
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap">
+                    </TextBlock>
+                    <CheckBox Content="理論値アーティア検索" IsChecked="{Binding IsUsingBestArtian.Value}"/>
+                    <TextBlock TextWrapping="Wrap">
+                            出現し得るアーティア武器を全て所持している仮定で検索を行います。<LineBreak/>
+                            この機能で検索結果に出る理論値武器は、除外・固定・マイセット登録ができません。<LineBreak/>
+                            通常の検索条件を優先するため、「武器設定」が「武器を計算に含める」、「武器指定」が「指定しない(全武器から検索する)」の場合にのみ有効です。
+                    </TextBlock>
+                </StackPanel>
             </TabItem>
         </TabControl>
     </Grid>

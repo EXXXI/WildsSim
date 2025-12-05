@@ -34,6 +34,11 @@ namespace SimModel.Service
         public bool IsBestCharmSearch { get { return Searcher?.Condition?.IsBestCharmSearch ?? false; } }
 
         /// <summary>
+        /// 理論値アーティアでの検索中か否か
+        /// </summary>
+        public bool IsBestArtianSearch { get { return Searcher?.Condition?.IsBestArtianSearch ?? false; } }
+
+        /// <summary>
         /// データ読み込み
         /// </summary>
         public void LoadData()
@@ -55,6 +60,7 @@ namespace SimModel.Service
             // セーブデータ類の読み込み
             FileOperation.MakeSaveFolder();
             FileOperation.LoadAdditionalCharmCSV();
+            FileOperation.LoadArtianCSV();
             FileOperation.LoadCludeCSV();
             FileOperation.LoadRecentSkillCSV();
             FileOperation.LoadMyConditionCSV();
@@ -633,6 +639,34 @@ namespace SimModel.Service
         public void MoveCharm(int dropIndex, int targetIndex)
         {
             DataManagement.MoveCharm(dropIndex, targetIndex);
+        }
+
+        /// <summary>
+        /// アーティア登録
+        /// </summary>
+        /// <param name="artian">登録対象</param>
+        public void AddArtian(Weapon artian)
+        {
+            DataManagement.AddArtian(artian);
+        }
+
+        /// <summary>
+        /// アーティア削除
+        /// </summary>
+        /// <param name="artian">削除対象</param>
+        public void DeleteArtian(Weapon artian)
+        {
+            DataManagement.DeleteArtian(artian);
+        }
+
+        /// <summary>
+        /// アーティアの順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        public void MoveArtian(int dropIndex, int targetIndex)
+        {
+            DataManagement.MoveArtian(dropIndex, targetIndex);
         }
     }
 }

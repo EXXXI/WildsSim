@@ -3,6 +3,8 @@
     internal enum SkillSelectorKind
     {
         Normal,
-        WithFixs
+        WithFixs,
+        ArtianGroup,
+        ArtianSeries
     }
 }

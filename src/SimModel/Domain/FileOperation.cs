@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
@@ -39,6 +40,7 @@ namespace SimModel.Domain
         private const string RecentSkillCsv = SaveFolder + "/recentSkill.csv";
         private const string ConditionCsv = SaveFolder + "/condition.csv";
         private const string AdditionalCharmCsv = SaveFolder + "/additionalCharm.csv";
+        private const string ArtianCsv = SaveFolder + "/artian.csv";
         private const string ShiningCharmComboCsv = "MHWilds_COMBO_SHININGCHARM.csv";
         private const string ShiningCharmGroupCsv = "MHWilds_GROUP_SHININGCHARM.csv";
         private const string DefUpgradeCsv = "MHWilds_DEF_UPGRADE.csv";
@@ -63,11 +65,12 @@ namespace SimModel.Domain
                 {
                     Name = line[SkillMasterHeaderName],
                     Level = ParseUtil.Parse(line[SkillMasterHeaderRequiredPoints]),
-                    Category = line[SkillMasterHeaderCategory]
+                    Category = line[SkillMasterHeaderCategory],
+                    CanWithArtian = ParseUtil.Parse(line[@"アーティア対応"]) == 1
                 })
                 // マスタのCSVにある同名スキルのうち、スキルレベルが最大のものだけを選ぶ
                 .GroupBy(x => new { x.Name, x.Category })
-                .Select(group => new Skill(group.Key.Name, group.Max(x => x.Level), group.Key.Category))
+                .Select(group => new Skill(group.Key.Name, group.Max(x => x.Level), group.Key.Category, canWithArtian:group.Last().CanWithArtian))
                 .ToList();
 
             // 特殊な名称のデータを保持
@@ -488,14 +491,15 @@ namespace SimModel.Domain
             List<string[]> body = new List<string[]>();
             foreach (var set in Masters.MySets)
             {
-                body.Add(new string[] { set.Weapon.Name, set.Head.Name, set.Body.Name, set.Arm.Name, set.Waist.Name, set.Leg.Name, set.Charm.Name, set.DecoNameCSV, set.Name });
+                body.Add(new string[] { set.Weapon.Name, set.Head.Name, set.Body.Name, set.Arm.Name, set.Waist.Name, set.Leg.Name, set.Charm.Name, set.DecoNameCSV, set.Name, set.IsTranscending ? "1" : "" });
             }
-            string[] header = new string[] { "武器", "頭", "胴", "腕", "腰", "足", "護石", "装飾品", "名前" };
+            string[] header = new string[] { "武器", "頭", "胴", "腕", "腰", "足", "護石", "装飾品", "名前", "限界突破有無" };
             string export = CsvWriter.WriteToText(header, body);
             File.WriteAllText(MySetCsv, export);
 
-            // マイセット利用状況の反映のため護石を再書き込み
+            // マイセット利用状況の反映のため護石、アーティアを再書き込み
             SaveAdditionalCharmCSV();
+            SaveArtianCSV();
         }
 
         /// <summary>
@@ -525,11 +529,14 @@ namespace SimModel.Domain
                 set.Charm.Kind = EquipKind.charm;
                 set.DecoNameCSV = line[@"装飾品"];
                 set.Name = line[@"名前"];
+                // 互換性のため、lineが"限界突破有無"を要素に持っていることを確認
+                set.IsTranscending = line.HasColumn(@"限界突破有無") && (line[@"限界突破有無"] == "1");
                 Masters.MySets.Add(set);
             }
 
             // マイセット利用状況の反映のため護石を再書き込み
             SaveAdditionalCharmCSV();
+            SaveArtianCSV();
         }
 
         /// <summary>
@@ -591,10 +598,11 @@ namespace SimModel.Domain
                 bodyStrings.Add(condition.Ice?.ToString() ?? "null");
                 bodyStrings.Add(condition.Dragon?.ToString() ?? "null");
                 bodyStrings.Add(condition.SkillCSV);
+                bodyStrings.Add(condition.IsTranscending ? "1" : string.Empty);
                 body.Add(bodyStrings.ToArray());
             }
 
-            string[] header = new string[] { "ID", "名前", "武器指定有無", "武器名", "武器種", "攻撃力", "防御力", "火耐性", "水耐性", "雷耐性", "氷耐性", "龍耐性", "スキル"};
+            string[] header = new string[] { "ID", "名前", "武器指定有無", "武器名", "武器種", "攻撃力", "防御力", "火耐性", "水耐性", "雷耐性", "氷耐性", "龍耐性", "スキル", "限界突破有無" };
             string export = CsvWriter.WriteToText(header, body);
             File.WriteAllText(ConditionCsv, export);
         }
@@ -631,6 +639,8 @@ namespace SimModel.Domain
                 condition.Ice = line[@"氷耐性"] == "null" ? null : ParseUtil.Parse(line[@"氷耐性"]);
                 condition.Dragon = line[@"龍耐性"] == "null" ? null : ParseUtil.Parse(line[@"龍耐性"]);
                 condition.SkillCSV = line[@"スキル"];
+                // 互換性のため、lineが"限界突破有無"を要素に持っていない場合、デフォルトで限界突破有りとする
+                condition.IsTranscending = (!line.HasColumn(@"限界突破有無")) || (line[@"限界突破有無"] == "1");
 
                 Masters.MyConditions.Add(condition);
             }
@@ -899,6 +909,94 @@ namespace SimModel.Domain
                 {
                     Masters.DefUpgrades.Add(rare, new(upgrade, transcending));
                 }
+            }
+        }
+
+        /// <summary>
+        /// アーティア書き込み
+        /// </summary>
+        internal static void SaveArtianCSV()
+        {
+            List<string[]> body = new();
+            foreach (var artian in Masters.Artians)
+            {
+                List<string> bodyStrings = new List<string>();
+
+                bodyStrings.Add(artian.WeaponType.ToString());
+                bodyStrings.Add(artian.DispName.ToString());
+                for (int i = 0; i < LogicConfig.Instance.ArtianSkillCount; i++)
+                {
+                    bodyStrings.Add(artian.Skills.Count > i ? artian.Skills[i].Name : string.Empty);
+                    bodyStrings.Add(artian.Skills.Count > i ? artian.Skills[i].Level.ToString() : string.Empty);
+                }
+                bodyStrings.Add(artian.Name);
+                bodyStrings.Add(Masters.MySets.Where(set => artian.Name.Equals(set.Charm.Name)).Any() ? "マイセット登録中" : string.Empty);
+
+                body.Add(bodyStrings.ToArray());
+            }
+
+            List<string> headStrings = new List<string>();
+            headStrings.Add("武器種");
+            headStrings.Add("名前");
+            for (int i = 1; i <= LogicConfig.Instance.ArtianSkillCount; i++)
+            {
+                headStrings.Add("スキル系統" + i);
+                headStrings.Add("スキル値" + i);
+            }
+            headStrings.Add("内部管理ID");
+            headStrings.Add("マイセット登録有無");
+            string[] header = headStrings.ToArray();
+
+            string export = CsvWriter.WriteToText(header, body);
+            File.WriteAllText(ArtianCsv, export);
+        }
+
+        /// <summary>
+        /// アーティア読み込み
+        /// </summary>
+        static internal void LoadArtianCSV()
+        {
+            Masters.Artians = new();
+
+            // csv読み込み
+            string csv = ReadAllText(ArtianCsv);
+            var x = CsvReader.ReadFromText(csv);
+            foreach (ICsvLine line in x)
+            {
+                Weapon artian = new Weapon();
+                artian.InitArtian();
+
+                try
+                {
+                    artian.Name = line[@"内部管理ID"];
+                    if (string.IsNullOrWhiteSpace(artian.Name))
+                    {
+                        artian.Name = Guid.NewGuid().ToString();
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    artian.Name = Guid.NewGuid().ToString();
+                }
+                artian.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), line[@"武器種"]);
+                artian.DispName = line[@"名前"];
+                List<Skill> skills = new List<Skill>();
+                for (int i = 1; i <= LogicConfig.Instance.ArtianSkillCount; i++)
+                {
+                    string skill = line[@"スキル系統" + i];
+                    string level = line[@"スキル値" + i];
+                    if (string.IsNullOrWhiteSpace(skill))
+                    {
+                        break;
+                    }
+                    skills.Add(new Skill(skill, ParseUtil.Parse(level)));
+                }
+                artian.Skills = skills;
+
+                Masters.Artians.Add(artian);
+
+                // GUIDの反映のためSaveが必要だが、マイセット読み込み後に実施するためここでは行わない
+                // SaveArtianCSV();
             }
         }
 
