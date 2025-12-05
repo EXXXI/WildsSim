@@ -107,7 +107,7 @@ namespace WildsSim.ViewModels.SubViews
             SearchResult.ChangeCollection(BindableEquipSet.BeBindableList(result));
             DetailSet.Value = SearchResult.Value.Count > 0 ? SearchResult.Value[0] : null;
             IsRemaining.Value = remain;
-            IsNoResult.Value = !remain && result.Count == 0 && ((!Simulator.IsBestCharmSearch) || (!Simulator.IsBestArtianSearch));
+            IsNoResult.Value = !remain && result.Count == 0 && !Simulator.IsBestCharmSearch;
             Limit = limit;
         }
 

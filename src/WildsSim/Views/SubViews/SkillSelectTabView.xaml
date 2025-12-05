@@ -88,12 +88,6 @@
                     <StackPanel Orientation="Horizontal">
                         <CheckBox Content="限界突破強化を使用する" IsChecked="{Binding IsTranscending.Value}"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <CheckBox Content="理論値護石(光おま)を検索対象にする" IsChecked="{Binding IsUsingBestCharm.Value}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="※理論値護石は除外固定・マイセット登録不可" />
-                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2">
