@@ -100,6 +100,9 @@
     <None Update="save\additionalCharm.csv">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Update="save\artian.csv">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
     <None Update="save\myset.csv">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>

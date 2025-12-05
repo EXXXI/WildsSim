@@ -80,6 +80,11 @@ namespace WildsSim.ViewModels
         public ReactivePropertySlim<CharmTabViewModel> CharmTabVM { get; } = new();
 
         /// <summary>
+        /// アーティア画面のVM
+        /// </summary>
+        public ReactivePropertySlim<ArtianTabViewModel> ArtianTabVM { get; } = new();
+
+        /// <summary>
         /// 装飾品設定画面のVM
         /// </summary>
         public ReactivePropertySlim<DecoTabViewModel> DecoTabVM { get; } = new();
@@ -125,6 +130,7 @@ namespace WildsSim.ViewModels
             SimulatorTabVM.Value = new SimulatorTabViewModel();
             CludeTabVM.Value = new CludeTabViewModel();
             CharmTabVM.Value = new CharmTabViewModel();
+            ArtianTabVM.Value = new ArtianTabViewModel();
             DecoTabVM.Value = new DecoTabViewModel();
             MySetTabVM.Value = new MySetTabViewModel();
             LicenseTabVM.Value = new LicenseTabViewModel();
@@ -174,6 +180,8 @@ namespace WildsSim.ViewModels
             CludeTabVM.Value.LoadEquipsForClude();
             // 護石画面用のVMの設定
             CharmTabVM.Value.LoadEquipsForCharm();
+            // アーティア画面用のVMの設定
+            ArtianTabVM.Value.LoadEquipsForArtian();
         }
 
         /// <summary>

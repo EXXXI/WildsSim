@@ -3,6 +3,8 @@ using WildsSim.Config;
 using SimModel.Model;
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace WildsSim.ViewModels.Controls
 {
@@ -99,7 +101,18 @@ namespace WildsSim.ViewModels.Controls
 
             // スキルの一覧
             ObservableCollection<string> skillList = new();
-            foreach (var skill in Masters.Skills)
+            List<Skill> skills = Masters.Skills;
+            if (Kind == SkillSelectorKind.ArtianGroup)
+            {
+                skills = skills.Where(s => s.Category == "グループスキル" && s.CanWithArtian).ToList();
+                PlaceHolderText.Value = "グループスキル";
+            }
+            else if (Kind == SkillSelectorKind.ArtianSeries)
+            {
+                skills = skills.Where(s => s.Category == "シリーズスキル" && s.CanWithArtian).ToList();
+                PlaceHolderText.Value = "シリーズスキル";
+            }
+            foreach (var skill in skills)
             {
                 skillList.Add(skill.Name);
             }
@@ -134,6 +147,11 @@ namespace WildsSim.ViewModels.Controls
             {
                 // スキルが選択されていないときは0とする
                 list.Add(0);
+            }
+            else if (Kind == SkillSelectorKind.ArtianGroup || Kind == SkillSelectorKind.ArtianSeries) {
+                // アーティア画面はレベル1のみ
+                list.Add(1);
+                maxLevel = 1;
             }
             else
             {

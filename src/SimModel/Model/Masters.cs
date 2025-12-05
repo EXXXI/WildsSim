@@ -65,6 +65,11 @@ namespace SimModel.Model
         public static Dictionary<int, List<Skill>> ShiningCharmGroups { get; set; } = new();
 
         /// <summary>
+        /// アーティアマスタ
+        /// </summary>
+        public static List<Weapon> Artians { get; set; } = new();
+
+        /// <summary>
         /// 装飾品マスタ
         /// </summary>
         public static List<Deco> Decos { get; set; } = new();
@@ -102,7 +107,7 @@ namespace SimModel.Model
         public static Equipment GetEquipByName(string equipName)
         {
             string? name = equipName?.Trim();
-            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos);
+            var equips = Weapons.Union(Artians).Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos);
             return equips.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
         }
 
