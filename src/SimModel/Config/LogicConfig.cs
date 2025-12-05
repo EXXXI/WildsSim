@@ -61,6 +61,16 @@ namespace SimModel.Config
         public int ArtianSkillCount { get; set; } = 2;
 
         /// <summary>
+        /// 限界突破スロットの挙動
+        /// TODO: 仕様が確定したら削除
+        /// 0:全スロ+1(上限3)
+        /// 1:怪異錬成方式でレア5は+3、レア6は+1
+        /// 2:怪異錬成方式でレア5は+3、レア6は+2
+        /// 3:怪異錬成方式でレア5は+3、レア6は+3
+        /// </summary>
+        public int TranscendingLogic { get; set; } = 0;
+
+        /// <summary>
         /// マイセットのデフォルト名
         /// </summary>
         public string DefaultMySetName { get; } = "マイセット";
@@ -81,6 +91,7 @@ namespace SimModel.Config
                 MaxCharmSkillCount = ParseUtil.LoadConfigItem(line, @"追加護石のスキル最大個数", 3);
                 MaxDegreeOfParallelism = ParseUtil.LoadConfigItem(line, @"最大並列処理数", 4);
                 AllowUnavailableEquipments = ParseUtil.LoadConfigItem(line, @"入手不可装備の利用有無", false);
+                TranscendingLogic = ParseUtil.LoadConfigItem(line, @"(仮)限界突破スロットの挙動", 0);
             }
         }
 

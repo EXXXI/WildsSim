@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimModel.Config;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
@@ -410,10 +411,56 @@ namespace SimModel.Model
                 return;
             }
 
-            // 仮説1：各スロットを上限3まで1ずつ増加させる
-            transcendingSlot1 = Math.Min(Slot1 + 1, 3);
-            transcendingSlot2 = Math.Min(Slot2 + 1, 3);
-            transcendingSlot3 = Math.Min(Slot3 + 1, 3);
+            // 仮説0：各スロットを上限3まで1ずつ増加させる
+            if (LogicConfig.Instance.TranscendingLogic == 0)
+            {
+                transcendingSlot1 = Math.Min(Slot1 + 1, 3);
+                transcendingSlot2 = Math.Min(Slot2 + 1, 3);
+                transcendingSlot3 = Math.Min(Slot3 + 1, 3);
+                return;
+            }
+
+            // 仮説1-3：怪異錬成方式
+            // レア5は+3、レア6は設定値をそのまま利用して+1～3
+            int increase = Rare == 5 ? 3 : LogicConfig.Instance.TranscendingLogic;
+            int slot1 = Slot1;
+            int slot2 = Slot2;
+            int slot3 = Slot3;
+            for (int i = increase; i > 0; i--)
+            {
+                if (slot1 == 0)
+                {
+                    slot1++;
+                }
+                else if (slot2 == 0)
+                {
+                    slot2++;
+                }
+                else if (slot3 == 0)
+                {
+                    slot3++;
+                }
+                else if (slot1 < 3)
+                {
+                    slot1++;
+                }
+                else if (slot2 < 3)
+                {
+                    slot2++;
+                }
+                else if (slot3 < 3)
+                {
+                    slot3++;
+                }
+                else
+                {
+                    // すべて3の場合終了
+                    break;
+                }
+            }
+            transcendingSlot1 = slot1;
+            transcendingSlot2 = slot2;
+            transcendingSlot3 = slot3;
         }
 
         /// <summary>
