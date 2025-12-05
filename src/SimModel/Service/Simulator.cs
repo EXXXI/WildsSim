@@ -34,6 +34,11 @@ namespace SimModel.Service
         public bool IsBestCharmSearch { get { return Searcher?.Condition?.IsBestCharmSearch ?? false; } }
 
         /// <summary>
+        /// 理論値アーティアでの検索中か否か
+        /// </summary>
+        public bool IsBestArtianSearch { get { return Searcher?.Condition?.IsBestArtianSearch ?? false; } }
+
+        /// <summary>
         /// データ読み込み
         /// </summary>
         public void LoadData()

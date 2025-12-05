@@ -160,7 +160,7 @@ namespace SimModel.Model
         public EquipKind Kind { get; set; }
 
         /// <summary>
-        /// 仮想装備フラグ(理論値護石)
+        /// 仮想装備フラグ(理論値護石・アーティア)
         /// </summary>
         public bool IsVirtual { get; set; } = false;
 

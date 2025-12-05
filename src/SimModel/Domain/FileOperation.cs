@@ -964,6 +964,7 @@ namespace SimModel.Domain
             foreach (ICsvLine line in x)
             {
                 Weapon artian = new Weapon();
+                artian.InitArtian();
 
                 try
                 {
@@ -979,17 +980,6 @@ namespace SimModel.Domain
                 }
                 artian.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), line[@"武器種"]);
                 artian.DispName = line[@"名前"];
-                artian.Rare = 8;
-                artian.Slot1 = 3;
-                artian.Slot2 = 3;
-                artian.Slot3 = 3;
-                artian.SlotType1 = 1;
-                artian.SlotType2 = 1;
-                artian.SlotType3 = 1;
-                artian.Mindef = 0;
-                artian.Maxdef = artian.Mindef; // 防御力の変動はない
-                artian.Attack = 190;
-                artian.RowNo = int.MaxValue;
                 List<Skill> skills = new List<Skill>();
                 for (int i = 1; i <= LogicConfig.Instance.ArtianSkillCount; i++)
                 {

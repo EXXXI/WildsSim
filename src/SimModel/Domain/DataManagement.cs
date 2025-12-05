@@ -224,9 +224,14 @@ namespace SimModel.Domain
         /// <returns>追加したマイセット</returns>
         static internal EquipSet? AddMySet(EquipSet set)
         {
-            // 削除できる装備(護石)について、マスタに存在しているかチェック
+            // 削除できる装備(護石・アーティア)について、マスタに存在しているかチェック
             if (set.Charm != null &&
                 !Masters.Charms.Union(Masters.AdditionalCharms).Any(c => c.Name.Equals(set.Charm.Name)))
+            {
+                return null;
+            }
+            if (set.Weapon != null &&
+                !Masters.Weapons.Union(Masters.Artians).Any(c => c.Name.Equals(set.Weapon.Name)))
             {
                 return null;
             }

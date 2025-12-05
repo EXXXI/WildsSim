@@ -33,10 +33,25 @@ namespace SimModel.Model
         /// </summary>
         public string Category { get; init; }
 
+        private bool? canWithArtian = null;
         /// <summary>
-        /// スキルのカテゴリ
+        /// アーティア武器に付与可能か否か
         /// </summary>
-        public bool CanWithArtian { get; init; } = false;
+        public bool CanWithArtian
+        {
+            get
+            {
+                if (canWithArtian == null)
+                {
+                    canWithArtian = Masters.Skills.Where(s => s.Name == Name).First().CanWithArtian;
+                }
+                return canWithArtian.Value;
+            }
+            set
+            {
+                canWithArtian = value;
+            }
+        }
 
         /// <summary>
         /// シリーズスキル等、レベルに特殊な名称がある場合ここに格納
@@ -49,7 +64,7 @@ namespace SimModel.Model
         /// <param name="name">スキル名</param>
         /// <param name="level">レベル</param>
         /// <param name="isFixed">固定検索フラグ</param>
-        public Skill(string name, int level, bool isFixed = false, bool canWithArtian = false) 
+        public Skill(string name, int level, bool isFixed = false, bool? canWithArtian = null) 
             : this(name, level, Masters.Skills.Where(s => s.Name == name).FirstOrDefault()?.Category, isFixed, canWithArtian) { }
 
         /// <summary>
@@ -59,12 +74,15 @@ namespace SimModel.Model
         /// <param name="level">レベル</param>
         /// <param name="category">カテゴリ</param>
         /// <param name="isFixed">固定検索フラグ</param>
-        public Skill(string name, int level, string? category, bool isFixed = false, bool canWithArtian = false)
+        public Skill(string name, int level, string? category, bool isFixed = false, bool? canWithArtian = null)
         {
             Name = name;
             Level = level;
             IsFixed = isFixed;
-            CanWithArtian = canWithArtian;
+            if (canWithArtian != null)
+            {
+                CanWithArtian = canWithArtian.Value;
+            }
             Category = string.IsNullOrEmpty(category) ? @"未分類" : category;
             SpecificNames = Masters.Skills.Where(s => s.Name == name).Select(s => s.SpecificNames).FirstOrDefault() ?? new();
         }

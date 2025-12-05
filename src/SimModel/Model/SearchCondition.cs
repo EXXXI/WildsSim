@@ -92,6 +92,11 @@ namespace SimModel.Model
         public bool IsBestCharmSearch { get; set; } = false;
 
         /// <summary>
+        /// 理論値アーティア検索フラグ
+        /// </summary>
+        public bool IsBestArtianSearch { get; set; } = false;
+
+        /// <summary>
         /// CSV用スキル形式
         /// </summary>
         public string SkillCSV
@@ -209,6 +214,7 @@ namespace SimModel.Model
             Ice = condition.Ice;
             Dragon = condition.Dragon;
             IsBestCharmSearch = condition.IsBestCharmSearch;
+            IsBestArtianSearch = condition.IsBestArtianSearch;
         }
 
         /// <summary>
@@ -317,6 +323,59 @@ namespace SimModel.Model
             }
 
             return targetCharms;
+        }
+
+        /// <summary>
+        /// この検索条件に関連する理論値アーティアリストを生成
+        /// </summary>
+        /// <returns></returns>
+        internal List<Weapon> MakeRelatedArtians()
+        {
+            List<Weapon> targetArtians = new();
+            var groupSkills = Skills.Where(skill => (skill.Level != 0) && (skill.Category == "グループスキル") && skill.CanWithArtian);
+            var seriesSkills = Skills.Where(skill => (skill.Level != 0) && (skill.Category == "シリーズスキル") && skill.CanWithArtian);
+            // スキル2種
+            foreach (var groupSkill in groupSkills)
+            {
+                foreach (var seriesSkill in seriesSkills)
+                {
+                    Weapon artian = new();
+                    artian.InitArtian();
+                    artian.Name = Guid.NewGuid().ToString(); // 一時的な名前
+                    artian.WeaponType = WeaponType;
+                    artian.DispName = $"{artian.WeaponType}({groupSkill.Name},{seriesSkill.Name})";
+                    artian.Skills.Add(new Skill(groupSkill.Name, 1));
+                    artian.Skills.Add(new Skill(seriesSkill.Name, 1));
+                    artian.IsVirtual = true;
+                    targetArtians.Add(artian);
+                }
+            }
+            // グループスキルのみ
+            foreach (var groupSkill in groupSkills)
+            {
+                Weapon artian = new();
+                artian.InitArtian();
+                artian.Name = Guid.NewGuid().ToString(); // 一時的な名前
+                artian.WeaponType = WeaponType;
+                artian.DispName = $"{artian.WeaponType}({groupSkill.Name})";
+                artian.Skills.Add(new Skill(groupSkill.Name, 1));
+                artian.IsVirtual = true;
+                targetArtians.Add(artian);
+            }
+            // シリーズスキルのみ
+            foreach (var seriesSkill in seriesSkills)
+            {
+                Weapon artian = new();
+                artian.InitArtian();
+                artian.Name = Guid.NewGuid().ToString(); // 一時的な名前
+                artian.WeaponType = WeaponType;
+                artian.DispName = $"{artian.WeaponType}({seriesSkill.Name})";
+                artian.Skills.Add(new Skill(seriesSkill.Name, 1));
+                artian.IsVirtual = true;
+                targetArtians.Add(artian);
+            }
+
+            return targetArtians;
         }
 
         /// <summary>

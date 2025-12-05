@@ -79,6 +79,7 @@ namespace WildsSim.ViewModels.SubViews
         internal void AddArtian()
         {
             Weapon artian = new Weapon();
+            artian.InitArtian();
             artian.Name = Guid.NewGuid().ToString();
             artian.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), SelectedWeaponType.Value);
             string dispName = string.Empty;
@@ -100,17 +101,6 @@ namespace WildsSim.ViewModels.SubViews
                 dispName = ArtianName.Value;
             }
             artian.DispName = dispName;
-            artian.Rare = 8;
-            artian.Slot1 = 3;
-            artian.Slot2 = 3;
-            artian.Slot3 = 3;
-            artian.SlotType1 = 1;
-            artian.SlotType2 = 1;
-            artian.SlotType3 = 1;
-            artian.Mindef = 0;
-            artian.Maxdef = artian.Mindef; // 防御力の変動はない
-            artian.Attack = 190;
-            artian.RowNo = int.MaxValue;
             List<Skill> skills = new List<Skill>();
             foreach (var vm in ArtianSkillSelectorVMs.Value)
             {

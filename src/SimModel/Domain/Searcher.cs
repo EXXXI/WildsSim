@@ -131,7 +131,16 @@ namespace SimModel.Domain
             }
             else
             {
-                Weapons = Masters.Weapons.Union(Masters.Artians).Where(w => w.WeaponType == condition.WeaponType).ToList();
+                if (condition.IsBestArtianSearch)
+                {
+                    // 理論値検索
+                    Weapons = Masters.Weapons.Union(Masters.Artians).Union(condition.MakeRelatedArtians()).Where(w => w.WeaponType == condition.WeaponType).ToList();
+                }
+                else
+                {
+                    // 通常
+                    Weapons = Masters.Weapons.Union(Masters.Artians).Where(w => w.WeaponType == condition.WeaponType).ToList();
+                }
             }
 
             Heads = Masters.Heads;
@@ -574,8 +583,8 @@ namespace SimModel.Domain
                     Equipment? equip = Masters.GetEquipByName(name);
                     if (equip == null || string.IsNullOrWhiteSpace(equip.Name))
                     {
-                        // 即席の理論値護石はマスタに存在しないため、護石を再検索
-                        equip = Charms.FirstOrDefault(c => c.Name == name);
+                        // 即席の理論値装備はマスタに存在しないため、再検索
+                        equip = Charms.Union(Weapons).FirstOrDefault(e => e.Name == name);
                     }
                     if (equip == null || string.IsNullOrWhiteSpace(equip.Name))
                     {

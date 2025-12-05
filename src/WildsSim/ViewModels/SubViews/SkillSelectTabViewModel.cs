@@ -144,6 +144,11 @@ namespace WildsSim.ViewModels.SubViews
         public ReactivePropertySlim<bool> IsUsingBestCharm { get; } = new(false);
 
         /// <summary>
+        /// 理論値アーティア使用フラグ
+        /// </summary>
+        public ReactivePropertySlim<bool> IsUsingBestArtian { get; } = new(false);
+
+        /// <summary>
         /// スロット武器選択の選択肢
         /// </summary>
         public ReactivePropertySlim<ObservableCollection<string>> SlotWeapons { get; } = new();
@@ -249,6 +254,16 @@ namespace WildsSim.ViewModels.SubViews
             CalcWeapon.Subscribe(_ => ChangeIsCalcWeapon());
             SelectedWeaponType.Subscribe(_ => ChangeWeapons());
             SelectedWeapon.Subscribe(_ => ChangeShowAttackCond());
+            IsUsingBestArtian.Subscribe(_ => PrepareBestArtianSearch());
+        }
+
+        private void PrepareBestArtianSearch()
+        {
+            if (IsUsingBestArtian.Value)
+            {
+                CalcWeapon.Value = CalcWeaponString;
+                SelectedWeapon.Value = SearchWeaponString;
+            }
         }
 
         /// <summary>
@@ -624,10 +639,9 @@ namespace WildsSim.ViewModels.SubViews
             condition.ID = Guid.NewGuid().ToString();
             condition.DispName = "検索条件";
 
-            // 理論値護石使用フラグ
+            // 理論値検索フラグ
             condition.IsBestCharmSearch = IsUsingBestCharm.Value;
-
-
+            condition.IsBestArtianSearch = IsUsingBestArtian.Value;
 
             return condition;
         }
