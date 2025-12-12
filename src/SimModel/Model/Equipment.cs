@@ -404,63 +404,81 @@ namespace SimModel.Model
         {
             if (!IsTranscendingSlotTarget)
             {
-                // 防具5部位以外、レア5,6以外は処理しない
+                // 防具5部位以外や、レア5,6以外は処理しない
                 transcendingSlot1 = Slot1;
                 transcendingSlot2 = Slot2;
                 transcendingSlot3 = Slot3;
                 return;
             }
 
-            // 仮説0：各スロットを上限3まで1ずつ増加させる
+            // 仮説0：レア5は全スロットを+1(計+3)、レア6はスロット1,2を+1(計+2)。元々Lv3のスロットは変化しない
             if (LogicConfig.Instance.TranscendingLogic == 0)
             {
                 transcendingSlot1 = Math.Min(Slot1 + 1, 3);
                 transcendingSlot2 = Math.Min(Slot2 + 1, 3);
-                transcendingSlot3 = Math.Min(Slot3 + 1, 3);
+                transcendingSlot3 = (Rare == 6) ? Slot3 : Math.Min(Slot3 + 1, 3);
                 return;
             }
 
-            // 仮説1-3：怪異錬成方式
-            // レア5は+3、レア6は設定値をそのまま利用して+1～3
-            int increase = Rare == 5 ? 3 : LogicConfig.Instance.TranscendingLogic;
-            int slot1 = Slot1;
-            int slot2 = Slot2;
-            int slot3 = Slot3;
-            for (int i = increase; i > 0; i--)
+            // 仮説1：レア5は全スロットを+1(計+3)、レア6はスロット1,2を+1(計+2)。元々Lv3のスロットの拡張分は、次のスロットの拡張に繰り上げされる
+            if (LogicConfig.Instance.TranscendingLogic == 1)
             {
-                if (slot1 == 0)
+                // 一旦上限を無視して+1
+                transcendingSlot1 = Slot1 + 1;
+                transcendingSlot2 = Slot2 + 1;
+                transcendingSlot3 = (Rare == 6) ? Slot3 : Slot3 + 1;
+
+                // 繰り上げ処理
+                if (transcendingSlot1 > 3)
                 {
-                    slot1++;
+                    transcendingSlot2 += transcendingSlot1 - 3;
+                    transcendingSlot1 = 3;
                 }
-                else if (slot2 == 0)
+                if (transcendingSlot2 > 3)
                 {
-                    slot2++;
+                    transcendingSlot3 += transcendingSlot2 - 3;
+                    transcendingSlot2 = 3;
                 }
-                else if (slot3 == 0)
+                if (transcendingSlot3 > 3)
                 {
-                    slot3++;
+                    transcendingSlot1 = 3;
                 }
-                else if (slot1 < 3)
-                {
-                    slot1++;
-                }
-                else if (slot2 < 3)
-                {
-                    slot2++;
-                }
-                else if (slot3 < 3)
-                {
-                    slot3++;
-                }
-                else
-                {
-                    // すべて3の場合終了
-                    break;
-                }
+                return;
             }
-            transcendingSlot1 = slot1;
-            transcendingSlot2 = slot2;
-            transcendingSlot3 = slot3;
+
+            // 仮説2：元々Lv3のスロットを除いて、左から順にレア5は3つ、レア6は2つ拡張(各スロット+1までで終了)
+            // 仮説3：元々Lv3のスロットを除いて、左から順にレア5は3つ、レア6は2つ拡張(余ったらループ)
+            if (LogicConfig.Instance.TranscendingLogic == 2 || LogicConfig.Instance.TranscendingLogic == 3)
+            {
+                int increase = (Rare == 6) ? 2 : 3;
+                transcendingSlot1 = Slot1;
+                transcendingSlot2 = Slot2;
+                transcendingSlot3 = Slot3;
+                while (increase > 0)
+                {
+                    if (transcendingSlot1 < 3 && increase > 0)
+                    {
+                        transcendingSlot1++;
+                        increase--;
+                    }
+                    if (transcendingSlot2 < 3 && increase > 0)
+                    {
+                        transcendingSlot2++;
+                        increase--;
+                    }
+                    if (transcendingSlot3 < 3 && increase > 0)
+                    {
+                        transcendingSlot3++;
+                        increase--;
+                    }
+                    if (LogicConfig.Instance.TranscendingLogic == 2)
+                    {
+                        increase = 0; // 設定2の場合ループしない
+                    }
+                }
+                return;
+            }
+
         }
 
         /// <summary>
