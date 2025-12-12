@@ -13,7 +13,7 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="180"/>
+            <ColumnDefinition Width="200"/>
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
@@ -32,16 +32,19 @@
                 <TextBlock Width="50" Text="スロット1"/>
                 <ComboBox ItemsSource="{Binding SlotSizeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding Slot1.Value}" Width="40" SelectedIndex="0"/>
                 <ComboBox ItemsSource="{Binding SlotTypeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding SlotType1.Value}" Width="70" SelectedIndex="0"/>
+                <Button Content="クリア" Width="30" Command="{Binding ClearSlot1Command}"></Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Width="50" Text="スロット2"/>
                 <ComboBox ItemsSource="{Binding SlotSizeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding Slot2.Value}" Width="40" SelectedIndex="0"/>
                 <ComboBox ItemsSource="{Binding SlotTypeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding SlotType2.Value}" Width="70" SelectedIndex="0"/>
+                <Button Content="クリア" Width="30" Command="{Binding ClearSlot2Command}"></Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Width="50" Text="スロット3"/>
                 <ComboBox ItemsSource="{Binding SlotSizeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding Slot3.Value}" Width="40" SelectedIndex="0"/>
                 <ComboBox ItemsSource="{Binding SlotTypeMaster.Value, Mode=OneWay}"  SelectedItem="{Binding SlotType3.Value}" Width="70" SelectedIndex="0"/>
+                <Button Content="クリア" Width="30" Command="{Binding ClearSlot3Command}"></Button>
             </StackPanel>
             <Button x:Name="charmAddButton" Content="登録する" Command="{Binding AddCharmCommand}" />
         </StackPanel>

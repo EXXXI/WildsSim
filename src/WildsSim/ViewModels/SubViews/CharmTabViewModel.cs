@@ -83,6 +83,21 @@ namespace WildsSim.ViewModels.SubViews
         public ReactiveCommand AddCharmCommand { get; } = new ReactiveCommand();
 
         /// <summary>
+        /// スロット1クリアコマンド
+        /// </summary>
+        public ReactiveCommand ClearSlot1Command { get; } = new ReactiveCommand();
+
+        /// <summary>
+        /// スロット2クリアコマンド
+        /// </summary>
+        public ReactiveCommand ClearSlot2Command { get; } = new ReactiveCommand();
+
+        /// <summary>
+        /// スロット3クリアコマンド
+        /// </summary>
+        public ReactiveCommand ClearSlot3Command { get; } = new ReactiveCommand();
+
+        /// <summary>
         /// ドラッグコマンド
         /// </summary>
         public ReactiveCommand RowChangedCommand { get; private set; } = new();
@@ -118,6 +133,9 @@ namespace WildsSim.ViewModels.SubViews
             // コマンドを設定
             AddCharmCommand.Subscribe(_ => AddCharm());
             RowChangedCommand.Subscribe(indexpair => RowChanged(indexpair as (int, int)?));
+            ClearSlot1Command.Subscribe(_ => ClearSlot(1));
+            ClearSlot2Command.Subscribe(_ => ClearSlot(2));
+            ClearSlot3Command.Subscribe(_ => ClearSlot(3));
         }
 
         /// <summary>
@@ -257,6 +275,31 @@ namespace WildsSim.ViewModels.SubViews
 
             // ログ表示
             SetStatusBar("護石削除完了：" + charm.DispName);
+        }
+
+        /// <summary>
+        /// スロット入力をクリア
+        /// </summary>
+        /// <param name="no">クリア対象</param>
+        private void ClearSlot(int no)
+        {
+            switch (no)
+            {
+                case 1:
+                    Slot1.Value = "0";
+                    SlotType1.Value = "防具用";
+                    break;
+                case 2:
+                    Slot2.Value = "0";
+                    SlotType2.Value = "防具用";
+                    break;
+                case 3:
+                    Slot3.Value = "0";
+                    SlotType3.Value = "防具用";
+                    break;
+                default:
+                    break;
+            }
         }
 
         /// <summary>
