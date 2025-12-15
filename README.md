@@ -12,7 +12,7 @@ alpha版は上記を承知の上でTU4環境のシミュを行いたい方のみ
 
 安定動作を求める方はTU4対応の正式版ができるまで、20251115.0.1版をご利用ください。
 
-どちらも[releases](./releases)の画面から入手できます。
+どちらも[releases](https://github.com/EXXXI/WildsSim/releases)の画面から入手できます。
 
 ### TU4向けalpha版の仕様について
 
