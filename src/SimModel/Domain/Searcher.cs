@@ -436,7 +436,10 @@ namespace SimModel.Domain
             // 除外固定データ
             foreach (var clude in Masters.Cludes)
             {
-                Constraints[CludeRowPrefix + clude.Name].SetCoefficient(Variables[EquipColPrefix + clude.Name], 1);
+                if(Constraints.ContainsKey(CludeRowPrefix + clude.Name) && Variables.ContainsKey(EquipColPrefix + clude.Name))
+                {
+                    Constraints[CludeRowPrefix + clude.Name].SetCoefficient(Variables[EquipColPrefix + clude.Name], 1);
+                }
             }
         }
 
