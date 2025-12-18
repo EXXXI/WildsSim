@@ -182,6 +182,8 @@ namespace WildsSim.ViewModels
             CharmTabVM.Value.LoadEquipsForCharm();
             // アーティア画面用のVMの設定
             ArtianTabVM.Value.LoadEquipsForArtian();
+            // スキル選択画面用のVMの設定
+            SkillSelectTabVM.Value.LoadEquipsForArtian();
         }
 
         /// <summary>

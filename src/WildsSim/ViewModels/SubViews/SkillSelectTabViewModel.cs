@@ -14,6 +14,7 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Automation;
+using WildsSim.ViewModels.BindableWrapper;
 
 namespace WildsSim.ViewModels.SubViews
 {
@@ -171,7 +172,7 @@ namespace WildsSim.ViewModels.SubViews
         /// <summary>
         /// 武器の選択肢
         /// </summary>
-        public ReactivePropertySlim<ObservableCollection<string>> Weapons { get; } = new();
+        public ReactivePropertySlim<ObservableCollection<ComboItemViewModel<string>>> Weapons { get; } = new();
 
         /// <summary>
         /// 選択中武器
@@ -372,7 +373,7 @@ namespace WildsSim.ViewModels.SubViews
                 vm.ClearAll();
             }
             // TODO: 各プルダウンの初期化がちょっと雑な指定なので時間があれば再検討
-            SelectedWeapon.Value = Weapons.Value[0];
+            SelectedWeapon.Value = Weapons.Value[0].Value;
             SelectedWeaponType.Value = WeaponTypes.Value[0];
             CalcWeapon.Value = CalcWeaponMaster.Value[0];
             MinAttack.Value = string.Empty;
@@ -562,14 +563,19 @@ namespace WildsSim.ViewModels.SubViews
         /// <summary>
         /// 武器種の選択をもとに、武器一覧を切り替える
         /// </summary>
-        private void ChangeWeapons()
+        private void ChangeWeapons(bool holdSelection = false)
         {
-            string selected = SelectedWeaponType.Value;
-            ObservableCollection<string> weapons = new();
-            weapons.Add(SearchWeaponString);
-            weapons.AddRange(Masters.Weapons.Where(w => w.WeaponType.ToString() == selected).Select(w => w.Name).ToList());
+            string selectedType = SelectedWeaponType.Value;
+            string selectedWeaponName = SelectedWeapon.Value;
+            ObservableCollection<ComboItemViewModel<string>> weapons = new();
+            weapons.Add(new(SearchWeaponString, SearchWeaponString));
+            weapons.AddRange(Masters.Weapons.Union(Masters.Artians).Where(w => w.WeaponType.ToString() == selectedType).Select(w => new ComboItemViewModel<string>(w.Name, w.DispName)).ToList());
             Weapons.Value = weapons;
-            SelectedWeapon.Value = weapons[0];
+            if (!holdSelection || !weapons.Any(w => w.Value == selectedWeaponName))
+            {
+                SelectedWeapon.Value = weapons[0].Value;
+
+            }
             ChangeShowAttackCond();
         }
 
@@ -645,6 +651,15 @@ namespace WildsSim.ViewModels.SubViews
 
             return condition;
         }
+
+        /// <summary>
+        /// 装備関係のマスタ情報をVMにロード
+        /// </summary>
+        internal void LoadEquipsForArtian()
+        {
+            ChangeWeapons();
+        }
+
 
         /// <summary>
         /// int.Parseを実施

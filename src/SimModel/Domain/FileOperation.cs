@@ -926,7 +926,7 @@ namespace SimModel.Domain
                 bodyStrings.Add(artian.DispName.ToString());
                 for (int i = 0; i < LogicConfig.Instance.ArtianSkillCount; i++)
                 {
-                    bodyStrings.Add(artian.Skills.Count > i ? artian.Skills[i].Name : string.Empty);
+                    bodyStrings.Add(artian.Skills.Count > i ? artian.Skills[i].Name ?? string.Empty : string.Empty);
                     bodyStrings.Add(artian.Skills.Count > i ? artian.Skills[i].Level.ToString() : string.Empty);
                 }
                 bodyStrings.Add(artian.Name);
