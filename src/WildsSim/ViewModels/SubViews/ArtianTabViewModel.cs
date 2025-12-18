@@ -104,9 +104,12 @@ namespace WildsSim.ViewModels.SubViews
             List<Skill> skills = new List<Skill>();
             foreach (var vm in ArtianSkillSelectorVMs.Value)
             {
-                string skill = vm.SkillName.Value;
-                int level = vm.SkillLevel.Value;
-                skills.Add(new Skill(skill, level));
+                if (Masters.Skills.Any(s => s.Name == vm.SkillName.Value))
+                {
+                    string skill = vm.SkillName.Value;
+                    int level = vm.SkillLevel.Value;
+                    skills.Add(new Skill(skill, level));
+                }
             }
             artian.Skills = skills;
 
