@@ -571,10 +571,13 @@ namespace WildsSim.ViewModels.SubViews
             weapons.Add(new(SearchWeaponString, SearchWeaponString));
             weapons.AddRange(Masters.Weapons.Union(Masters.Artians).Where(w => w.WeaponType.ToString() == selectedType).Select(w => new ComboItemViewModel<string>(w.Name, w.DispName)).ToList());
             Weapons.Value = weapons;
-            if (!holdSelection || !weapons.Any(w => w.Value == selectedWeaponName))
+            if (holdSelection && weapons.Any(w => w.Value == selectedWeaponName))
+            {
+                SelectedWeapon.Value = selectedWeaponName;
+            }
+            else
             {
                 SelectedWeapon.Value = weapons[0].Value;
-
             }
             ChangeShowAttackCond();
         }
@@ -657,7 +660,7 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         internal void LoadEquipsForArtian()
         {
-            ChangeWeapons();
+            ChangeWeapons(true);
         }
 
 
