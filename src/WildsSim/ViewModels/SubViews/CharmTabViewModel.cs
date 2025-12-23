@@ -224,7 +224,7 @@ namespace WildsSim.ViewModels.SubViews
         /// <param name="indexpair">(int dropIndex, int targetIndex)</param>
         private void RowChanged((int dropIndex, int targetIndex)? indexpair)
         {
-            if (indexpair != null)
+            if (indexpair != null && indexpair.Value.dropIndex >= 0 && indexpair.Value.targetIndex >= 0)
             {
                 Charms.Value.Move(indexpair.Value.dropIndex, indexpair.Value.targetIndex);
                 Simulator.MoveCharm(indexpair.Value.dropIndex, indexpair.Value.targetIndex);
