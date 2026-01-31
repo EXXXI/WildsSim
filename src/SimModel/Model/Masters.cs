@@ -144,5 +144,35 @@ namespace SimModel.Model
             }
             return 0;
         }
+
+        /// <summary>
+        /// 護石の下位互換検出
+        /// </summary>
+        public static void CalcLowerCharm()
+        {
+            foreach (var charm in AdditionalCharms)
+            {
+                charm.Upper = null;
+                foreach (var other in AdditionalCharms)
+                {
+                    if (charm == other)
+                    {
+                        continue;
+                    }
+                    if (Equipment.IsLeftUpper(other, charm, true))
+                    {
+                        if (Equipment.IsLeftUpper(charm, other, true))
+                        {
+                            charm.Upper = (other, false);
+                        }
+                        else
+                        {
+                            charm.Upper = (other, true);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

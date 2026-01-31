@@ -12,6 +12,11 @@ namespace WildsSim.ViewModels.BindableWrapper
     internal class BindableCharm : BindableEquipment
     {
         /// <summary>
+        /// 上位互換に関する説明
+        /// </summary>
+        public ReactivePropertySlim<string> UpperDesc { get; set; } = new(string.Empty);
+
+        /// <summary>
         /// 護石を削除するコマンド
         /// </summary>
         public ReactiveCommand DeleteCommand { get; } = new ReactiveCommand();
@@ -26,6 +31,19 @@ namespace WildsSim.ViewModels.BindableWrapper
             if (original.Kind != EquipKind.charm)
             {
                 throw new ArgumentException("護石以外の装備が護石として登録されています");
+            }
+
+            if (original.Upper != null)
+            {
+                (Equipment upper, bool isFullUpper) = original.Upper.Value;
+                if (isFullUpper)
+                {
+                    UpperDesc.Value = "上位互換の護石が存在します：" + upper.DispName;
+                }
+                else
+                {
+                    UpperDesc.Value = "同値の護石が存在します：" + upper.DispName;
+                }
             }
 
             DeleteCommand.Subscribe(() => Delete());

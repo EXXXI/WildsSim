@@ -89,7 +89,6 @@ namespace SimModel.Domain
             }
 
             // どの防具・護石・武器にも存在しないスキルの場合除外
-            // TODO: AdditionalCharms実装後、要見直し
             var equips = Masters.Weapons.Union(Masters.Heads).Union(Masters.Bodys).Union(Masters.Arms)
                 .Union(Masters.Waists).Union(Masters.Legs).Union(Masters.Charms).Union(Masters.Decos);
             Masters.Skills = Masters.Skills.Where(skill =>
@@ -839,6 +838,9 @@ namespace SimModel.Domain
 
                 Masters.AdditionalCharms.Add(charm);
             }
+
+            // 下位互換の計算
+            Masters.CalcLowerCharm();
 
             // GUIDの反映のためSaveが必要だが、マイセット読み込み後に実施するためここでは行わない
             // SaveAdditionalCharmCSV();

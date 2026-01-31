@@ -415,6 +415,9 @@ namespace SimModel.Domain
             // 追加
             Masters.AdditionalCharms.Add(charm);
 
+            // 下位互換の再計算
+            Masters.CalcLowerCharm();
+
             // マスタへ反映
             FileOperation.SaveAdditionalCharmCSV();
         }
@@ -444,6 +447,9 @@ namespace SimModel.Domain
 
             // 削除
             Masters.AdditionalCharms.Remove(charm);
+
+            // 下位互換の再計算
+            Masters.CalcLowerCharm();
 
             // マスタへ反映
             FileOperation.SaveAdditionalCharmCSV();

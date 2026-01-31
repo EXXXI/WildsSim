@@ -60,6 +60,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
+                <DataGridTextColumn Header="" Binding="{Binding UpperDesc.Value, Mode=OneWay}" />
             </DataGrid.Columns>
         </ctrl:RowDraggableDataGrid>
     </Grid>
