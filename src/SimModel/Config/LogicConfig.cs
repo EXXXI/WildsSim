@@ -55,6 +55,11 @@ namespace SimModel.Config
         public bool AllowUnavailableEquipments { get; set; }
 
         /// <summary>
+        /// 下位互換護石の検出有無
+        /// </summary>
+        public bool UseCalcUpperCharm { get; set; }
+
+        /// <summary>
         /// アーティアのスキル数
         /// (現状2固定としてファイルへの外出しはしない)
         /// </summary>
@@ -81,6 +86,7 @@ namespace SimModel.Config
                 MaxCharmSkillCount = ParseUtil.LoadConfigItem(line, @"追加護石のスキル最大個数", 3);
                 MaxDegreeOfParallelism = ParseUtil.LoadConfigItem(line, @"最大並列処理数", 4);
                 AllowUnavailableEquipments = ParseUtil.LoadConfigItem(line, @"入手不可装備の利用有無", false);
+                UseCalcUpperCharm = ParseUtil.LoadConfigItem(line, @"下位互換護石の検出有無", true); 
             }
         }
 

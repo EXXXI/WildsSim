@@ -315,7 +315,7 @@ namespace SimModel.Service
                         continue;
                     }
                     // 上位互換の護石があるか確認
-                    if (IsLeftUpperCharm(left.Charm, right.Charm))
+                    if (Equipment.IsLeftUpper(left.Charm, right.Charm))
                     {
                         hasUpper = true;
                         break;
@@ -330,110 +330,6 @@ namespace SimModel.Service
             return filtered;
         }
 
-        /// <summary>
-        /// 第一引数の護石が第二引数の護石の上位互換の場合true
-        /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
-        /// <returns></returns>
-        private bool IsLeftUpperCharm(Equipment left, Equipment right)
-        {
-            // スキルチェック
-            foreach (var skill in right.Skills)
-            {
-                if (!left.Skills.Any(s => s.Name == skill.Name) ||
-                    left.Skills.Any(s => s.Name == skill.Name && s.Level < skill.Level))
-                {
-                    return false;
-                }
-            }
-
-            // スロット整理
-            int[] wSlotDataLeft = [0, 0, 0, 0];
-            int[] aSlotDataLeft = [0, 0, 0, 0];
-            for (int i = 0; i < left.Slot1; i++)
-            {
-                if (left.SlotType1 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            for (int i = 0; i < left.Slot2; i++)
-            {
-                if (left.SlotType2 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            for (int i = 0; i < left.Slot3; i++)
-            {
-                if (left.SlotType3 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            int[] wSlotDataRight = [0, 0, 0, 0];
-            int[] aSlotDataRight = [0, 0, 0, 0];
-            for (int i = 0; i < right.Slot1; i++)
-            {
-                if (right.SlotType1 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-            for (int i = 0; i < right.Slot2; i++)
-            {
-                if (right.SlotType2 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-            for (int i = 0; i < right.Slot3; i++)
-            {
-                if (right.SlotType3 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-
-            // スロットチェック
-            for (int i = 0; i < 4; i++)
-            {
-                if (wSlotDataLeft[i] < wSlotDataRight[i])
-                {
-                    return false;
-                }
-                if (aSlotDataLeft[i] < aSlotDataRight[i])
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
 
         /// <summary>
         /// 除外装備登録

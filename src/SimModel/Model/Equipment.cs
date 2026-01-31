@@ -1,6 +1,7 @@
 ﻿using SimModel.Config;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
@@ -163,6 +164,12 @@ namespace SimModel.Model
         /// 仮想装備フラグ(理論値護石・アーティア)
         /// </summary>
         public bool IsVirtual { get; set; } = false;
+
+        /// <summary>
+        /// 護石用：上位互換確認結果
+        /// タプルの第一引数：装備情報、第二引数：同値の場合false、上位互換でtrue
+        /// </summary>
+        public (Equipment, bool)? Upper { get; set; } = null;
 
         /// <summary>
         /// デフォルトコンストラクタ
@@ -433,6 +440,146 @@ namespace SimModel.Model
                         Kind == EquipKind.leg) &&
                        (Rare == 5 || Rare == 6);
             }
+        }
+
+        /// <summary>
+        /// 第一引数の防具が第二引数の防具の上位互換の場合true
+        /// 護石比較用
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <param name="useDecos">装飾品を考慮する場合true</param>
+        /// <returns></returns>
+        static public bool IsLeftUpper(Equipment left, Equipment right, bool useDecos = false)
+        {
+            // スキルチェック
+            List<Skill> shortageSkills = new();
+            foreach (var skill in right.Skills)
+            {
+                if (!left.Skills.Any(s => s.Name == skill.Name))
+                {
+                    shortageSkills.Add(skill);
+                }
+                else if (left.Skills.First(s => s.Name == skill.Name).Level < skill.Level)
+                {
+                    shortageSkills.Add(new Skill(skill.Name, skill.Level - left.Skills.First(s => s.Name == skill.Name).Level));
+                }
+            }
+            if (!useDecos && shortageSkills.Count > 0)
+            {
+                return false;
+            }
+
+            // 足りないスキルに必要な装飾品を整理
+            int[] wSlotShortageData = [0, 0, 0, 0];
+            int[] aSlotShortageData = [0, 0, 0, 0];
+            foreach (var skill in shortageSkills)
+            {
+                Deco? deco = Masters.Decos.Where(d => d.Skills.Any(s => s.Name == skill.Name) && (d.SlotType1 == 0 || d.Slot1 == 1)).FirstOrDefault();
+                if (deco == null)
+                {
+                    // 必要な装飾品が存在しない場合、上位互換ではない
+                    return false;
+                }
+                // スロット整理
+                for (int i = 0; i < deco.Slot1; i++)
+                {
+                    if (deco.SlotType1 == 1)
+                    {
+                        wSlotShortageData[i] += skill.Level;
+                    }
+                    else
+                    {
+                        aSlotShortageData[i] += skill.Level;
+                    }
+                }
+            }
+
+            // スロット整理
+            int[] wSlotDataLeft = [0, 0, 0, 0];
+            int[] aSlotDataLeft = [0, 0, 0, 0];
+            for (int i = 0; i < left.Slot1; i++)
+            {
+                if (left.SlotType1 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            for (int i = 0; i < left.Slot2; i++)
+            {
+                if (left.SlotType2 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            for (int i = 0; i < left.Slot3; i++)
+            {
+                if (left.SlotType3 == 1)
+                {
+                    wSlotDataLeft[i]++;
+                }
+                else
+                {
+                    aSlotDataLeft[i]++;
+                }
+            }
+            int[] wSlotDataRight = [0, 0, 0, 0];
+            int[] aSlotDataRight = [0, 0, 0, 0];
+            for (int i = 0; i < right.Slot1; i++)
+            {
+                if (right.SlotType1 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+            for (int i = 0; i < right.Slot2; i++)
+            {
+                if (right.SlotType2 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+            for (int i = 0; i < right.Slot3; i++)
+            {
+                if (right.SlotType3 == 1)
+                {
+                    wSlotDataRight[i]++;
+                }
+                else
+                {
+                    aSlotDataRight[i]++;
+                }
+            }
+
+            // スロットチェック
+            for (int i = 0; i < 4; i++)
+            {
+                if (wSlotDataLeft[i] < wSlotDataRight[i] + wSlotShortageData[i])
+                {
+                    return false;
+                }
+                if (aSlotDataLeft[i] < aSlotDataRight[i] + aSlotShortageData[i])
+                {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }
