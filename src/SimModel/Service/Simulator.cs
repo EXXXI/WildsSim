@@ -538,37 +538,6 @@ namespace SimModel.Service
         }
 
         /// <summary>
-        /// 護石の下位互換検出
-        /// </summary>
-        public void CalcLowerCharm()
-        {
-            foreach (var charm in Masters.AdditionalCharms)
-            {
-                charm.Upper = null;
-                foreach (var other in Masters.AdditionalCharms)
-                {
-                    if (charm == other)
-                    {
-                        continue;
-                    }
-                    if (Equipment.IsLeftUpper(other, charm))
-                    {
-                        if (Equipment.IsLeftUpper(charm, other))
-                        {
-                            charm.Upper = (other, false);
-                        }
-                        else
-                        {
-                            charm.Upper = (other, true);
-                            break;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// アーティア登録
         /// </summary>
         /// <param name="artian">登録対象</param>

@@ -150,6 +150,11 @@ namespace SimModel.Model
         /// </summary>
         public static void CalcLowerCharm()
         {
+            if (!Config.LogicConfig.Instance.UseCalcUpperCharm)
+            {
+                return;
+            }
+
             foreach (var charm in AdditionalCharms)
             {
                 charm.Upper = null;
