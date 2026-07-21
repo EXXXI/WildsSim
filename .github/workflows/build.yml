@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore src/WildsSim.sln
+
+      - name: Build
+        run: dotnet build src/WildsSim.sln -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish src/WildsSim/WildsSim.csproj -c Release --no-restore --no-self-contained -o publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WildsSim-${{ github.sha }}
+          path: publish
+          if-no-files-found: error
