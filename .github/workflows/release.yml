@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version suffix (X.X). Release title becomes YYYYMMDD.X.X'
+        description: 'Version suffix (X.X or YYYYMMDD.X.X). If X.X is provided, Release title becomes YYYYMMDD.X.X'
         required: true
         default: '0.1'
         type: string
@@ -29,9 +29,14 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          $jst = [System.TimeZoneInfo]::FindSystemTimeZoneById('Tokyo Standard Time')
-          $now = [System.TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow, $jst)
-          $version = "$($now.ToString('yyyyMMdd')).${{ inputs.version }}"
+          $version_parts_count = ("${{ inputs.version }}" -split '\.' | Measure-Object).Count
+          if ($version_parts_count -lt 3) {
+            $jst = [System.TimeZoneInfo]::FindSystemTimeZoneById('Tokyo Standard Time')
+            $now = [System.TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow, $jst)
+            $version = "$($now.ToString('yyyyMMdd')).${{ inputs.version }}"
+          } else {
+            $version = "${{ inputs.version }}"
+          }
           "version=$version" >> $env:GITHUB_OUTPUT
           Write-Host "version=$version"
 
