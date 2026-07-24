@@ -43,7 +43,7 @@ jobs:
       - name: Restore
         run: dotnet restore src/WildsSim.sln
 
-      - name: Publish (win-x64, self-contained)
+      - name: Publish (win-x64, no-self-contained)
         run: >
           dotnet publish src/WildsSim/WildsSim.csproj
           -c Release -r win-x64 --no-self-contained
