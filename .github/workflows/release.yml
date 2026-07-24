@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version suffix (X.X). Release title becomes YYYYMMDD.X.X'
+        required: true
+        default: '0.1'
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set version
+        id: ver
+        shell: pwsh
+        run: |
+          $jst = [System.TimeZoneInfo]::FindSystemTimeZoneById('Tokyo Standard Time')
+          $now = [System.TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow, $jst)
+          $version = "$($now.ToString('yyyyMMdd')).${{ inputs.version }}"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "version=$version"
+
+      - name: Restore
+        run: dotnet restore src/WildsSim.sln
+
+      - name: Publish (win-x64, self-contained)
+        run: >
+          dotnet publish src/WildsSim/WildsSim.csproj
+          -c Release -r win-x64 --self-contained true
+          -o publish
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path publish/* -DestinationPath "WildsSim-${{ steps.ver.outputs.version }}.zip"
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: ${{ steps.ver.outputs.version }}
+          tag_name: ${{ steps.ver.outputs.version }}
+          files: WildsSim-${{ steps.ver.outputs.version }}.zip
