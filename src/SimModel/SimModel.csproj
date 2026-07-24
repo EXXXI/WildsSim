@@ -26,6 +26,7 @@
   <ItemGroup>
     <PackageReference Include="Csv" Version="2.0.128" />
     <PackageReference Include="Google.OrTools" Version="9.12.4544" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
 	<PackageReference Include="NLog" Version="5.4.0" />
 	<PackageReference Include="ReactiveProperty" Version="9.7.0" />
   </ItemGroup>
