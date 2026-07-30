@@ -1,4 +1,5 @@
-﻿using Prism.Mvvm;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Prism.Mvvm;
 using Reactive.Bindings;
 using SimModel.Service;
 using System.Reactive.Linq;
@@ -119,8 +120,7 @@ namespace WildsSim.ViewModels
             Instance = this;
 
             // シミュ本体のインスタンス化
-            Simulator = new Simulator();
-            Simulator.LoadData();
+            Simulator = App.ServiceProvider.GetRequiredService<Simulator>();
 
             // ビジー状態のプロパティを紐づけ
             IsFree = IsBusy.Select(x => !x).ToReadOnlyReactivePropertySlim();

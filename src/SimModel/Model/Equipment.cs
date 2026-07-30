@@ -448,9 +448,9 @@ namespace SimModel.Model
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
-        /// <param name="useDecos">装飾品を考慮する場合true</param>
+        /// <param name="decos">装飾品を考慮する場合装飾品リストを渡す</param>
         /// <returns></returns>
-        static public bool IsLeftUpper(Equipment left, Equipment right, bool useDecos = false)
+        static public bool IsLeftUpper(Equipment left, Equipment right, List<Deco>? decos = null)
         {
             // スキルチェック
             List<Skill> shortageSkills = new();
@@ -465,17 +465,24 @@ namespace SimModel.Model
                     shortageSkills.Add(new Skill(skill.Name, skill.Level - left.Skills.First(s => s.Name == skill.Name).Level));
                 }
             }
-            if (!useDecos && shortageSkills.Count > 0)
+            if (shortageSkills.Count == 0)
             {
+                // 不足スキルがないので、上位互換である
+                return true;
+            }
+            if (decos == null)
+            {
+                // 装飾品を考慮しない場合、不足スキルがある時点で上位互換ではない
                 return false;
             }
 
+            // 装飾品調査
             // 足りないスキルに必要な装飾品を整理
             int[] wSlotShortageData = [0, 0, 0, 0];
             int[] aSlotShortageData = [0, 0, 0, 0];
             foreach (var skill in shortageSkills)
             {
-                Deco? deco = Masters.Decos.Where(d => d.Skills.Any(s => s.Name == skill.Name) && (d.SlotType1 == 0 || d.Slot1 == 1)).FirstOrDefault();
+                Deco? deco = decos.Where(d => d.Skills.Any(s => s.Name == skill.Name) && (d.SlotType1 == 0 || d.Slot1 == 1)).FirstOrDefault();
                 if (deco == null)
                 {
                     // 必要な装飾品が存在しない場合、上位互換ではない

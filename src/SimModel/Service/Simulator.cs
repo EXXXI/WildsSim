@@ -38,33 +38,13 @@ namespace SimModel.Service
         /// </summary>
         public bool IsBestArtianSearch { get { return Searcher?.Condition?.IsBestArtianSearch ?? false; } }
 
-        /// <summary>
-        /// データ読み込み
-        /// </summary>
-        public void LoadData()
-        {
-            // マスタデータ類の読み込み
-            FileOperation.LoadDefUpgradeCSV();
-            FileOperation.LoadHeadCSV();
-            FileOperation.LoadBodyCSV();
-            FileOperation.LoadArmCSV();
-            FileOperation.LoadWaistCSV();
-            FileOperation.LoadLegCSV();
-            FileOperation.LoadCharmCSV();
-            FileOperation.LoadDecoCSV();
-            FileOperation.LoadWeaponCSV();
-            FileOperation.LoadSkillCSV();
-            FileOperation.LoadAdditionalCharmComboCSV();
-            FileOperation.LoadAdditionalCharmGroupCSV();
 
-            // セーブデータ類の読み込み
-            FileOperation.MakeSaveFolder();
-            FileOperation.LoadAdditionalCharmCSV();
-            FileOperation.LoadArtianCSV();
-            FileOperation.LoadCludeCSV();
-            FileOperation.LoadRecentSkillCSV();
-            FileOperation.LoadMyConditionCSV();
-            FileOperation.LoadMySetCSV();
+        private readonly DataManagement _dataManagement;
+
+        public Simulator(DataManagement dataManagement)
+        {
+            _dataManagement = dataManagement;
+            _dataManagement.LoadData();
         }
 
         /// <summary>
@@ -82,7 +62,8 @@ namespace SimModel.Service
             {
                 Searcher.Dispose();
             }
-            Searcher = new Searcher(condition);
+            SearchRange range = new(condition);
+            Searcher = new Searcher(condition, range);
             IsSearchedAll = Searcher.ExecSearch(limit);
 
             // 最近使ったスキル更新
@@ -128,6 +109,9 @@ namespace SimModel.Service
                 progress.Value = 0.0;
             }
 
+            // 検索範囲は変更しないのでここで1つだけ生成
+            SearchRange range = new(condition);
+
             // 全スキル全レベルを走査
             Parallel.ForEach(Masters.Skills,
                 new ParallelOptions
@@ -157,13 +141,18 @@ namespace SimModel.Service
                         if (isNewSkill)
                         {
                             // 頑張り度1で検索
-                            using Searcher exSearcher = new Searcher(exCondition);
+                            using Searcher exSearcher = new Searcher(exCondition, range);
                             exSearcher.ExecSearch(1);
 
                             // 1件でもヒットすれば追加スキル一覧に追加
                             if (exSearcher.ResultSets.Count > 0)
                             {
                                 subResult.Add(exSkill);
+                            }
+                            else
+                            {
+                                // ヒットしなかった場合、上位Lvは確認不要
+                                break;
                             }
                         }
                     }
@@ -221,17 +210,17 @@ namespace SimModel.Service
 
             // 検索対象の護石をリストアップ
             SearchCondition condition = Searcher.Condition;
-            List<Equipment> targetCharms = condition.MakeRelatedCharms();
+            List<Equipment> targetCharms = condition.MakeRelatedCharms(Masters.ShiningCharmCombos, Masters.ShiningCharmGroups);
 
-            // 護石の除外・固定を一時解除
-            List<Clude> charmCludes = new();
+
+            // 護石以外の除外固定設定を取得
+            List<Clude> cludesWithoutCharm = new();
             foreach (var clude in Masters.Cludes)
             {
                 Equipment equip = Masters.GetEquipByName(clude.Name);
-                if (equip.Kind == EquipKind.charm)
+                if (equip.Kind != EquipKind.charm)
                 {
-                    charmCludes.Add(clude);
-                    DataManagement.DeleteClude(clude.Name);
+                    cludesWithoutCharm.Add(clude);
                 }
             }
 
@@ -255,11 +244,13 @@ namespace SimModel.Service
                     // 検索条件をコピー
                     SearchCondition exCondition = new(Searcher.Condition);
 
-                    // 護石を検索条件に追加
-                    exCondition.FixCharm = targetCharm;
+                    // 護石を固定
+                    SearchRange range = new(exCondition);
+                    range.Charms = new List<Equipment> { targetCharm };
+                    range.Cludes = cludesWithoutCharm;
 
                     // 頑張り度1で検索
-                    using Searcher exSearcher = new Searcher(exCondition);
+                    using Searcher exSearcher = new Searcher(exCondition, range);
                     exSearcher.ExecSearch(1);
 
                     // 1件でもヒットすれば結果に追加
@@ -288,19 +279,6 @@ namespace SimModel.Service
                     }
                 }
             );
-
-            // 護石の除外・固定を戻す
-            foreach (var clude in charmCludes)
-            {
-                if (clude.Kind == CludeKind.exclude)
-                {
-                    DataManagement.AddExclude(clude.Name);
-                }
-                else
-                {
-                    DataManagement.AddInclude(clude.Name);
-                }
-            }
 
             // 下位互換の護石で済む場合削除
             List<EquipSet> filtered = new();
@@ -338,7 +316,7 @@ namespace SimModel.Service
         /// <returns>追加できた場合その設定、追加できなかった場合null</returns>
         public Clude? AddExclude(string name)
         {
-            return DataManagement.AddExclude(name);
+            return _dataManagement.AddExclude(name);
         }
 
         /// <summary>
@@ -348,7 +326,7 @@ namespace SimModel.Service
         /// <returns>追加できた場合その設定、追加できなかった場合null</returns>
         public Clude? AddInclude(string name)
         {
-            return DataManagement.AddInclude(name);
+            return _dataManagement.AddInclude(name);
         }
 
         /// <summary>
@@ -357,7 +335,7 @@ namespace SimModel.Service
         /// <param name="name">対象装備名</param>
         public void DeleteClude(string name)
         {
-            DataManagement.DeleteClude(name);
+            _dataManagement.DeleteClude(name);
         }
 
         /// <summary>
@@ -365,7 +343,7 @@ namespace SimModel.Service
         /// </summary>
         public void DeleteAllClude()
         {
-            DataManagement.DeleteAllClude();
+            _dataManagement.DeleteAllClude();
         }
 
         /// <summary>
@@ -373,7 +351,7 @@ namespace SimModel.Service
         /// </summary>
         public void DeleteAllArmorClude()
         {
-            DataManagement.DeleteAllArmorClude();
+            _dataManagement.DeleteAllArmorClude();
         }
 
         /// <summary>
@@ -381,7 +359,7 @@ namespace SimModel.Service
         /// </summary>
         public void DeleteAllWeaponClude()
         {
-            DataManagement.DeleteAllWeaponClude();
+            _dataManagement.DeleteAllWeaponClude();
         }
 
         // TODO: 現状未使用
@@ -391,7 +369,7 @@ namespace SimModel.Service
         /// <param name="rare">レア度</param>
         public void ExcludeByRare(int rare)
         {
-            DataManagement.ExcludeByRare(rare);
+            _dataManagement.ExcludeByRare(rare);
         }
 
         /// <summary>
@@ -401,7 +379,7 @@ namespace SimModel.Service
         /// <returns>登録セット</returns>
         public EquipSet? AddMySet(EquipSet set)
         {
-            return DataManagement.AddMySet(set);
+            return _dataManagement.AddMySet(set);
         }
 
         /// <summary>
@@ -410,7 +388,7 @@ namespace SimModel.Service
         /// <param name="set">削除対象</param>
         public void DeleteMySet(EquipSet set)
         {
-            DataManagement.DeleteMySet(set);
+            _dataManagement.DeleteMySet(set);
         }
 
         /// <summary>
@@ -418,15 +396,7 @@ namespace SimModel.Service
         /// </summary>
         public void SaveMySet()
         {
-            DataManagement.SaveMySet();
-        }
-
-        /// <summary>
-        /// マイセット再読み込み
-        /// </summary>
-        public void LoadMySet()
-        {
-            DataManagement.LoadMySet();
+            _dataManagement.SaveMySet();
         }
 
         /// <summary>
@@ -435,7 +405,7 @@ namespace SimModel.Service
         /// <param name="skills">検索で使ったスキル</param>
         public void UpdateRecentSkill(List<Skill> skills)
         {
-            DataManagement.UpdateRecentSkill(skills);
+            _dataManagement.UpdateRecentSkill(skills);
         }
 
         /// <summary>
@@ -468,7 +438,7 @@ namespace SimModel.Service
         /// <param name="condition">登録対象</param>
         public void AddMyCondition(SearchCondition condition)
         {
-            DataManagement.AddMyCondition(condition);
+            _dataManagement.AddMyCondition(condition);
         }
 
         /// <summary>
@@ -477,7 +447,7 @@ namespace SimModel.Service
         /// <param name="condition">削除対象</param>
         public void DeleteMyCondition(SearchCondition condition)
         {
-            DataManagement.DeleteMyCondition(condition);
+            _dataManagement.DeleteMyCondition(condition);
         }
 
         /// <summary>
@@ -486,7 +456,7 @@ namespace SimModel.Service
         /// <param name="condition">更新対象</param>
         public void UpdateMyCondition(SearchCondition condition)
         {
-            DataManagement.UpdateMyCondition(condition);
+            _dataManagement.UpdateMyCondition(condition);
         }
 
         /// <summary>
@@ -496,7 +466,7 @@ namespace SimModel.Service
         /// <param name="count">変更する値</param>
         public void SaveDecoCount(Deco deco, int count)
         {
-            DataManagement.SaveDecoCount(deco, count);
+            _dataManagement.SaveDecoCount(deco, count);
         }
 
         /// <summary>
@@ -506,7 +476,7 @@ namespace SimModel.Service
         /// <param name="targetIndex">入れ替え先</param>
         public void MoveMySet(int dropIndex, int targetIndex)
         {
-            DataManagement.MoveMySet(dropIndex, targetIndex);
+            _dataManagement.MoveMySet(dropIndex, targetIndex);
         }
 
         /// <summary>
@@ -515,7 +485,7 @@ namespace SimModel.Service
         /// <param name="charm">登録対象</param>
         public void AddCharm(Equipment charm)
         {
-            DataManagement.AddCharm(charm);
+            _dataManagement.AddCharm(charm);
         }
 
         /// <summary>
@@ -524,7 +494,7 @@ namespace SimModel.Service
         /// <param name="condition">削除対象</param>
         public void DeleteCharm(Equipment charm)
         {
-            DataManagement.DeleteCharm(charm);
+            _dataManagement.DeleteCharm(charm);
         }
 
         /// <summary>
@@ -534,7 +504,7 @@ namespace SimModel.Service
         /// <param name="targetIndex">入れ替え先</param>
         public void MoveCharm(int dropIndex, int targetIndex)
         {
-            DataManagement.MoveCharm(dropIndex, targetIndex);
+            _dataManagement.MoveCharm(dropIndex, targetIndex);
         }
 
         /// <summary>
@@ -543,7 +513,7 @@ namespace SimModel.Service
         /// <param name="artian">登録対象</param>
         public void AddArtian(Weapon artian)
         {
-            DataManagement.AddArtian(artian);
+            _dataManagement.AddArtian(artian);
         }
 
         /// <summary>
@@ -552,7 +522,7 @@ namespace SimModel.Service
         /// <param name="artian">削除対象</param>
         public void DeleteArtian(Weapon artian)
         {
-            DataManagement.DeleteArtian(artian);
+            _dataManagement.DeleteArtian(artian);
         }
 
         /// <summary>
@@ -562,7 +532,7 @@ namespace SimModel.Service
         /// <param name="targetIndex">入れ替え先</param>
         public void MoveArtian(int dropIndex, int targetIndex)
         {
-            DataManagement.MoveArtian(dropIndex, targetIndex);
+            _dataManagement.MoveArtian(dropIndex, targetIndex);
         }
     }
 }

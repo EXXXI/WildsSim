@@ -100,6 +100,34 @@ namespace SimModel.Model
         public static Dictionary<int, DefUpgrade> DefUpgrades { get; set; } = new();
 
         /// <summary>
+        /// 全装備キャッシュ
+        /// </summary>
+        private static IEnumerable<Equipment>? _allEquipments = null;
+        /// <summary>
+        /// 全装備
+        /// </summary>
+        public static IEnumerable<Equipment> AllEquipments { 
+            get 
+            {
+                if (_allEquipments == null)
+                {
+                    _allEquipments = Weapons.Union(Artians).Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos);
+                }
+                return _allEquipments;
+            }
+        }
+
+        /// <summary>
+        /// 全装備キャッシュをクリア
+        /// TODO: Artians、AdditionalCharmsの更新時に自動で呼び出される仕組みが望ましい
+        /// </summary>
+        public static void ClearAllEquipmentsCache()
+        {
+            _allEquipments = null;
+        }
+
+
+        /// <summary>
         /// 装備名から装備を取得
         /// </summary>
         /// <param name="equipName">装備名</param>
@@ -107,8 +135,7 @@ namespace SimModel.Model
         public static Equipment GetEquipByName(string equipName)
         {
             string? name = equipName?.Trim();
-            var equips = Weapons.Union(Artians).Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos);
-            return equips.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
+            return AllEquipments.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
         }
 
         /// <summary>
@@ -143,41 +170,6 @@ namespace SimModel.Model
                 }
             }
             return 0;
-        }
-
-        /// <summary>
-        /// 護石の下位互換検出
-        /// </summary>
-        public static void CalcLowerCharm()
-        {
-            if (!Config.LogicConfig.Instance.UseCalcUpperCharm)
-            {
-                return;
-            }
-
-            foreach (var charm in AdditionalCharms)
-            {
-                charm.Upper = null;
-                foreach (var other in AdditionalCharms)
-                {
-                    if (charm == other)
-                    {
-                        continue;
-                    }
-                    if (Equipment.IsLeftUpper(other, charm, true))
-                    {
-                        if (Equipment.IsLeftUpper(charm, other, true))
-                        {
-                            charm.Upper = (other, false);
-                        }
-                        else
-                        {
-                            charm.Upper = (other, true);
-                            break;
-                        }
-                    }
-                }
-            }
         }
     }
 }

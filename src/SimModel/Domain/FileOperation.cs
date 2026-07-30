@@ -1,6 +1,5 @@
 ﻿using Csv;
 using Google.OrTools.ConstraintSolver;
-using Google.Protobuf.Collections;
 using NLog;
 using SimModel.Config;
 using SimModel.Model;
@@ -9,19 +8,14 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Security.Claims;
-using System.Text;
 using System.Text.Json;
-using System.Xml.Linq;
-using static Google.Protobuf.WellKnownTypes.Field.Types;
-using static System.Reflection.Metadata.BlobBuilder;
 
 namespace SimModel.Domain
 {
     /// <summary>
     /// CSV・Json操作クラス
     /// </summary>
-    static internal class FileOperation
+    public class FileOperation
     {
         // 定数：ファイルパス
         private const string SkillCsv = "MHWilds_SKILL.csv";
@@ -51,16 +45,16 @@ namespace SimModel.Domain
         private const string SkillMasterHeaderCost = @"コスト";
         private const string SkillMasterHeaderSpecificName = @"発動スキル";
 
-        static Logger logger = LogManager.GetCurrentClassLogger();
+        static private Logger logger = LogManager.GetCurrentClassLogger();
 
         /// <summary>
         /// スキルマスタ読み込み
         /// </summary>
-        static internal void LoadSkillCSV()
+        internal List<Skill> LoadSkillCSV()
         {
             string csv = ReadAllText(SkillCsv);
 
-            Masters.Skills = CsvReader.ReadFromText(csv)
+            var skills = CsvReader.ReadFromText(csv)
                 .Select(line => new
                 {
                     Name = line[SkillMasterHeaderName],
@@ -84,24 +78,19 @@ namespace SimModel.Domain
                 .Where(x => !string.IsNullOrWhiteSpace(x.Specific));
             foreach (var item in hasSpecificNames)
             {
-                Skill skill = Masters.Skills.First(s => s.Name == item.Name);
+                Skill skill = skills.First(s => s.Name == item.Name);
                 skill.SpecificNames.Add(item.Level, item.Specific);
             }
 
-            // どの防具・護石・武器にも存在しないスキルの場合除外
-            var equips = Masters.Weapons.Union(Masters.Heads).Union(Masters.Bodys).Union(Masters.Arms)
-                .Union(Masters.Waists).Union(Masters.Legs).Union(Masters.Charms).Union(Masters.Decos);
-            Masters.Skills = Masters.Skills.Where(skill =>
-                equips.Any(e => e.Skills.Any(s => s.Name == skill.Name)))
-                .ToList();
+            return skills;
         }
 
         /// <summary>
         /// 武器マスタ読み込み
         /// </summary>
-        static internal void LoadWeaponCSV()
+        internal List<Weapon> LoadWeaponCSV()
         {
-            Masters.Weapons = new();
+            List<Weapon> weapons = new();
 
             // 汎用スロット作成
             int maxSize = LogicConfig.Instance.MaxSlotSize;
@@ -121,7 +110,7 @@ namespace SimModel.Domain
                             SlotType2 = 1,
                             SlotType3 = 1
                         };
-                        Masters.Weapons.Add(weapon);
+                        weapons.Add(weapon);
                     }
                 }
             }
@@ -165,62 +154,58 @@ namespace SimModel.Domain
                 }
                 weapon.Skills = skills;
 
-                Masters.Weapons.Add(weapon);
+                weapons.Add(weapon);
             }
+
+            return weapons;
         }
 
         /// <summary>
         /// 頭防具マスタ読み込み
         /// </summary>
-        static internal void LoadHeadCSV()
+        internal List<Equipment> LoadHeadCSV(Dictionary<int, DefUpgrade> defUpgrades)
         {
-            Masters.Heads = new();
-            LoadEquipCSV(HeadCsv, Masters.Heads, EquipKind.head);
+            return LoadEquipCSV(HeadCsv, EquipKind.head, defUpgrades);
         }
 
         /// <summary>
         /// 胴防具マスタ読み込み
         /// </summary>
-        static internal void LoadBodyCSV()
+        internal List<Equipment> LoadBodyCSV(Dictionary<int, DefUpgrade> defUpgrades)
         {
-            Masters.Bodys = new();
-            LoadEquipCSV(BodyCsv, Masters.Bodys, EquipKind.body);
+            return LoadEquipCSV(BodyCsv, EquipKind.body, defUpgrades);
         }
 
         /// <summary>
         /// 腕防具マスタ読み込み
         /// </summary>
-        static internal void LoadArmCSV()
+        internal List<Equipment> LoadArmCSV(Dictionary<int, DefUpgrade> defUpgrades)
         {
-            Masters.Arms = new();
-            LoadEquipCSV(ArmCsv, Masters.Arms, EquipKind.arm);
+            return LoadEquipCSV(ArmCsv, EquipKind.arm, defUpgrades);
         }
 
         /// <summary>
         /// 腰防具マスタ読み込み
         /// </summary>
-        static internal void LoadWaistCSV()
+        internal List<Equipment> LoadWaistCSV(Dictionary<int, DefUpgrade> defUpgrades)
         {
-            Masters.Waists = new();
-            LoadEquipCSV(WaistCsv, Masters.Waists, EquipKind.waist);
+            return LoadEquipCSV(WaistCsv, EquipKind.waist, defUpgrades);
         }
 
         /// <summary>
         /// 足防具マスタ読み込み
         /// </summary>
-        static internal void LoadLegCSV()
+        internal List<Equipment> LoadLegCSV(Dictionary<int, DefUpgrade> defUpgrades)
         {
-            Masters.Legs = new();
-            LoadEquipCSV(LegCsv, Masters.Legs, EquipKind.leg);
+            return LoadEquipCSV(LegCsv, EquipKind.leg, defUpgrades);
         }
 
         /// <summary>
         /// 護石マスタ読み込み
         /// </summary>
-        static internal void LoadCharmCSV()
+        internal List<Equipment> LoadCharmCSV()
         {
-            Masters.Charms = new();
-            LoadEquipCSV(CharmCsv, Masters.Charms, EquipKind.charm);
+            return LoadEquipCSV(CharmCsv, EquipKind.charm);
         }
 
         /// <summary>
@@ -229,8 +214,9 @@ namespace SimModel.Domain
         /// <param name="fileName">CSVファイル名</param>
         /// <param name="equipments">格納先</param>
         /// <param name="kind">部位</param>
-        static private void LoadEquipCSV(string fileName, List<Equipment> equipments, EquipKind kind)
+        private List<Equipment> LoadEquipCSV(string fileName, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
         {
+            List<Equipment> equips = new();
             string csv = ReadAllText(fileName);
             var x = CsvReader.ReadFromText(csv);
             foreach (ICsvLine line in x)
@@ -251,9 +237,9 @@ namespace SimModel.Domain
                     equip.Slot2 = ParseUtil.Parse(line[@"スロット2"]);
                     equip.Slot3 = ParseUtil.Parse(line[@"スロット3"]);
                     equip.Mindef = ParseUtil.Parse(line[@"初期防御力"]);
-                    int maxdef = CalcMaxdef(equip.Rare, equip.Mindef, equip.Kind);
+                    int maxdef = CalcMaxdef(equip.Rare, equip.Mindef, equip.Kind, defUpgrades);
                     equip.Maxdef = ParseUtil.Parse(line[@"最終防御力"], maxdef); // 指定がある場合指定を優先
-                    int transcendingDef = CalcTranscendingDef(equip.Rare, equip.Maxdef, equip.Kind);
+                    int transcendingDef = CalcTranscendingDef(equip.Rare, equip.Maxdef, equip.Kind, defUpgrades);
                     equip.TranscendingDef = transcendingDef;
                     equip.Fire = ParseUtil.Parse(line[@"火耐性"]);
                     equip.Water = ParseUtil.Parse(line[@"水耐性"]);
@@ -285,8 +271,9 @@ namespace SimModel.Domain
                 //    charm.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
                 //}
 
-                equipments.Add(equip);
+                equips.Add(equip);
             }
+            return equips;
         }
 
         /// <summary>
@@ -296,13 +283,13 @@ namespace SimModel.Domain
         /// <param name="mindef">最低防御力</param>
         /// <param name="kind">防具種類</param>
         /// <returns>レア度から算出した最大防御力</returns>
-        private static int CalcMaxdef(int rare, int mindef, EquipKind kind)
+        private int CalcMaxdef(int rare, int mindef, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
         {
-            if (kind == EquipKind.charm)
+            if (kind == EquipKind.charm || defUpgrades == null)
             {
                 return mindef;
             }
-            bool getted = Masters.DefUpgrades.TryGetValue(rare, out DefUpgrade? defUpgrade);
+            bool getted = defUpgrades.TryGetValue(rare, out DefUpgrade? defUpgrade);
             if (getted && defUpgrade != null)
             {
                 return mindef + defUpgrade.UpgradeDef;
@@ -317,13 +304,13 @@ namespace SimModel.Domain
         /// <param name="maxdef">最大防御力</param>
         /// <param name="kind">防具種類</param>
         /// <returns>レア度から算出した限界突破防御力</returns>
-        private static int CalcTranscendingDef(int rare, int maxdef, EquipKind kind)
+        private int CalcTranscendingDef(int rare, int maxdef, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
         {
-            if (kind == EquipKind.charm)
+            if (kind == EquipKind.charm || defUpgrades == null)
             {
                 return maxdef;
             }
-            bool getted = Masters.DefUpgrades.TryGetValue(rare, out DefUpgrade? defUpgrade);
+            bool getted = defUpgrades.TryGetValue(rare, out DefUpgrade? defUpgrade);
             if (getted && defUpgrade != null)
             {
                 return maxdef + defUpgrade.TranscendingDef;
@@ -334,9 +321,9 @@ namespace SimModel.Domain
         /// <summary>
         /// 装飾品マスタ読み込み
         /// </summary>
-        static internal void LoadDecoCSV()
+        internal List<Deco> LoadDecoCSV()
         {
-            Masters.Decos = new();
+            List<Deco> decos = new();
 
             string csv = ReadAllText(DecoCsv);
 
@@ -396,40 +383,44 @@ namespace SimModel.Domain
                     equip.DecoCateory = skills[0].Category;
                 }
 
-                Masters.Decos.Add(equip);
+                decos.Add(equip);
             }
             
-            LoadDecoCountJson();
+            decos = LoadDecoCountJson(decos);
+
+            return decos;
         }
 
         /// <summary>
         /// 装飾品所持数読み込み
         /// </summary>
-        private static void LoadDecoCountJson()
+        private List<Deco> LoadDecoCountJson(List<Deco> decos)
         {
             string json = ReadAllText(DecoCountJson);
             if (string.IsNullOrWhiteSpace(json))
             {
-                return;
+                return decos;
             }
 
             JsonSerializerOptions options = new();
             options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
             Dictionary<string, int>? decoCounts = JsonSerializer.Deserialize<Dictionary<string, int>>(json, options);
 
-            foreach (var deco in Masters.Decos)
+            foreach (var deco in decos)
             {
                 deco.DecoCount = decoCounts?.Where(dc => deco.Name == dc.Key).Select(dc => dc.Value).FirstOrDefault() ?? 0;
             }
+
+            return decos;
         }
 
         /// <summary>
         /// 装飾品所持数書き込み
         /// </summary>
-        public static void SaveDecoCountJson()
+        public void SaveDecoCountJson(List<Deco> decos)
         {
             Dictionary<string, int> data = new();
-            foreach (var deco in Masters.Decos)
+            foreach (var deco in decos)
             {
                 data.Add(deco.Name, deco.DecoCount);
             }
@@ -443,10 +434,10 @@ namespace SimModel.Domain
         /// <summary>
         /// 除外固定マスタ書き込み
         /// </summary>
-        static internal void SaveCludeCSV()
+        internal void SaveCludeCSV(List<Clude> cludes)
         {
             List<string[]> body = new List<string[]>();
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in cludes)
             {
                 string kind = "0";
                 if (clude.Kind.Equals(CludeKind.include))
@@ -464,9 +455,9 @@ namespace SimModel.Domain
         /// <summary>
         /// 除外固定マスタ読み込み
         /// </summary>
-        static internal void LoadCludeCSV()
+        internal List<Clude> LoadCludeCSV()
         {
-            Masters.Cludes = new();
+            List<Clude> cludes = new();
 
             string csv = ReadAllText(CludeCsv);
 
@@ -478,17 +469,18 @@ namespace SimModel.Domain
                     Kind = (CludeKind)ParseUtil.Parse(line[@"種別"])
                 };
 
-                Masters.Cludes.Add(clude);
+                cludes.Add(clude);
             }
+            return cludes;
         }
 
         /// <summary>
         /// マイセットマスタ書き込み
         /// </summary>
-        static internal void SaveMySetCSV()
+        internal void SaveMySetCSV(List<EquipSet> mySets)
         {
             List<string[]> body = new List<string[]>();
-            foreach (var set in Masters.MySets)
+            foreach (var set in mySets)
             {
                 body.Add(new string[] { set.Weapon.Name, set.Head.Name, set.Body.Name, set.Arm.Name, set.Waist.Name, set.Leg.Name, set.Charm.Name, set.DecoNameCSV, set.Name, set.IsTranscending ? "1" : "" });
             }
@@ -496,55 +488,98 @@ namespace SimModel.Domain
             string export = CsvWriter.WriteToText(header, body);
             File.WriteAllText(MySetCsv, export);
 
-            // マイセット利用状況の反映のため護石、アーティアを再書き込み
-            SaveAdditionalCharmCSV();
-            SaveArtianCSV();
+            // マイセット利用状況の反映のため護石、アーティアを再書き込みが必要だが、呼び出し側(DataManagement)で行うことにする
+            //SaveAdditionalCharmCSV();
+            //SaveArtianCSV();
         }
 
         /// <summary>
         /// マイセットマスタ読み込み
         /// </summary>
-        static internal void LoadMySetCSV()
+        internal List<EquipSet> LoadMySetCSV(IEnumerable<Equipment> equips)
         {
-            Masters.MySets = new();
+            List<EquipSet> mySets = new();
 
             string csv = ReadAllText(MySetCsv);
 
             foreach (ICsvLine line in CsvReader.ReadFromText(csv))
             {
                 EquipSet set = new EquipSet();
-                set.Weapon = Masters.GetEquipByName(line[@"武器"]) as Weapon ?? new();
-                set.Head = Masters.GetEquipByName(line[@"頭"]);
-                set.Body = Masters.GetEquipByName(line[@"胴"]);
-                set.Arm = Masters.GetEquipByName(line[@"腕"]);
-                set.Waist = Masters.GetEquipByName(line[@"腰"]);
-                set.Leg = Masters.GetEquipByName(line[@"足"]);
-                set.Charm = Masters.GetEquipByName(line[@"護石"]);
+                set.Weapon = GetEquipByName(line[@"武器"], equips) as Weapon ?? new();
+                set.Head = GetEquipByName(line[@"頭"], equips);
+                set.Body = GetEquipByName(line[@"胴"], equips);
+                set.Arm = GetEquipByName(line[@"腕"], equips);
+                set.Waist = GetEquipByName(line[@"腰"], equips);
+                set.Leg = GetEquipByName(line[@"足"], equips);
+                set.Charm = GetEquipByName(line[@"護石"], equips);
                 set.Head.Kind = EquipKind.head;
                 set.Body.Kind = EquipKind.body;
                 set.Arm.Kind = EquipKind.arm;
                 set.Waist.Kind = EquipKind.waist;
                 set.Leg.Kind = EquipKind.leg;
                 set.Charm.Kind = EquipKind.charm;
-                set.DecoNameCSV = line[@"装飾品"];
+                set.Decos = DecosFromCsv(line[@"装飾品"], equips);
+                set.SortDecos();
                 set.Name = line[@"名前"];
                 // 互換性のため、lineが"限界突破有無"を要素に持っていることを確認
                 set.IsTranscending = line.HasColumn(@"限界突破有無") && (line[@"限界突破有無"] == "1");
-                Masters.MySets.Add(set);
+                mySets.Add(set);
             }
 
-            // マイセット利用状況の反映のため護石を再書き込み
-            SaveAdditionalCharmCSV();
-            SaveArtianCSV();
+            return mySets;
         }
+
+        /// <summary>
+        /// 装飾品CSVから装飾品リストを作成
+        /// </summary>
+        /// <param name="decoCsv">装飾品CSV</param>
+        /// <param name="equips">装備一覧</param>
+        /// <returns>装飾品リスト</returns>
+        private List<Equipment> DecosFromCsv(string decoCsv, IEnumerable<Equipment> equips)
+        {
+            List<Equipment> decos = new();
+            string[] splitted = decoCsv.Split(',');
+            foreach (var decoName in splitted)
+            {
+                if (string.IsNullOrWhiteSpace(decoName))
+                {
+                    continue;
+                }
+                Equipment? deco = GetEquipByName(decoName, equips);
+                if (deco != null)
+                {
+                    decos.Add(deco);
+                }
+            }
+            return decos;
+        }
+
+        /// <summary>
+        /// 装備名から武器を取得
+        /// </summary>
+        /// <param name="name">装備名</param>
+        /// <param name="equips">装備一覧</param>
+        /// <returns>該当装備</returns>
+        private Equipment GetEquipByName(string name, IEnumerable<Equipment> equips)
+        {
+            Equipment? equip = equips.Where(equip => equip.Name == name.Trim()).FirstOrDefault();
+            if (equip == null)
+            {
+                equip = new();
+                equip.Name = name;
+            }
+            return equip;
+        }
+
+
 
         /// <summary>
         /// 最近使ったスキル書き込み
         /// </summary>
-        internal static void SaveRecentSkillCSV()
+        internal void SaveRecentSkillCSV(List<string> recentSkillNames)
         {
             List<string[]> body = new List<string[]>();
-            foreach (var name in Masters.RecentSkillNames)
+            foreach (var name in recentSkillNames)
             {
                 body.Add(new string[] { name });
             }
@@ -563,25 +598,26 @@ namespace SimModel.Domain
         /// <summary>
         /// 最近使ったスキル読み込み
         /// </summary>
-        internal static void LoadRecentSkillCSV()
+        internal List<string> LoadRecentSkillCSV()
         {
-            Masters.RecentSkillNames = new();
+            List<string> recentSkillNames = new();
 
             string csv = ReadAllText(RecentSkillCsv);
 
             foreach (ICsvLine line in CsvReader.ReadFromText(csv))
             {
-                Masters.RecentSkillNames.Add(line[@"スキル名"]);
+                recentSkillNames.Add(line[@"スキル名"]);
             }
+            return recentSkillNames;
         }
 
         /// <summary>
         /// マイ検索条件書き込み
         /// </summary>
-        internal static void SaveMyConditionCSV()
+        internal void SaveMyConditionCSV(List<SearchCondition> myConditions)
         {
             List<string[]> body = new();
-            foreach (var condition in Masters.MyConditions)
+            foreach (var condition in myConditions)
             {
                 List<string> bodyStrings = new();
                 bodyStrings.Add(condition.ID);
@@ -609,9 +645,9 @@ namespace SimModel.Domain
         /// <summary>
         /// マイ検索条件読み込み
         /// </summary>
-        internal static void LoadMyConditionCSV()
+        internal List<SearchCondition> LoadMyConditionCSV()
         {
-            Masters.MyConditions = new();
+            List<SearchCondition> myConditions = new();
 
             string csv = ReadAllText(ConditionCsv);
 
@@ -641,17 +677,18 @@ namespace SimModel.Domain
                 // 互換性のため、lineが"限界突破有無"を要素に持っていない場合、デフォルトで限界突破有りとする
                 condition.IsTranscending = (!line.HasColumn(@"限界突破有無")) || (line[@"限界突破有無"] == "1");
 
-                Masters.MyConditions.Add(condition);
+                myConditions.Add(condition);
             }
+            return myConditions;
         }
 
         /// <summary>
         /// 追加護石書き込み
         /// </summary>
-        internal static void SaveAdditionalCharmCSV()
+        internal void SaveAdditionalCharmCSV(List<Equipment> additionalCharms, List<EquipSet> mySets)
         {
             List<string[]> body = new();
-            foreach (var charm in Masters.AdditionalCharms)
+            foreach (var charm in additionalCharms)
             {
                 List<string> bodyStrings = new List<string>();
                 for (int i = 0; i < LogicConfig.Instance.MaxCharmSkillCount; i++)
@@ -710,7 +747,7 @@ namespace SimModel.Domain
                 bodyStrings.Add(charm.SlotType2.ToString());
                 bodyStrings.Add(charm.SlotType3.ToString());
                 bodyStrings.Add(charm.Name);
-                bodyStrings.Add(Masters.MySets.Where(set => charm.Name.Equals(set.Charm.Name)).Any() ? "マイセット登録中" : string.Empty);
+                bodyStrings.Add(mySets.Where(set => charm.Name.Equals(set.Charm.Name)).Any() ? "マイセット登録中" : string.Empty);
                 body.Add(bodyStrings.ToArray());
             }
 
@@ -743,9 +780,9 @@ namespace SimModel.Domain
         /// <summary>
         /// 追加護石読み込み
         /// </summary>
-        internal static void LoadAdditionalCharmCSV()
+        internal List<Equipment> LoadAdditionalCharmCSV()
         {
-            Masters.AdditionalCharms = new();
+            List<Equipment> additionalCharms = new();
             string csv = ReadAllText(AdditionalCharmCsv);
             var x = CsvReader.ReadFromText(csv);
             foreach (ICsvLine line in x)
@@ -836,22 +873,21 @@ namespace SimModel.Domain
 
                 charm.SetCharmDispName();
 
-                Masters.AdditionalCharms.Add(charm);
+                additionalCharms.Add(charm);
             }
-
-            // 下位互換の計算
-            Masters.CalcLowerCharm();
 
             // GUIDの反映のためSaveが必要だが、マイセット読み込み後に実施するためここでは行わない
             // SaveAdditionalCharmCSV();
+
+            return additionalCharms;
         }
 
         /// <summary>
         /// 護石検索用組み合わせ読み込み
         /// </summary>
-        internal static void LoadAdditionalCharmComboCSV()
+        internal List<CharmCombo> LoadAdditionalCharmComboCSV()
         {
-            Masters.ShiningCharmCombos = new();
+            List<CharmCombo> shiningCharmCombos = new();
             string csv = ReadAllText(ShiningCharmComboCsv);
             var x = CsvReader.ReadFromText(csv);
             foreach (ICsvLine line in x)
@@ -868,38 +904,42 @@ namespace SimModel.Domain
                 combo.SlotType2 = ParseUtil.Parse(line[@"スロット2タイプ"]);
                 combo.SlotType3 = ParseUtil.Parse(line[@"スロット3タイプ"]);
 
-                Masters.ShiningCharmCombos.Add(combo);
+                shiningCharmCombos.Add(combo);
             }
+
+            return shiningCharmCombos;
         }
 
         /// <summary>
         /// 護石検索用グループ情報読み込み
         /// </summary>
-        internal static void LoadAdditionalCharmGroupCSV()
+        internal Dictionary<int, List<Skill>> LoadAdditionalCharmGroupCSV()
         {
-            Masters.ShiningCharmGroups = new();
-            Masters.ShiningCharmGroups.Add(0, new());
+            Dictionary<int, List<Skill>> shiningCharmGroups = new();
+            shiningCharmGroups.Add(0, new());
             string csv = ReadAllText(ShiningCharmGroupCsv);
             var x = CsvReader.ReadFromText(csv);
             foreach (ICsvLine line in x)
             {
                 int group = ParseUtil.Parse(line[@"グループ"]);
-                if (!Masters.ShiningCharmGroups.ContainsKey(group))
+                if (!shiningCharmGroups.ContainsKey(group))
                 {
-                    Masters.ShiningCharmGroups.Add(group, new());
+                    shiningCharmGroups.Add(group, new());
                 }
-                List<Skill> groupSkills = Masters.ShiningCharmGroups[group];
+                List<Skill> groupSkills = shiningCharmGroups[group];
                 Skill skill = new Skill(line[@"スキル名"], ParseUtil.Parse(line[@"レベル"]));
                 groupSkills.Add(skill);
             }
+
+            return shiningCharmGroups;
         }
 
         /// <summary>
         /// 防御力強化差分読み込み
         /// </summary>
-        internal static void LoadDefUpgradeCSV()
+        internal Dictionary<int, DefUpgrade> LoadDefUpgradeCSV()
         {
-            Masters.DefUpgrades = new();
+            Dictionary<int,DefUpgrade> defUpgrades = new();
             string csv = ReadAllText(DefUpgradeCsv);
             var x = CsvReader.ReadFromText(csv);
             foreach (ICsvLine line in x)
@@ -909,18 +949,19 @@ namespace SimModel.Domain
                 int transcending = ParseUtil.Parse(line[@"限界突破強化"]);
                 if (rare != 0)
                 {
-                    Masters.DefUpgrades.Add(rare, new(upgrade, transcending));
+                    defUpgrades.Add(rare, new(upgrade, transcending));
                 }
             }
+            return defUpgrades;
         }
 
         /// <summary>
         /// アーティア書き込み
         /// </summary>
-        internal static void SaveArtianCSV()
+        internal void SaveArtianCSV(List<Weapon> artians, List<EquipSet> mySets)
         {
             List<string[]> body = new();
-            foreach (var artian in Masters.Artians)
+            foreach (var artian in artians)
             {
                 List<string> bodyStrings = new List<string>();
 
@@ -932,7 +973,7 @@ namespace SimModel.Domain
                     bodyStrings.Add(artian.Skills.Count > i ? artian.Skills[i].Level.ToString() : string.Empty);
                 }
                 bodyStrings.Add(artian.Name);
-                bodyStrings.Add(Masters.MySets.Where(set => artian.Name.Equals(set.Charm.Name)).Any() ? "マイセット登録中" : string.Empty);
+                bodyStrings.Add(mySets.Where(set => artian.Name.Equals(set.Charm.Name)).Any() ? "マイセット登録中" : string.Empty);
 
                 body.Add(bodyStrings.ToArray());
             }
@@ -956,9 +997,9 @@ namespace SimModel.Domain
         /// <summary>
         /// アーティア読み込み
         /// </summary>
-        static internal void LoadArtianCSV()
+        internal List<Weapon> LoadArtianCSV()
         {
-            Masters.Artians = new();
+            List<Weapon> artians = new();
 
             // csv読み込み
             string csv = ReadAllText(ArtianCsv);
@@ -995,11 +1036,12 @@ namespace SimModel.Domain
                 }
                 artian.Skills = skills;
 
-                Masters.Artians.Add(artian);
+                artians.Add(artian);
 
                 // GUIDの反映のためSaveが必要だが、マイセット読み込み後に実施するためここでは行わない
                 // SaveArtianCSV();
             }
+            return artians;
         }
 
         /// <summary>
@@ -1007,7 +1049,7 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="fileName">CSVファイル名</param>
         /// <returns>CSVの内容</returns>
-        static private string ReadAllText(string fileName)
+        private string ReadAllText(string fileName)
         {
             try
             {
@@ -1040,12 +1082,14 @@ namespace SimModel.Domain
         /// <summary>
         /// saveフォルダがなかったら作成する
         /// </summary>
-        internal static void MakeSaveFolder()
+        internal void MakeSaveFolder()
         {
             if (!System.IO.Directory.Exists(SaveFolder))
             {
                 Directory.CreateDirectory(SaveFolder);
             }
         }
+
+
     }
 }

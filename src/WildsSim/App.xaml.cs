@@ -3,6 +3,8 @@ using WildsSim.Views;
 using System;
 using System.Windows;
 using NLog;
+using Microsoft.Extensions.DependencyInjection;
+using SimModel.Service;
 
 namespace WildsSim
 {
@@ -16,6 +18,8 @@ namespace WildsSim
         /// </summary>
         static Logger logger = LogManager.GetCurrentClassLogger();
 
+        public static IServiceProvider ServiceProvider { get; private set; }
+
         /// <summary>
         /// 開始時処理
         /// MainViewModelをバインドしたMainViewを開く
@@ -23,6 +27,11 @@ namespace WildsSim
         /// <param name="e"></param>
         protected override void OnStartup(StartupEventArgs e)
        {
+            // DIコンテナにサービスを登録
+            var services = new ServiceCollection();
+            services.AddSimModelServices();
+            ServiceProvider = services.BuildServiceProvider();
+
             base.OnStartup(e);
 
             AppDomain currentDomain = AppDomain.CurrentDomain;

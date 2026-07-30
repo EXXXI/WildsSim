@@ -261,15 +261,15 @@ namespace SimModel.Model
         /// この検索条件に関連する理論値護石リストを生成
         /// </summary>
         /// <returns></returns>
-        internal List<Equipment> MakeRelatedCharms()
+        internal List<Equipment> MakeRelatedCharms(List<CharmCombo> charmCombos, Dictionary<int, List<Skill>> charmGroups)
         {
             List<Equipment> targetCharms = new();
             var condSkills = Skills.Where(skill => skill.Level != 0);
-            foreach (var combo in Masters.ShiningCharmCombos)
+            foreach (var combo in charmCombos)
             {
-                var skill1List = Masters.ShiningCharmGroups[combo.Group1].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
-                var skill2List = Masters.ShiningCharmGroups[combo.Group2].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
-                var skill3List = Masters.ShiningCharmGroups[combo.Group3].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                var skill1List = charmGroups[combo.Group1].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                var skill2List = charmGroups[combo.Group2].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                var skill3List = charmGroups[combo.Group3].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
                 foreach (var skill1 in skill1List)
                 {
                     foreach (var skill2 in skill2List)
