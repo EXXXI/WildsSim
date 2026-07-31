@@ -214,7 +214,7 @@ namespace SimModel.Domain
         /// <param name="fileName">CSVファイル名</param>
         /// <param name="equipments">格納先</param>
         /// <param name="kind">部位</param>
-        private List<Equipment> LoadEquipCSV(string fileName, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
+        private static List<Equipment> LoadEquipCSV(string fileName, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
         {
             List<Equipment> equips = new();
             string csv = ReadAllText(fileName);
@@ -283,7 +283,7 @@ namespace SimModel.Domain
         /// <param name="mindef">最低防御力</param>
         /// <param name="kind">防具種類</param>
         /// <returns>レア度から算出した最大防御力</returns>
-        private int CalcMaxdef(int rare, int mindef, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
+        private static int CalcMaxdef(int rare, int mindef, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
         {
             if (kind == EquipKind.charm || defUpgrades == null)
             {
@@ -304,7 +304,7 @@ namespace SimModel.Domain
         /// <param name="maxdef">最大防御力</param>
         /// <param name="kind">防具種類</param>
         /// <returns>レア度から算出した限界突破防御力</returns>
-        private int CalcTranscendingDef(int rare, int maxdef, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
+        private static int CalcTranscendingDef(int rare, int maxdef, EquipKind kind, Dictionary<int, DefUpgrade>? defUpgrades = null)
         {
             if (kind == EquipKind.charm || defUpgrades == null)
             {
@@ -535,7 +535,7 @@ namespace SimModel.Domain
         /// <param name="decoCsv">装飾品CSV</param>
         /// <param name="equips">装備一覧</param>
         /// <returns>装飾品リスト</returns>
-        private List<Equipment> DecosFromCsv(string decoCsv, IEnumerable<Equipment> equips)
+        private static List<Equipment> DecosFromCsv(string decoCsv, IEnumerable<Equipment> equips)
         {
             List<Equipment> decos = new();
             string[] splitted = decoCsv.Split(',');
@@ -560,7 +560,7 @@ namespace SimModel.Domain
         /// <param name="name">装備名</param>
         /// <param name="equips">装備一覧</param>
         /// <returns>該当装備</returns>
-        private Equipment GetEquipByName(string name, IEnumerable<Equipment> equips)
+        private static Equipment GetEquipByName(string name, IEnumerable<Equipment> equips)
         {
             Equipment? equip = equips.Where(equip => equip.Name == name.Trim()).FirstOrDefault();
             if (equip == null)
@@ -1049,7 +1049,7 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="fileName">CSVファイル名</param>
         /// <returns>CSVの内容</returns>
-        private string ReadAllText(string fileName)
+        private static string ReadAllText(string fileName)
         {
             try
             {

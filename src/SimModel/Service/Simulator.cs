@@ -1,4 +1,5 @@
-﻿using SimModel.Config;
+﻿using NLog;
+using SimModel.Config;
 using SimModel.Domain;
 using SimModel.Model;
 using System;
@@ -16,7 +17,7 @@ namespace SimModel.Service
         /// <summary>
         /// 検索インスタンス
         /// </summary>
-        private Searcher Searcher { get; set; }
+        private Searcher? Searcher { get; set; }
 
         /// <summary>
         /// 全件検索完了フラグ
@@ -38,13 +39,23 @@ namespace SimModel.Service
         /// </summary>
         public bool IsBestArtianSearch { get { return Searcher?.Condition?.IsBestArtianSearch ?? false; } }
 
+        /// <summary>
+        /// ログ出力用
+        /// </summary>
+        static private Logger logger = LogManager.GetCurrentClassLogger();
 
         private readonly DataManagement _dataManagement;
 
-        public Simulator(DataManagement dataManagement)
+        private readonly SearcherFactory _searcherFactory;
+
+        private readonly CharmAppraiser _charmAppraiser;
+
+        public Simulator(DataManagement dataManagement, SearcherFactory searcherFactory, CharmAppraiser charmAppraiser)
         {
             _dataManagement = dataManagement;
             _dataManagement.LoadData();
+            _searcherFactory = searcherFactory;
+            _charmAppraiser = charmAppraiser;
         }
 
         /// <summary>
@@ -63,7 +74,7 @@ namespace SimModel.Service
                 Searcher.Dispose();
             }
             SearchRange range = new(condition);
-            Searcher = new Searcher(condition, range);
+            Searcher = _searcherFactory.Create(condition, range);
             IsSearchedAll = Searcher.ExecSearch(limit);
 
             // 最近使ったスキル更新
@@ -141,7 +152,7 @@ namespace SimModel.Service
                         if (isNewSkill)
                         {
                             // 頑張り度1で検索
-                            using Searcher exSearcher = new Searcher(exCondition, range);
+                            using Searcher exSearcher = _searcherFactory.Create(exCondition, range);
                             exSearcher.ExecSearch(1);
 
                             // 1件でもヒットすれば追加スキル一覧に追加
@@ -202,11 +213,21 @@ namespace SimModel.Service
         {
             ResetIsCanceling();
 
+            // まだ検索がされていない場合、0件で返す
+            // 想定していない状況であり、このコードが実行されたら呼び出し側のバグ
+            if (Searcher == null)
+            {
+                logger.Warn("通常の検索を行う前に護石検索が実行されました。");
+                return new List<EquipSet>();
+            }
+
             // プログレスバー
             if (progress != null)
             {
                 progress.Value = 0.0;
             }
+            // 護石検索の進捗は80%までで、残り20%は下位互換護石の除外処理に使う
+            double mainProgressRate = 0.8;
 
             // 検索対象の護石をリストアップ
             SearchCondition condition = Searcher.Condition;
@@ -250,7 +271,7 @@ namespace SimModel.Service
                     range.Cludes = cludesWithoutCharm;
 
                     // 頑張り度1で検索
-                    using Searcher exSearcher = new Searcher(exCondition, range);
+                    using Searcher exSearcher = _searcherFactory.Create(exCondition, range);
                     exSearcher.ExecSearch(1);
 
                     // 1件でもヒットすれば結果に追加
@@ -264,7 +285,7 @@ namespace SimModel.Service
                     {
                         lock (progress)
                         {
-                            progress.Value += 1.0 / targetCharms.Count;
+                            progress.Value += mainProgressRate / targetCharms.Count;
                         }
 
                     }
@@ -284,7 +305,7 @@ namespace SimModel.Service
             List<EquipSet> filtered = new();
             foreach (var left in resultSets)
             {
-                bool hasUpper = false;
+                bool hasLower = false;
                 foreach (var right in resultSets)
                 {
                     // 同じ護石は除外
@@ -292,17 +313,24 @@ namespace SimModel.Service
                     {
                         continue;
                     }
-                    // 上位互換の護石があるか確認
-                    if (Equipment.IsLeftUpper(left.Charm, right.Charm))
+                    // 下位互換の護石があるか確認
+                    if (_charmAppraiser.IsLeftUpper(left.Charm, right.Charm, false))
                     {
-                        hasUpper = true;
+                        hasLower = true;
                         break;
                     }
                 }
-                if (!hasUpper)
+                if (!hasLower)
                 {
                     filtered.Add(left);
                 }
+
+                // プログレスバー
+                if (progress != null)
+                {
+                        progress.Value += (1 - mainProgressRate) / resultSets.Count;
+                }
+
             }
 
             return filtered;

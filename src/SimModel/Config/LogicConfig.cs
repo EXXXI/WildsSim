@@ -12,7 +12,7 @@ namespace SimModel.Config
         /// <summary>
         /// インスタンス
         /// </summary>
-        static private LogicConfig instance;
+        static private LogicConfig? instance;
 
         /// <summary>
         /// ロジック設定ファイル
@@ -97,10 +97,7 @@ namespace SimModel.Config
         {
             get
             {
-                if (instance == null)
-                {
-                    instance = new LogicConfig();
-                }
+                instance ??= new LogicConfig();
                 return instance;
             }
         }

@@ -13,17 +13,32 @@ namespace SimModel.Domain
     /// </summary>
     public class DataManagement
     {
+        /// <summary>
+        /// ファイル操作クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
         private readonly FileOperation _fileOperation;
 
-        public DataManagement(FileOperation fileOperation)
+        /// <summary>
+        /// 護石関連操作クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly CharmAppraiser _charmAppraiser;
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="fileOperation"></param>
+        public DataManagement(FileOperation fileOperation, CharmAppraiser charmAppraiser)
         {
             _fileOperation = fileOperation;
+            _charmAppraiser = charmAppraiser;
         }
 
         /// <summary>
         /// 最近使ったスキルの記憶容量
         /// </summary>
-        static public int MaxRecentSkillCount { get; } = LogicConfig.Instance.MaxRecentSkillCount;
+        static private int MaxRecentSkillCount { get; } = LogicConfig.Instance.MaxRecentSkillCount;
 
         /// <summary>
         /// 初期データ読み込み
@@ -52,6 +67,9 @@ namespace SimModel.Domain
             Masters.RecentSkillNames = _fileOperation.LoadRecentSkillCSV();
             Masters.MyConditions = _fileOperation.LoadMyConditionCSV();
             LoadMySet(); // 後処理が必要なためまとめて別メソッドに切り出し
+
+            // 念のため全装備キャッシュをクリア
+            Masters.ClearAllEquipmentsCache();
         }
 
         /// <summary>
@@ -62,6 +80,7 @@ namespace SimModel.Domain
             Masters.Skills = _fileOperation.LoadSkillCSV();
 
             // どの防具・護石・武器にも存在しないスキルを除外
+            // アーティア・追加護石がまだ読み込まれていないため、AllEquipmentsは使わない
             var equips = Masters.Weapons.Union(Masters.Heads).Union(Masters.Bodys).Union(Masters.Arms)
                 .Union(Masters.Waists).Union(Masters.Legs).Union(Masters.Charms).Union(Masters.Decos);
             Masters.Skills = Masters.Skills.Where(skill =>
@@ -83,7 +102,7 @@ namespace SimModel.Domain
         /// <summary>
         /// マイセット読み込み関連処理
         /// </summary>
-        internal void LoadMySet()
+        private void LoadMySet()
         {
             // マスタへ反映
             Masters.MySets = _fileOperation.LoadMySetCSV(Masters.AllEquipments);
@@ -125,7 +144,7 @@ namespace SimModel.Domain
             Equipment? equip = Masters.GetEquipByName(name);
             if ((equip == null) || 
                 (equip.Kind == EquipKind.deco) ||
-                (equip is Weapon weapon))
+                (equip is Weapon))
             {
                 // 装飾品と武器は固定しない
                 return null;
@@ -370,7 +389,7 @@ namespace SimModel.Domain
         /// <param name="skills">検索したスキル</param>
         internal void UpdateRecentSkill(List<Skill> skills)
         {
-            List<string> newNames = new List<string>();
+            List<string> newNames = new();
 
             // 今回の検索条件をリストに追加
             foreach (var skill in skills)
@@ -640,9 +659,9 @@ namespace SimModel.Domain
                     {
                         continue;
                     }
-                    if (Equipment.IsLeftUpper(other, charm, Masters.Decos))
+                    if (_charmAppraiser.IsLeftUpper(other, charm, true))
                     {
-                        if (Equipment.IsLeftUpper(charm, other, Masters.Decos))
+                        if (_charmAppraiser.IsLeftUpper(charm, other, true))
                         {
                             charm.Upper = (other, false);
                         }

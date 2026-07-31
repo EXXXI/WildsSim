@@ -512,7 +512,7 @@ namespace SimModel.Model
         /// <param name="baseSkills">スキル一覧</param>
         /// <param name="newSkills">追加するスキル</param>
         /// <returns>合わせたスキル一覧</returns>
-        private List<Skill> JoinSkill(List<Skill> baseSkills, List<Skill> newSkills)
+        private static List<Skill> JoinSkill(List<Skill> baseSkills, List<Skill> newSkills)
         {
             foreach (var newSkill in newSkills)
             {

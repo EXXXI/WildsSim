@@ -82,11 +82,6 @@ namespace SimModel.Model
         public string DispName { get; set; }
 
         /// <summary>
-        /// 護石検索用固定護石
-        /// </summary>
-        public Equipment? FixCharm { get; set; } = null;
-
-        /// <summary>
         /// 理論値護石検索フラグ
         /// </summary>
         public bool IsBestCharmSearch { get; set; } = false;
@@ -95,6 +90,11 @@ namespace SimModel.Model
         /// 理論値アーティア検索フラグ
         /// </summary>
         public bool IsBestArtianSearch { get; set; } = false;
+
+        /// <summary>
+        /// 装飾品全所持フラグ
+        /// </summary>
+        public bool HasAllDecos { get; set; } = false;
 
         /// <summary>
         /// CSV用スキル形式
@@ -384,7 +384,7 @@ namespace SimModel.Model
         /// <param name="left"></param>
         /// <param name="right"></param>
         /// <returns></returns>
-        private bool IsSameCharm(Equipment left, Equipment right)
+        private static bool IsSameCharm(Equipment left, Equipment right)
         {
             if (left.Skills.Count != right.Skills.Count) { return false; }
             if (left.Slot1 != right.Slot1) { return false; }

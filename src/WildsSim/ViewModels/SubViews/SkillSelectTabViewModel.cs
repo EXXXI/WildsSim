@@ -669,7 +669,7 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         /// <param name="param">Parsestring</param>
         /// <returns>Parseしたint　変換できなかった場合null</returns>
-        private int? ParseOrNull(string param)
+        private static int? ParseOrNull(string param)
         {
             if (int.TryParse(param, out int result))
             {

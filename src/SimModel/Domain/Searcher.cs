@@ -11,7 +11,7 @@ namespace SimModel.Domain
     /// <summary>
     /// 検索を実施するクラス
     /// </summary>
-    internal class Searcher : IDisposable
+    public class Searcher : IDisposable
     {
         // 制約式・変数の名称
         const string WeaponRowName = "weapon";
@@ -45,6 +45,7 @@ namespace SimModel.Domain
         const string CludeRowPrefix = "clude_";
         const string EquipColPrefix = "equip_";
         const string OneSetRowPrefix = "oneset_";
+        private const int MaxDecoCount = 7;
 
         /// <summary>
         /// 検索条件
@@ -227,7 +228,7 @@ namespace SimModel.Domain
                 if (equip is Deco deco)
                 {
                     // 装飾品は所持数を上限とする
-                    value = SimSolver.MakeIntVar(0.0, deco.DecoCount, key);
+                    value = SimSolver.MakeIntVar(0.0, Condition.HasAllDecos ? MaxDecoCount : deco.DecoCount, key);
                 }
                 else
                 {
@@ -679,7 +680,7 @@ namespace SimModel.Domain
         /// <param name="newName">新セットの防具名</param>
         /// <param name="oldName">旧セットの防具名</param>
         /// <returns></returns>
-        private bool IsDuplicateEquipName(string newName, string oldName)
+        private static bool IsDuplicateEquipName(string newName, string oldName)
         {
             return string.IsNullOrWhiteSpace(newName) || newName.Equals(oldName);
         }

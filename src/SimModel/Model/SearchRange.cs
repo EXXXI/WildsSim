@@ -9,7 +9,7 @@ namespace SimModel.Model
     /// <summary>
     /// 検索対象を定めるクラス
     /// </summary>
-    internal class SearchRange
+    public class SearchRange
     {
         /// <summary>
         /// 検索対象の武器一覧

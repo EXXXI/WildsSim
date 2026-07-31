@@ -10,12 +10,13 @@ namespace SimModel.Service
     {
         public static IServiceCollection AddSimModelServices(this IServiceCollection services)
         {
-            // ここにSimModelのサービスを登録する
+            // ここでSimModelのサービスを登録する
+            // 本来はIFと実装を分離すべきだが、一旦見送り(必要に応じて変更する)
             services.AddSingleton<Simulator, Simulator>();
-            //services.AddTransient<Searcher, Searcher>();
+            services.AddSingleton<SearcherFactory, SearcherFactory>();
             services.AddSingleton<DataManagement, DataManagement>();
             services.AddSingleton<FileOperation, FileOperation>();
-            // 他のサービスも必要に応じて登録
+            services.AddSingleton<CharmAppraiser, CharmAppraiser>();
             return services;
         }
     }

@@ -362,7 +362,7 @@ namespace SimModel.Model
                         break;
                 }
             }
-            dispName.Append("-");
+            dispName.Append('-');
             dispName.Append(Slot2);
             if (Slot2 != 0)
             {
@@ -381,7 +381,7 @@ namespace SimModel.Model
                         break;
                 }
             }
-            dispName.Append("-");
+            dispName.Append('-');
             dispName.Append(Slot3);
             if (Slot3 != 0)
             {
@@ -442,151 +442,5 @@ namespace SimModel.Model
             }
         }
 
-        /// <summary>
-        /// 第一引数の防具が第二引数の防具の上位互換の場合true
-        /// 護石比較用
-        /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
-        /// <param name="decos">装飾品を考慮する場合装飾品リストを渡す</param>
-        /// <returns></returns>
-        static public bool IsLeftUpper(Equipment left, Equipment right, List<Deco>? decos = null)
-        {
-            // スキルチェック
-            List<Skill> shortageSkills = new();
-            foreach (var skill in right.Skills)
-            {
-                if (!left.Skills.Any(s => s.Name == skill.Name))
-                {
-                    shortageSkills.Add(skill);
-                }
-                else if (left.Skills.First(s => s.Name == skill.Name).Level < skill.Level)
-                {
-                    shortageSkills.Add(new Skill(skill.Name, skill.Level - left.Skills.First(s => s.Name == skill.Name).Level));
-                }
-            }
-            if (shortageSkills.Count == 0)
-            {
-                // 不足スキルがないので、上位互換である
-                return true;
-            }
-            if (decos == null)
-            {
-                // 装飾品を考慮しない場合、不足スキルがある時点で上位互換ではない
-                return false;
-            }
-
-            // 装飾品調査
-            // 足りないスキルに必要な装飾品を整理
-            int[] wSlotShortageData = [0, 0, 0, 0];
-            int[] aSlotShortageData = [0, 0, 0, 0];
-            foreach (var skill in shortageSkills)
-            {
-                Deco? deco = decos.Where(d => d.Skills.Any(s => s.Name == skill.Name) && (d.SlotType1 == 0 || d.Slot1 == 1)).FirstOrDefault();
-                if (deco == null)
-                {
-                    // 必要な装飾品が存在しない場合、上位互換ではない
-                    return false;
-                }
-                // スロット整理
-                for (int i = 0; i < deco.Slot1; i++)
-                {
-                    if (deco.SlotType1 == 1)
-                    {
-                        wSlotShortageData[i] += skill.Level;
-                    }
-                    else
-                    {
-                        aSlotShortageData[i] += skill.Level;
-                    }
-                }
-            }
-
-            // スロット整理
-            int[] wSlotDataLeft = [0, 0, 0, 0];
-            int[] aSlotDataLeft = [0, 0, 0, 0];
-            for (int i = 0; i < left.Slot1; i++)
-            {
-                if (left.SlotType1 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            for (int i = 0; i < left.Slot2; i++)
-            {
-                if (left.SlotType2 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            for (int i = 0; i < left.Slot3; i++)
-            {
-                if (left.SlotType3 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            int[] wSlotDataRight = [0, 0, 0, 0];
-            int[] aSlotDataRight = [0, 0, 0, 0];
-            for (int i = 0; i < right.Slot1; i++)
-            {
-                if (right.SlotType1 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-            for (int i = 0; i < right.Slot2; i++)
-            {
-                if (right.SlotType2 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-            for (int i = 0; i < right.Slot3; i++)
-            {
-                if (right.SlotType3 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-
-            // スロットチェック
-            for (int i = 0; i < 4; i++)
-            {
-                if (wSlotDataLeft[i] < wSlotDataRight[i] + wSlotShortageData[i])
-                {
-                    return false;
-                }
-                if (aSlotDataLeft[i] < aSlotDataRight[i] + aSlotShortageData[i])
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 }
