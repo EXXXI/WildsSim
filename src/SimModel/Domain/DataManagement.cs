@@ -641,7 +641,6 @@ namespace SimModel.Domain
 
         /// <summary>
         /// 護石の下位互換検出
-        /// TODO: 方式変更
         /// </summary>
         private void CalcLowerCharm()
         {
@@ -653,23 +652,16 @@ namespace SimModel.Domain
             foreach (var charm in Masters.AdditionalCharms)
             {
                 charm.Upper = null;
-                foreach (var other in Masters.AdditionalCharms)
+                Equipment? upper = _charmAppraiser.HasUpperCharm(charm);
+                if (upper != null)
                 {
-                    if (charm == other)
+                    if (_charmAppraiser.IsLeftUpper(charm, upper))
                     {
-                        continue;
+                        charm.Upper = (upper, false);
                     }
-                    if (_charmAppraiser.IsLeftUpper(other, charm, true))
+                    else
                     {
-                        if (_charmAppraiser.IsLeftUpper(charm, other, true))
-                        {
-                            charm.Upper = (other, false);
-                        }
-                        else
-                        {
-                            charm.Upper = (other, true);
-                            break;
-                        }
+                        charm.Upper = (upper, true);
                     }
                 }
             }

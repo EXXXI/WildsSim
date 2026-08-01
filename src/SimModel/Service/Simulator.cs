@@ -302,6 +302,7 @@ namespace SimModel.Service
             );
 
             // 下位互換の護石で済む場合削除
+            // TODO: HasUpperCharmで少し高速化できそう。検索本体に比べて恩恵が少なく、処理も複雑になりそうなので保留中
             List<EquipSet> filtered = new();
             foreach (var left in resultSets)
             {
