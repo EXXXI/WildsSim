@@ -113,8 +113,25 @@ namespace SimModel.Model
         /// <summary>
         /// 限界突破防御力
         /// </summary>
-        public int TranscendingDef { get; set; }
-
+        private int? transcendingDef = null;
+        /// <summary>
+        /// 限界突破防御力
+        /// </summary>
+        public int TranscendingDef
+        {
+            get
+            {
+                if (transcendingDef == null)
+                {
+                    return Maxdef;
+                }
+                return transcendingDef.Value;
+            }
+            set
+            {
+                transcendingDef = value;
+            }
+        }
         /// <summary>
         /// 火耐性
         /// </summary>

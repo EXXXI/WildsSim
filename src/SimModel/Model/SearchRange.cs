@@ -58,18 +58,17 @@ namespace SimModel.Model
 
         /// <summary>
         /// コンストラクタ
-        /// 初期状態としてMastersをベースにする
+        /// 通常検索用：初期状態としてMastersをベースにする
         /// </summary>
-        public SearchRange(SearchCondition condition)
+        public SearchRange(SearchCondition condition, Masters master)
         {
-            // TODO: Mastersのシングルトン化後、コンストラクタインジェクションにする
 
             // 武器
             if (condition.IsSpecificWeapon)
             {
                 // 武器が指定されている場合、その武器のみを検索対象にする
                 Weapons = new();
-                Weapon? weapon = Masters.Weapons.Union(Masters.Artians).Where(w => w.Name == condition.WeaponName).FirstOrDefault();
+                Weapon? weapon = Masters.Weapons.Union(master.Artians).Where(w => w.Name == condition.WeaponName).FirstOrDefault();
                 if (weapon != null)
                 {
                     Weapons.Add(weapon);
@@ -78,25 +77,25 @@ namespace SimModel.Model
             else if (condition.IsBestArtianSearch)
             {
                 // 理論値検索が指定されている場合、関連するアーティア武器を洗い出して追加する
-                Weapons = Masters.Weapons.Union(Masters.Artians).Union(condition.MakeRelatedArtians()).Where(w => w.WeaponType == condition.WeaponType).ToList();
+                Weapons = Masters.Weapons.Union(master.Artians).Union(condition.MakeRelatedArtians()).Where(w => w.WeaponType == condition.WeaponType).ToList();
             }
             else
             {
                 // 通常
-                Weapons = Masters.Weapons.Union(Masters.Artians).Where(w => w.WeaponType == condition.WeaponType).ToList();
+                Weapons = Masters.Weapons.Union(master.Artians).Where(w => w.WeaponType == condition.WeaponType).ToList();
             }
 
             // 護石
             if (condition.IsBestCharmSearch)
             {
                 // 理論値護石検索が指定されている場合、関連する護石を洗い出して追加する
-                Charms = Masters.Charms.Union(Masters.AdditionalCharms)
+                Charms = Masters.Charms.Union(master.AdditionalCharms)
                     .Union(condition.MakeRelatedCharms(Masters.ShiningCharmCombos, Masters.ShiningCharmGroups)).ToList();
             }
             else
             {
                 // 通常
-                Charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
+                Charms = Masters.Charms.Union(master.AdditionalCharms).ToList();
             }
 
             // 他はMastersをベースにする
@@ -106,7 +105,24 @@ namespace SimModel.Model
             Waists = Masters.Waists;
             Legs = Masters.Legs;
             Decos = Masters.Decos;
-            Cludes = Masters.Cludes;
+            Cludes = master.Cludes;
+        }
+
+        /// <summary>
+        /// コンストラクタ
+        /// 特殊検索用：空の初期状態
+        /// </summary>
+        public SearchRange()
+        {
+            Weapons = new();
+            Charms = new();
+            Heads = new();
+            Bodys = new();
+            Arms = new();
+            Waists = new();
+            Legs = new();
+            Decos = new();
+            Cludes = new();
         }
 
     }

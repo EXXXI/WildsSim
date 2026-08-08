@@ -56,12 +56,21 @@ namespace WildsSim.ViewModels.SubViews
         public ReactiveCommand RowChangedCommand { get; } = new ReactiveCommand();
 
         /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
+        /// <summary>
         /// コンストラクタ
         /// </summary>
-        public MySetTabViewModel()
+        public MySetTabViewModel(Masters masters)
         {
+            _masters = masters;
+
             // マイセット画面の一覧と装備詳細を紐づけ
-            MyDetailSet.Subscribe(set => {
+            MyDetailSet.Subscribe(set =>
+            {
                 if (set != null)
                 {
                     MyEquipRowVMs.ChangeCollection(EquipRowViewModel.SetToEquipRows(set.Original));
@@ -187,7 +196,7 @@ namespace WildsSim.ViewModels.SubViews
         internal void LoadMySets()
         {
             // マイセット画面用のVMの設定
-            MySetList.ChangeCollection(BindableEquipSet.BeBindableList(Masters.MySets));
+            MySetList.ChangeCollection(BindableEquipSet.BeBindableList(_masters.MySets));
             if (!MySetList.Value.Contains(MyDetailSet.Value))
             {
                 MyDetailSet.Value = MySetList.Value.Count > 0 ? MySetList.Value[0] : null;

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SimModel.Config;
 using SimModel.Domain;
 using SimModel.Model;
+using System.IO.Abstractions;
 
 namespace SimModel.Service
 {
@@ -17,6 +18,10 @@ namespace SimModel.Service
             services.AddSingleton<DataManagement, DataManagement>();
             services.AddSingleton<FileOperation, FileOperation>();
             services.AddSingleton<CharmAppraiser, CharmAppraiser>();
+            services.AddSingleton<LogicConfig, LogicConfig>();
+            services.AddSingleton<IFileSystem, FileSystem>();
+            services.AddSingleton<Masters, Masters>();
+
             return services;
         }
     }

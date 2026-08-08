@@ -1,8 +1,10 @@
 ﻿using Reactive.Bindings;
 using SimModel.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Windows.Documents;
 
 namespace WildsSim.ViewModels.Controls
 {
@@ -70,7 +72,7 @@ namespace WildsSim.ViewModels.Controls
         /// コンストラクタ
         /// </summary>
         /// <param name="equip">装備</param>
-        public CludeGridCellViewModel(Equipment? equip)
+        public CludeGridCellViewModel(Equipment? equip, List<Clude> cludes)
         {
             // 装備情報を登録
             if (equip == null) 
@@ -86,7 +88,7 @@ namespace WildsSim.ViewModels.Controls
             // 除外固定情報を登録
             IsExclude.Value = false;
             IsInclude.Value = false;
-            Clude? clude = Masters.Cludes.Where(c => c.Name == BaseEquip.Name).FirstOrDefault();
+            Clude? clude = cludes.Where(c => c.Name == BaseEquip.Name).FirstOrDefault();
             if (clude != null) {
                 if (clude.Kind == CludeKind.exclude)
                 {

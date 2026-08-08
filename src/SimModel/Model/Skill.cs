@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace SimModel.Model
 {
@@ -8,6 +9,13 @@ namespace SimModel.Model
     /// </summary>
     public record Skill
     {
+        // TODO: Skillをアプリ内で編集するような機能が必要になった場合再検討
+        // その場合も通常起動時は問題ないと思われるが、テスト時にテスト同士で干渉する可能性がある
+        /// <summary>
+        /// スキルマスタ本体
+        /// </summary>
+        public static List<Skill> SkillMaster { get; set; } = new();
+
         /// <summary>
         /// 表示レベルを制限するカテゴリ名
         /// </summary>
@@ -43,7 +51,7 @@ namespace SimModel.Model
             {
                 if (canWithArtian == null)
                 {
-                    canWithArtian = Masters.Skills.Where(s => s.Name == Name).First().CanWithArtian;
+                    canWithArtian = SkillMaster.Where(s => s.Name == Name).First().CanWithArtian;
                 }
                 return canWithArtian.Value;
             }
@@ -65,7 +73,7 @@ namespace SimModel.Model
         /// <param name="level">レベル</param>
         /// <param name="isFixed">固定検索フラグ</param>
         public Skill(string name, int level, bool isFixed = false, bool? canWithArtian = null) 
-            : this(name, level, Masters.Skills.Where(s => s.Name == name).FirstOrDefault()?.Category, isFixed, canWithArtian) { }
+            : this(name, level, SkillMaster.Where(s => s.Name == name).FirstOrDefault()?.Category, isFixed, canWithArtian) { }
 
         /// <summary>
         /// コンストラクタ
@@ -84,7 +92,7 @@ namespace SimModel.Model
                 CanWithArtian = canWithArtian.Value;
             }
             Category = string.IsNullOrEmpty(category) ? @"未分類" : category;
-            SpecificNames = Masters.Skills.Where(s => s.Name == name).Select(s => s.SpecificNames).FirstOrDefault() ?? new();
+            SpecificNames = SkillMaster.Where(s => s.Name == name).Select(s => s.SpecificNames).FirstOrDefault() ?? new();
         }
 
         /// <summary>
@@ -94,7 +102,14 @@ namespace SimModel.Model
         public int MaxLevel {
             get 
             {
-                return Masters.SkillMaxLevel(Name);
+                foreach (var skill in SkillMaster)
+                {
+                    if (skill.Name == Name)
+                    {
+                        return skill.Level;
+                    }
+                }
+                return 0;
             }
         }
 

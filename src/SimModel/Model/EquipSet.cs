@@ -58,7 +58,7 @@ namespace SimModel.Model
         /// <summary>
         /// マイセット用名前
         /// </summary>
-        public string Name { get; set; } = LogicConfig.Instance.DefaultMySetName;
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// 限界突破有無
@@ -302,7 +302,7 @@ namespace SimModel.Model
 
 
         /// <summary>
-        /// 装飾品のCSV表記 Set可能
+        /// 装飾品のCSV表記
         /// </summary>
         public string DecoNameCSV
         {

@@ -50,12 +50,26 @@ namespace SimModel.Service
 
         private readonly CharmAppraiser _charmAppraiser;
 
-        public Simulator(DataManagement dataManagement, SearcherFactory searcherFactory, CharmAppraiser charmAppraiser)
+        /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
+        /// <summary>
+        /// ロジックの設定クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly LogicConfig _logicConfig;
+
+        public Simulator(DataManagement dataManagement, SearcherFactory searcherFactory, CharmAppraiser charmAppraiser, LogicConfig logicConfig, Masters masters)
         {
             _dataManagement = dataManagement;
             _dataManagement.LoadData();
             _searcherFactory = searcherFactory;
             _charmAppraiser = charmAppraiser;
+            _logicConfig = logicConfig;
+            _masters = masters;
         }
 
         /// <summary>
@@ -73,7 +87,7 @@ namespace SimModel.Service
             {
                 Searcher.Dispose();
             }
-            SearchRange range = new(condition);
+            SearchRange range = new(condition, _masters);
             Searcher = _searcherFactory.Create(condition, range);
             IsSearchedAll = Searcher.ExecSearch(limit);
 
@@ -121,13 +135,13 @@ namespace SimModel.Service
             }
 
             // 検索範囲は変更しないのでここで1つだけ生成
-            SearchRange range = new(condition);
+            SearchRange range = new(condition, _masters);
 
             // 全スキル全レベルを走査
             Parallel.ForEach(Masters.Skills,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
+                    MaxDegreeOfParallelism = _logicConfig.MaxDegreeOfParallelism
                 },
                 () => new List<Skill>(),
                 (skill, loop, subResult) =>
@@ -236,9 +250,9 @@ namespace SimModel.Service
 
             // 護石以外の除外固定設定を取得
             List<Clude> cludesWithoutCharm = new();
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in _masters.Cludes)
             {
-                Equipment equip = Masters.GetEquipByName(clude.Name);
+                Equipment equip = _masters.GetEquipByName(clude.Name);
                 if (equip.Kind != EquipKind.charm)
                 {
                     cludesWithoutCharm.Add(clude);
@@ -250,7 +264,7 @@ namespace SimModel.Service
             Parallel.ForEach(targetCharms,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
+                    MaxDegreeOfParallelism = _logicConfig.MaxDegreeOfParallelism
                 },
                 () => new List<EquipSet>(),
                 (targetCharm, loop, subResult) =>
@@ -266,7 +280,7 @@ namespace SimModel.Service
                     SearchCondition exCondition = new(Searcher.Condition);
 
                     // 護石を固定
-                    SearchRange range = new(exCondition);
+                    SearchRange range = new(exCondition, _masters);
                     range.Charms = new List<Equipment> { targetCharm };
                     range.Cludes = cludesWithoutCharm;
 

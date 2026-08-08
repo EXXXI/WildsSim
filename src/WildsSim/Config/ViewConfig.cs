@@ -1,5 +1,6 @@
 ﻿using Csv;
 using SimModel.Domain;
+using SimModel.ExceptionClass;
 using SimModel.Model;
 using System;
 using System.Collections.Generic;
@@ -51,14 +52,22 @@ namespace WildsSim.Config
         /// </summary>
         private ViewConfig()
         {
-            string csv = File.ReadAllText(ConfCsv);
-
-            foreach (ICsvLine line in CsvReader.ReadFromText(csv))
+            try
             {
-                MaxSlotSize = ParseUtil.LoadConfigItem(line, @"スロットの最大の大きさ", 4);
-                DefaultLimit = ParseUtil.LoadConfigItem(line, @"デフォルトの頑張り度", 100).ToString();
-                NoSkillName = ParseUtil.LoadConfigItem(line, @"スキル未選択時の表示", @"スキル選択");
-                UseSavedColumnIndexes = ParseUtil.LoadConfigItem(line, @"グリッドの列順保存有無", @"有").Equals(@"有");
+                string csv = File.ReadAllText(ConfCsv);
+
+                foreach (ICsvLine line in CsvReader.ReadFromText(csv))
+                {
+                    MaxSlotSize = ParseUtil.LoadConfigItem(line, @"スロットの最大の大きさ", 4);
+                    DefaultLimit = ParseUtil.LoadConfigItem(line, @"デフォルトの頑張り度", 100).ToString();
+                    NoSkillName = ParseUtil.LoadConfigItem(line, @"スキル未選択時の表示", @"スキル選択");
+                    UseSavedColumnIndexes = ParseUtil.LoadConfigItem(line, @"グリッドの列順保存有無", @"有").Equals(@"有");
+                }
+            }
+            catch (System.IO.IOException ex)
+            {
+                string message = $"設定ファイル {ConfCsv} の読み込みに失敗しました。";
+                throw new SimulatorException(message, ex);
             }
         }
 

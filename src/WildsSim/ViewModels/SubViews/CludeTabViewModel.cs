@@ -65,10 +65,18 @@ namespace WildsSim.ViewModels.SubViews
         public ReactiveCommand ApplyFilterCommand { get; } = new ReactiveCommand();
 
         /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
+        /// <summary>
         /// コンストラクタ
         /// </summary>
-        public CludeTabViewModel()
+        public CludeTabViewModel(Masters masters)
         {
+            _masters = masters;
+
             // コマンドを設定
             DeleteAllCludeCommand.Subscribe(_ => DeleteAllClude());
             DeleteAllArmorCludeCommand.Subscribe(_ => DeleteAllArmorClude());
@@ -110,7 +118,7 @@ namespace WildsSim.ViewModels.SubViews
         internal void AddExclude(string trueName, string dispName)
         {
             if (string.IsNullOrEmpty(trueName) ||
-                Masters.GetEquipByName(trueName).Name != trueName)
+                _masters.GetEquipByName(trueName).Name != trueName)
             {
                 // 装備無しなら何もせず終了
                 return;
@@ -156,7 +164,7 @@ namespace WildsSim.ViewModels.SubViews
         internal void AddInclude(string trueName, string dispName)
         {
             if (string.IsNullOrEmpty(trueName) ||
-                Masters.GetEquipByName(trueName).Name != trueName)
+                _masters.GetEquipByName(trueName).Name != trueName)
             {
                 // 装備無しなら何もせず終了
                 return;
@@ -309,7 +317,7 @@ namespace WildsSim.ViewModels.SubViews
             var arms = Masters.Arms;
             var waists = Masters.Waists;
             var legs = Masters.Legs;
-            var charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
+            var charms = Masters.Charms.Union(_masters.AdditionalCharms).ToList();
             var decos = Masters.Decos;
 
             // 簡潔化のためにリスト化(護石と装飾品は特殊処理があるので別枠)
@@ -334,10 +342,10 @@ namespace WildsSim.ViewModels.SubViews
             {
                 for (int i = 0; i < armors.Length; i++)
                 {
-                    armors[i] = armors[i].Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
+                    armors[i] = armors[i].Where(x => _masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
                 }
-                charms = charms.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
-                decos = decos.Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
+                charms = charms.Where(x => _masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
+                decos = decos.Where(x => _masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
 
             }
 
@@ -376,11 +384,11 @@ namespace WildsSim.ViewModels.SubViews
                     };
                     for (int j = 0; j < rowNoArmors.Count; j++)
                     {
-                        targetReactiveProperties[j].Value = new CludeGridCellViewModel(rowNoArmors[j].ElementAtOrDefault(i));
+                        targetReactiveProperties[j].Value = new CludeGridCellViewModel(rowNoArmors[j].ElementAtOrDefault(i), _masters.Cludes);
                     }
                     // 護石と装飾品は単に順番に並べる
-                    row.Charm.Value = new CludeGridCellViewModel(charms.ElementAtOrDefault(rows.Count));
-                    row.Deco.Value = new CludeGridCellViewModel(decos.ElementAtOrDefault(rows.Count));
+                    row.Charm.Value = new CludeGridCellViewModel(charms.ElementAtOrDefault(rows.Count), _masters.Cludes);
+                    row.Deco.Value = new CludeGridCellViewModel(decos.ElementAtOrDefault(rows.Count), _masters.Cludes);
                     rows.Add(row);
                 }
             }
@@ -389,13 +397,13 @@ namespace WildsSim.ViewModels.SubViews
             while (rows.Count < Math.Max(charms.Count, decos.Count))
             {
                 CludeGridArmorRowViewModel row = new();
-                row.Head.Value = new CludeGridCellViewModel(null);
-                row.Body.Value = new CludeGridCellViewModel(null);
-                row.Arm.Value = new CludeGridCellViewModel(null);
-                row.Waist.Value = new CludeGridCellViewModel(null);
-                row.Leg.Value = new CludeGridCellViewModel(null);
-                row.Charm.Value = new CludeGridCellViewModel(charms.ElementAtOrDefault(rows.Count));
-                row.Deco.Value = new CludeGridCellViewModel(decos.ElementAtOrDefault(rows.Count));
+                row.Head.Value = new CludeGridCellViewModel(null, _masters.Cludes);
+                row.Body.Value = new CludeGridCellViewModel(null, _masters.Cludes);
+                row.Arm.Value = new CludeGridCellViewModel(null, _masters.Cludes);
+                row.Waist.Value = new CludeGridCellViewModel(null, _masters.Cludes);
+                row.Leg.Value = new CludeGridCellViewModel(null, _masters.Cludes);
+                row.Charm.Value = new CludeGridCellViewModel(charms.ElementAtOrDefault(rows.Count), _masters.Cludes);
+                row.Deco.Value = new CludeGridCellViewModel(decos.ElementAtOrDefault(rows.Count), _masters.Cludes);
                 rows.Add(row);
             }
 
@@ -411,7 +419,7 @@ namespace WildsSim.ViewModels.SubViews
         private void LoadWeaponGridData(string filterName, bool cludeOnly)
         {
             // 表示対象
-            var weapons = Masters.Weapons.Union(Masters.Artians);
+            var weapons = Masters.Weapons.Union(_masters.Artians);
             var greatSwords = weapons.Where(w => w.WeaponType == WeaponType.大剣).ToList();
             var longSwords = weapons.Where(w => w.WeaponType == WeaponType.太刀).ToList();
             var swordAndShields = weapons.Where(w => w.WeaponType == WeaponType.片手剣).ToList();
@@ -447,7 +455,7 @@ namespace WildsSim.ViewModels.SubViews
             {
                 for (int i = 0; i < weaponLists.Length; i++)
                 {
-                    weaponLists[i] = weaponLists[i].Where(x => Masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
+                    weaponLists[i] = weaponLists[i].Where(x => _masters.Cludes.Where(c => c.Name == x.Name).Any()).ToList();
                 }
             }
 
@@ -487,7 +495,7 @@ namespace WildsSim.ViewModels.SubViews
                     };
                     for (int j = 0; j < rowNoWeapons.Count; j++)
                     {
-                        targetReactiveProperties[j].Value = new CludeGridCellViewModel(rowNoWeapons[j].ElementAtOrDefault(i));
+                        targetReactiveProperties[j].Value = new CludeGridCellViewModel(rowNoWeapons[j].ElementAtOrDefault(i), _masters.Cludes);
                     }
                     rows.Add(row);
                 }

@@ -3,23 +3,46 @@ using SimModel.Service;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SimModel.Domain
 {
+    /// <summary>
+    /// 護石検索関連処理
+    /// </summary>
     public class CharmAppraiser
     {
+        /// <summary>
+        /// 検索用の汎用装飾品リスト
+        /// </summary>
         private List<Deco>? GenericDecos { get; set; }
 
+        /// <summary>
+        /// SearcherFactoryのインスタンス
+        /// DIで注入される
+        /// </summary>
         private readonly SearcherFactory _searcherFactory;
-        public CharmAppraiser(SearcherFactory searcherFactory)
+
+        /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="searcherFactory"></param>
+        /// <param name="masters"></param>
+        public CharmAppraiser(SearcherFactory searcherFactory, Masters masters)
         {
             _searcherFactory = searcherFactory;
+            _masters = masters;
         }
 
-        private void MakeGenericDecos()
+        /// <summary>
+        /// 汎用装飾品リストを作成する
+        /// </summary>
+        private List<Deco> MakeGenericDecos()
         {
             List<Deco> decos = new();
             for (int type = 0; type <= 2; type++)
@@ -37,14 +60,26 @@ namespace SimModel.Domain
                 }
             }
 
-            GenericDecos = decos;
+            return decos;
         }
 
+        /// <summary>
+        /// 汎用装飾品の名前を作成する
+        /// </summary>
+        /// <param name="type">スロット種別</param>
+        /// <param name="size">スロットサイズ</param>
+        /// <returns></returns>
         private static string GenericDecoName(int type, int size)
         {
             return $"_{GenericTypeName(type)}汎珠【{GenericSizeName(size)}】";
         }
 
+        /// <summary>
+        /// 汎用装飾品のスロット種別の名前を作成する
+        /// </summary>
+        /// <param name="type">スロット種別</param>
+        /// <returns>スロット種別を表す文字</returns>
+        /// <exception cref="ArgumentException"></exception>
         private static string GenericTypeName(int type)
         {
             return type switch
@@ -55,6 +90,13 @@ namespace SimModel.Domain
                 _ => throw new ArgumentException("Invalid type")
             };
         }
+
+        /// <summary>
+        /// 汎用装飾品のスロットサイズの名前を作成する
+        /// </summary>
+        /// <param name="size">スロットサイズ</param>
+        /// <returns>スロットサイズを表す文字</returns>
+        /// <exception cref="ArgumentException"></exception>
         private static string GenericSizeName(int size)
         {
             return size switch
@@ -67,13 +109,12 @@ namespace SimModel.Domain
             };
         }
 
-
         /// <summary>
         /// 第一引数の防具が第二引数の防具の上位互換の場合true
         /// 護石比較用
         /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
+        /// <param name="left">調査対象</param>
+        /// <param name="right">比較対象</param>
         /// <param name="decos">装飾品を考慮する場合装飾品リストを渡す</param>
         /// <returns></returns>
         internal bool IsLeftUpper(Equipment left, Equipment right, bool useDecos = true)
@@ -102,7 +143,7 @@ namespace SimModel.Domain
         {
             // 護石に汎用装飾品を詰めて、他の護石でそれを再現できたら上位互換であると判定する
 
-            Searcher searcher = MakeCharmSearcher(charm, Masters.AdditionalCharms.Except([charm]).ToList(), useDecos);
+            Searcher searcher = MakeCharmSearcher(charm, _masters.AdditionalCharms.Except([charm]).ToList(), useDecos);
             searcher.ExecSearch(1);
 
             Equipment? UpperCharm = null;
@@ -130,7 +171,7 @@ namespace SimModel.Domain
             // 汎用装飾品リストが未作成の場合は作成する
             if (GenericDecos == null)
             {
-                MakeGenericDecos();
+                GenericDecos = MakeGenericDecos();
             }
 
             SearchCondition condition = new()
@@ -164,13 +205,7 @@ namespace SimModel.Domain
                 }
             }
 
-            SearchRange range = new(condition);
-            range.Weapons = new List<Weapon>();
-            range.Heads = new List<Equipment>();
-            range.Bodys = new List<Equipment>();
-            range.Arms = new List<Equipment>();
-            range.Waists = new List<Equipment>();
-            range.Legs = new List<Equipment>();
+            SearchRange range = new();
             range.Charms = charmRange;
             if (useDecos)
             {
@@ -180,7 +215,6 @@ namespace SimModel.Domain
             {
                 range.Decos = GenericDecos;
             }
-            range.Cludes = new List<Clude>();
 
             Searcher searcher = _searcherFactory.Create(condition, range);
             return searcher;

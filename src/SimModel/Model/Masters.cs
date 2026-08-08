@@ -7,12 +7,24 @@ namespace SimModel.Model
     /// <summary>
     /// 各種マスタ管理
     /// </summary>
-    static public class Masters
+    public class Masters
     {
+        // Loadしたきり変更されないマスタはstaticで保持する
+        // Saveする必要があるマスタはstaticで保持しない(テスト時にテスト同士で干渉しないように)
+
         /// <summary>
-        /// スキルマスタ
+        /// スキルマスタ 本体はSkill.SkillMasterに保持される
         /// </summary>
-        public static List<Skill> Skills { get; set; } = new();
+        public static List<Skill> Skills {
+            get
+            {
+                return Skill.SkillMaster;
+            }
+            set 
+            {
+                Skill.SkillMaster = value;
+            }
+        }
 
         /// <summary>
         /// 武器マスタ
@@ -52,7 +64,7 @@ namespace SimModel.Model
         /// <summary>
         /// 追加護石マスタ
         /// </summary>
-        public static List<Equipment> AdditionalCharms { get; set; } = new();
+        public List<Equipment> AdditionalCharms { get; set; } = new();
 
         /// <summary>
         /// 追加護石組み合わせマスタ
@@ -67,7 +79,7 @@ namespace SimModel.Model
         /// <summary>
         /// アーティアマスタ
         /// </summary>
-        public static List<Weapon> Artians { get; set; } = new();
+        public List<Weapon> Artians { get; set; } = new();
 
         /// <summary>
         /// 装飾品マスタ
@@ -77,22 +89,22 @@ namespace SimModel.Model
         /// <summary>
         /// 除外固定マスタ
         /// </summary>
-        public static List<Clude> Cludes { get; set; } = new();
+        public List<Clude> Cludes { get; set; } = new();
 
         /// <summary>
         /// マイセットマスタ
         /// </summary>
-        public static List<EquipSet> MySets { get; set; } = new();
+        public List<EquipSet> MySets { get; set; } = new();
 
         /// <summary>
         /// 最近使ったスキルマスタ
         /// </summary>
-        public static List<string> RecentSkillNames { get; set; } = new();
+        public List<string> RecentSkillNames { get; set; } = new();
 
         /// <summary>
         /// マイ検索条件マスタ
         /// </summary>
-        public static List<SearchCondition> MyConditions { get; set; } = new();
+        public List<SearchCondition> MyConditions { get; set; } = new();
 
         /// <summary>
         /// 防御力差分マスタ
@@ -102,11 +114,11 @@ namespace SimModel.Model
         /// <summary>
         /// 全装備キャッシュ
         /// </summary>
-        private static IEnumerable<Equipment>? _allEquipments = null;
+        private IEnumerable<Equipment>? _allEquipments = null;
         /// <summary>
         /// 全装備
         /// </summary>
-        public static IEnumerable<Equipment> AllEquipments { 
+        public IEnumerable<Equipment> AllEquipments { 
             get 
             {
                 if (_allEquipments == null)
@@ -121,7 +133,7 @@ namespace SimModel.Model
         /// 全装備キャッシュをクリア
         /// TODO: Artians、AdditionalCharmsの更新時に自動で呼び出される仕組みが望ましい
         /// </summary>
-        public static void ClearAllEquipmentsCache()
+        public void ClearAllEquipmentsCache()
         {
             _allEquipments = null;
         }
@@ -132,12 +144,13 @@ namespace SimModel.Model
         /// </summary>
         /// <param name="equipName">装備名</param>
         /// <returns>装備</returns>
-        public static Equipment GetEquipByName(string equipName)
+        public Equipment GetEquipByName(string equipName)
         {
             string? name = equipName?.Trim();
             return AllEquipments.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
         }
 
+        // TODO: Skillに移管すべき？
         /// <summary>
         /// スキル名がマスタに存在するかチェック
         /// </summary>
@@ -154,6 +167,7 @@ namespace SimModel.Model
             return Skills.Any(skill => skill.Name == name);
         }
 
+        // TODO: Skillに移管すべき？
         /// <summary>
         /// スキル名から最大レベルを算出
         /// マスタに存在しないスキルの場合0

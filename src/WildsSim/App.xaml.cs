@@ -5,6 +5,9 @@ using System.Windows;
 using NLog;
 using Microsoft.Extensions.DependencyInjection;
 using SimModel.Service;
+using WildsSim.ViewModels.SubViews;
+using SimModel.ExceptionClass;
+using System.Text;
 
 namespace WildsSim
 {
@@ -30,6 +33,14 @@ namespace WildsSim
             // DIコンテナにサービスを登録
             var services = new ServiceCollection();
             services.AddSimModelServices();
+            services.AddSingleton<ArtianTabViewModel, ArtianTabViewModel>();
+            services.AddSingleton<CharmTabViewModel, CharmTabViewModel>();
+            services.AddSingleton<CludeTabViewModel, CludeTabViewModel>();
+            services.AddSingleton<DecoTabViewModel, DecoTabViewModel>();
+            services.AddSingleton<LicenseTabViewModel, LicenseTabViewModel>();
+            services.AddSingleton<MySetTabViewModel, MySetTabViewModel>();
+            services.AddSingleton<SimulatorTabViewModel, SimulatorTabViewModel>();
+            services.AddSingleton<SkillSelectTabViewModel, SkillSelectTabViewModel>();
             ServiceProvider = services.BuildServiceProvider();
 
             base.OnStartup(e);
@@ -45,13 +56,24 @@ namespace WildsSim
         }
 
         /// <summary>
-        /// 予期せぬエラー時の処理
+        /// エラー時の処理
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="args"></param>
         static void MyUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
             Exception e = (Exception)args.ExceptionObject;
+            StringBuilder message = new();
+            if (e is SimulatorException)
+            {
+                message.AppendLine(e.Message);
+            }
+            else
+            {
+                message.AppendLine("予期せぬエラーが発生しました。");
+            }
+            message.AppendLine("詳細はlogsフォルダ配下のログファイルを参照してください。");
+            MessageBox.Show(message.ToString(), "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
             logger.Error(e, "エラーが発生しました。");
         }
     }

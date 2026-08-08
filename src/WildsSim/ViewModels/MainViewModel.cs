@@ -126,14 +126,14 @@ namespace WildsSim.ViewModels
             IsFree = IsBusy.Select(x => !x).ToReadOnlyReactivePropertySlim();
 
             // 各タブのVMを設定
-            SkillSelectTabVM.Value = new SkillSelectTabViewModel();
-            SimulatorTabVM.Value = new SimulatorTabViewModel();
-            CludeTabVM.Value = new CludeTabViewModel();
-            CharmTabVM.Value = new CharmTabViewModel();
-            ArtianTabVM.Value = new ArtianTabViewModel();
-            DecoTabVM.Value = new DecoTabViewModel();
-            MySetTabVM.Value = new MySetTabViewModel();
-            LicenseTabVM.Value = new LicenseTabViewModel();
+            SkillSelectTabVM.Value = App.ServiceProvider.GetRequiredService<SkillSelectTabViewModel>();
+            SimulatorTabVM.Value = App.ServiceProvider.GetRequiredService<SimulatorTabViewModel>();
+            CludeTabVM.Value = App.ServiceProvider.GetRequiredService<CludeTabViewModel>();
+            CharmTabVM.Value = App.ServiceProvider.GetRequiredService<CharmTabViewModel>();
+            ArtianTabVM.Value = App.ServiceProvider.GetRequiredService<ArtianTabViewModel>();
+            DecoTabVM.Value = App.ServiceProvider.GetRequiredService<DecoTabViewModel>();
+            MySetTabVM.Value = App.ServiceProvider.GetRequiredService<MySetTabViewModel>();
+            LicenseTabVM.Value = App.ServiceProvider.GetRequiredService<LicenseTabViewModel>();
 
             // マスタファイル読み込み
             LoadMasters();
