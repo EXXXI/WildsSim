@@ -107,8 +107,7 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // 変更
-            MyDetailSet.Value.Original.Name = setName;
-            Simulator.SaveMySet();
+            Simulator.ChangeNameOfMySet(setName, MyDetailSet.Value.Original);
 
             // マイセットマスタのリロード
             LoadMySets();

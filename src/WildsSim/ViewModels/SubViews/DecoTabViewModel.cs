@@ -52,10 +52,18 @@ namespace WildsSim.ViewModels.SubViews
         public ReactiveCommand SetAll7Command { get; } = new();
 
         /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
+        /// <summary>
         /// コンストラクタ
         /// </summary>
-        public DecoTabViewModel()
+        public DecoTabViewModel(Masters masters)
         {
+            _masters = masters;
+
             // VMをロード
             LoadContainers();
 
@@ -106,7 +114,7 @@ namespace WildsSim.ViewModels.SubViews
         private void LoadContainers(string filterName = "", string filterSkillName = "")
         {
             // 表示対象
-            var decos = Masters.Decos;
+            var decos = _masters.Decos;
 
             // 名称フィルタ適用
             if (!string.IsNullOrWhiteSpace(filterName))
@@ -121,7 +129,7 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // 表示
-            var groups = decos.GroupBy(d => d.DecoCateory);
+            var groups = decos.GroupBy(d => d.DecoCategory);
             ObservableCollection<DecoCountSelectorContainerViewModel> containers = new();
             foreach (var group in groups)
             {

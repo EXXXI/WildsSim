@@ -252,8 +252,8 @@ namespace SimModel.Service
             List<Clude> cludesWithoutCharm = new();
             foreach (var clude in _masters.Cludes)
             {
-                Equipment equip = _masters.GetEquipByName(clude.Name);
-                if (equip.Kind != EquipKind.charm)
+                Equipment? equip = _masters.GetEquipByName(clude.Name);
+                if (equip != null && equip.Kind != EquipKind.charm)
                 {
                     cludesWithoutCharm.Add(clude);
                 }
@@ -405,15 +405,15 @@ namespace SimModel.Service
             _dataManagement.DeleteAllWeaponClude();
         }
 
-        // TODO: 現状未使用
-        /// <summary>
-        /// 指定レア度以下を全除外
-        /// </summary>
-        /// <param name="rare">レア度</param>
-        public void ExcludeByRare(int rare)
-        {
-            _dataManagement.ExcludeByRare(rare);
-        }
+        // TODO: 護石・装飾品のレア度整備やアーティア・追加護石のレア度入力が必要なため保留
+        ///// <summary>
+        ///// 指定レア度以下を全除外
+        ///// </summary>
+        ///// <param name="rare">レア度</param>
+        //public void ExcludeByRare(int rare)
+        //{
+        //    _dataManagement.ExcludeByRare(rare);
+        //}
 
         /// <summary>
         /// マイセット登録
@@ -437,9 +437,9 @@ namespace SimModel.Service
         /// <summary>
         /// マイセット更新
         /// </summary>
-        public void SaveMySet()
+        public void ChangeNameOfMySet(string name, EquipSet set)
         {
-            _dataManagement.SaveMySet();
+            _dataManagement.ChangeNameOfMySet(name, set);
         }
 
         /// <summary>
@@ -494,12 +494,13 @@ namespace SimModel.Service
         }
 
         /// <summary>
-        /// マイ検索条件更新
+        /// マイ検索条件の名前更新
         /// </summary>
+        /// <param name="name">名前</param>
         /// <param name="condition">更新対象</param>
-        public void UpdateMyCondition(SearchCondition condition)
+        public void ChangeNameOfMyCondition(string name, SearchCondition condition)
         {
-            _dataManagement.UpdateMyCondition(condition);
+            _dataManagement.ChangeNameOfMyCondition(name, condition);
         }
 
         /// <summary>

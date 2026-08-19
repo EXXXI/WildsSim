@@ -209,7 +209,7 @@ namespace SimModel.Domain
             range.Charms = charmRange;
             if (useDecos)
             {
-                range.Decos = GenericDecos.Union(Masters.Decos).ToList();
+                range.Decos = GenericDecos.Union(_masters.Decos).ToList();
             }
             else
             {

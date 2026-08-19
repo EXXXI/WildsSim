@@ -310,6 +310,12 @@ namespace SimModel.Domain
             // 除外固定装備設定
             foreach (var clude in Cludes)
             {
+                if (!AllEquips.Any(e => e.Name == clude.Name))
+                {
+                    // 検索対象外装備の除外固定は無視
+                    continue;
+                }
+
                 int fix = 0;
                 if (clude.Kind.Equals(CludeKind.include))
                 {

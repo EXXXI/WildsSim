@@ -1140,7 +1140,7 @@ namespace SimModelTest.Domain
             var skill = Assert.Single(sampleEquip.Skills);
             Assert.Equal("スロ3武器スキル", skill.Name);
             Assert.Equal(1, skill.Level);
-            Assert.Equal(skill.Category, sampleEquip.DecoCateory);
+            Assert.Equal(skill.Category, sampleEquip.DecoCategory);
             Assert.Equal(7, sampleEquip.DecoCount);
 
             // 所持数の確認
@@ -1170,7 +1170,7 @@ namespace SimModelTest.Domain
 
             // 未実装の確認、4スロ、複合の確認も実施
             var equip = Assert.Single(result, x => x.Name == "複合珠【４】");
-            Assert.Equal("未実装スキル複合", equip.DecoCateory);
+            Assert.Equal("未実装スキル複合", equip.DecoCategory);
             Assert.Equal(0, equip.DecoCount);
         }
 

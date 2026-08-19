@@ -36,10 +36,25 @@ namespace SimModel.Model
         /// </summary>
         public bool IsFixed { get; set; } = false;
 
+        private string category = @"未分類";
         /// <summary>
         /// スキルのカテゴリ
         /// </summary>
-        public string Category { get; init; }
+        public string Category 
+        {
+            get
+            {
+                if (category == @"未分類")
+                {
+                    category = SkillMaster.Where(s => s.Name == Name).FirstOrDefault()?.Category ?? category;
+                }
+                return category;
+            }
+            set 
+            {
+                category = value;
+            }
+        }
 
         private bool? canWithArtian = null;
         /// <summary>
@@ -91,7 +106,10 @@ namespace SimModel.Model
             {
                 CanWithArtian = canWithArtian.Value;
             }
-            Category = string.IsNullOrEmpty(category) ? @"未分類" : category;
+            if (category != null)
+            {
+                Category = category;
+            }
             SpecificNames = SkillMaster.Where(s => s.Name == name).Select(s => s.SpecificNames).FirstOrDefault() ?? new();
         }
 

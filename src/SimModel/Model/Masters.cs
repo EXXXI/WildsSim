@@ -11,6 +11,7 @@ namespace SimModel.Model
     {
         // Loadしたきり変更されないマスタはstaticで保持する
         // Saveする必要があるマスタはstaticで保持しない(テスト時にテスト同士で干渉しないように)
+        // TODO: Decoも所持数データがあるため非staticにしたい
 
         /// <summary>
         /// スキルマスタ 本体はSkill.SkillMasterに保持される
@@ -84,7 +85,7 @@ namespace SimModel.Model
         /// <summary>
         /// 装飾品マスタ
         /// </summary>
-        public static List<Deco> Decos { get; set; } = new();
+        public List<Deco> Decos { get; set; } = new();
 
         /// <summary>
         /// 除外固定マスタ
@@ -144,10 +145,10 @@ namespace SimModel.Model
         /// </summary>
         /// <param name="equipName">装備名</param>
         /// <returns>装備</returns>
-        public Equipment GetEquipByName(string equipName)
+        public Equipment? GetEquipByName(string equipName)
         {
             string? name = equipName?.Trim();
-            return AllEquipments.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
+            return AllEquipments.Where(equip => equip.Name == name).FirstOrDefault();
         }
 
         // TODO: Skillに移管すべき？

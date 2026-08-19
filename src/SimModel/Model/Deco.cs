@@ -1,4 +1,6 @@
-﻿namespace SimModel.Model
+﻿using System.Linq;
+
+namespace SimModel.Model
 {
     /// <summary>
     /// 装飾品
@@ -19,9 +21,30 @@
         /// </summary>
         public int DecoCount { get; set; } = 0;
 
+        private string? decoCategory = null;
         /// <summary>
         /// カテゴリ
         /// </summary>
-        public string DecoCateory { get; set; } = "未分類";
+        public string DecoCategory 
+        { 
+            get
+            {
+                if (decoCategory != null)
+                {
+                    return decoCategory;
+                }
+                else if (Skills.Count > 0) {
+                    return Skills[0].Category;
+                }
+                else
+                {
+                    return "未分類";
+                }
+            }
+            set 
+            { 
+                decoCategory = value;
+            } 
+        }
     }
 }

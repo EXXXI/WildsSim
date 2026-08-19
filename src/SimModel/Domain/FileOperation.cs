@@ -57,6 +57,26 @@ namespace SimModel.Domain
         private readonly IFileSystem _fileSystem;
 
         /// <summary>
+        /// JsonSerializerOptions
+        /// </summary>
+        private JsonSerializerOptions? jsonOptions = null;
+        /// <summary>
+        /// JsonSerializerOptions
+        /// </summary>
+        private JsonSerializerOptions JsonOptions
+        {
+            get
+            {
+                if (jsonOptions == null)
+                {
+                    jsonOptions = new JsonSerializerOptions();
+                    jsonOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
+                }
+                return jsonOptions;
+            }
+        }
+
+        /// <summary>
         /// コンストラクタ
         /// </summary>
         /// <param name="logicConfig"></param>
@@ -441,12 +461,9 @@ namespace SimModel.Domain
                     // カテゴリ
                     if (skills.Count > 1)
                     {
-                        equip.DecoCateory = $"{skills[0].Name}複合";
+                        equip.DecoCategory = $"{skills[0].Name}複合";
                     }
-                    else
-                    {
-                        equip.DecoCateory = skills[0].Category;
-                    }
+                    // スキル1つの場合はDecoCateory呼び出し時にスキルマスタから判別
 
                     decos.Add(equip);
                 }
@@ -480,9 +497,7 @@ namespace SimModel.Domain
                     return decos;
                 }
 
-                JsonSerializerOptions options = new();
-                options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
-                Dictionary<string, int>? decoCounts = JsonSerializer.Deserialize<Dictionary<string, int>>(json, options);
+                Dictionary<string, int>? decoCounts = JsonSerializer.Deserialize<Dictionary<string, int>>(json, JsonOptions);
 
                 foreach (var deco in decos)
                 {
@@ -512,9 +527,8 @@ namespace SimModel.Domain
             {
                 data.Add(deco.Name, deco.DecoCount);
             }
-            JsonSerializerOptions options = new();
-            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
-            string json = JsonSerializer.Serialize(data, options);
+
+            string json = JsonSerializer.Serialize(data, JsonOptions);
 
             try
             {
@@ -820,8 +834,8 @@ namespace SimModel.Domain
             foreach (var condition in myConditions)
             {
                 List<string> bodyStrings = new();
-                bodyStrings.Add(condition.ID);
-                bodyStrings.Add(condition.DispName);
+                bodyStrings.Add(condition.ID ?? Guid.NewGuid().ToString());
+                bodyStrings.Add(condition.DispName ?? string.Empty);
                 bodyStrings.Add(condition.IsSpecificWeapon.ToString());
                 bodyStrings.Add(condition.WeaponName ?? "null");
                 bodyStrings.Add(condition.WeaponType.ToString());

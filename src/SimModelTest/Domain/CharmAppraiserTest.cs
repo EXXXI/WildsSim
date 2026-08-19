@@ -7,21 +7,14 @@ namespace SimModelTest.Domain
     /// <summary>
     /// CharmAppraiserのテスト
     /// </summary>
-    public class CharmAppraiserTest : IClassFixture<MasterSetUpFixture>
+    public class CharmAppraiserTest : TestDataSetUp
     {
         /// <summary>
-        /// Masters読み込み用Fixture
-        /// </summary>
-        private MasterSetUpFixture Fixture { get; }
-
-        /// <summary>
         /// コンストラクタ
-        /// Fixtureを用いてMastersを準備
         /// </summary>
-        /// <param name="fixture">Masters読み込み用Fixture</param>
-        public CharmAppraiserTest(MasterSetUpFixture fixture)
+        public CharmAppraiserTest() : base()
         {
-            this.Fixture = fixture;
+            // Base(TestDataSetUp)で別々のDIコンテナを生成し、テストデータを準備
         }
 
         /// <summary>
@@ -32,7 +25,7 @@ namespace SimModelTest.Domain
         public void IsLeftUpperTest_normal(bool expected, Equipment left, Equipment right, bool useDecos)
         {
             // DIコンテナから取得
-            var appraiser = Fixture.ServiceProvider.GetRequiredService<CharmAppraiser>();
+            var appraiser = ServiceProvider.GetRequiredService<CharmAppraiser>();
 
             // テスト
             bool actual = appraiser.IsLeftUpper(left, right, useDecos);
@@ -48,7 +41,7 @@ namespace SimModelTest.Domain
         public void IsLeftUpperTest_leftNull()
         {
             // DIコンテナから取得
-            var appraiser = Fixture.ServiceProvider.GetRequiredService<CharmAppraiser>();
+            var appraiser = ServiceProvider.GetRequiredService<CharmAppraiser>();
 
             // テスト
             var ex = Assert.ThrowsAny<Exception>(() => appraiser.IsLeftUpper(null, new Equipment()));
@@ -62,7 +55,7 @@ namespace SimModelTest.Domain
         public void IsLeftUpperTest_rightNull()
         {
             // DIコンテナから取得
-            var appraiser = Fixture.ServiceProvider.GetRequiredService<CharmAppraiser>();
+            var appraiser = ServiceProvider.GetRequiredService<CharmAppraiser>();
 
             // テスト
             var ex = Assert.ThrowsAny<Exception>(() => appraiser.IsLeftUpper(new Equipment(), null));
@@ -76,7 +69,7 @@ namespace SimModelTest.Domain
         public void HasUpperCharmTest_normal(bool expected, Equipment charm, bool useDecos)
         {
             // DIコンテナから取得
-            var appraiser = Fixture.ServiceProvider.GetRequiredService<CharmAppraiser>();
+            var appraiser = ServiceProvider.GetRequiredService<CharmAppraiser>();
 
             // テスト
             Equipment? upCharm = appraiser.HasUpperCharm(charm, useDecos);
@@ -101,7 +94,7 @@ namespace SimModelTest.Domain
         public void HasUpperCharmTest_null()
         {
             // DIコンテナから取得
-            var appraiser = Fixture.ServiceProvider.GetRequiredService<CharmAppraiser>();
+            var appraiser = ServiceProvider.GetRequiredService<CharmAppraiser>();
 
             // テスト
             var ex = Assert.ThrowsAny<Exception>(() => appraiser.HasUpperCharm(null));

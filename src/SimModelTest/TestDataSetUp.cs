@@ -9,17 +9,17 @@ using System.IO.Abstractions;
 namespace SimModelTest
 {
     /// <summary>
-    /// テスト用Fixture
+    /// テスト用基底クラス
     /// DIコンテナへの登録と、Mastersの読み込みを行う
     /// ファイルの書き込みはモック化し、書き込みのかわりにログが残る
     /// </summary>
-    public class MasterSetUpFixture
+    public class TestDataSetUp
     {
 
         /// <summary>
         /// DIコンテナのプロバイダ
         /// </summary>
-        public IServiceProvider ServiceProvider { get; }
+        protected IServiceProvider ServiceProvider { get; }
 
         /// <summary>
         /// 内部で使用するReadOnlyFileのインスタンス
@@ -29,7 +29,7 @@ namespace SimModelTest
         /// <summary>
         /// WriteAllTextの呼び出しをログとして残すためのDictionary
         /// </summary>
-        public Dictionary<string, List<string>> WriteLog
+        protected Dictionary<string, List<string>> WriteLog
         {
             get
             {
@@ -40,7 +40,7 @@ namespace SimModelTest
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public MasterSetUpFixture()
+        protected TestDataSetUp()
         {
             var services = new ServiceCollection();
             services.AddSingleton<Simulator, Simulator>();
@@ -60,12 +60,13 @@ namespace SimModelTest
 
             ServiceProvider = services.BuildServiceProvider();
             ServiceProvider.GetRequiredService<DataManagement>().LoadData();
+            ClearAllWriteLog();
         }
 
         /// <summary>
         /// ReadOnlyFileのWriteLogを全てクリアする
         /// </summary>
-        public void ClearAllWriteLog()
+        protected void ClearAllWriteLog()
         {
             ROFile.ClearAllWriteLog();
         }
@@ -74,9 +75,18 @@ namespace SimModelTest
         /// ReadOnlyFileのWriteLogをクリアする
         /// </summary>
         /// <param name="path"></param>
-        public void ClearWriteLog(string path)
+        protected void ClearWriteLog(string path)
         {
             ROFile.ClearWriteLog(path);
+        }
+
+        /// <summary>
+        /// Masterの再読み込みとWriteLogのクリア
+        /// </summary>
+        protected void Reload()
+        {
+            ServiceProvider.GetRequiredService<DataManagement>().LoadData();
+            ROFile.ClearAllWriteLog();
         }
     }
 }
