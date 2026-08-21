@@ -140,7 +140,24 @@ namespace SimModelTest.Domain
                     Skills = new List<Skill>() { new Skill("防具スキル", 1) },
                     Slot1 = 2,
                     Slot2 = 1
-
+                };
+                Equipment s1double = new Equipment()
+                {
+                    Name = "_s1double",
+                    Kind = EquipKind.charm,
+                    Skills = new List<Skill>() { new Skill("防具スキル", 1) },
+                    Slot1 = 1,
+                    SlotType1 = 2,
+                    Slot2 = 1
+                };
+                Equipment s3weapon = new Equipment()
+                {
+                    Name = "_s3weapon",
+                    Kind = EquipKind.charm,
+                    Skills = new List<Skill>() { new Skill("防具スキル", 1) },
+                    Slot1 = 3,
+                    SlotType1 = 1,
+                    Slot2 = 1
                 };
 
                 // bool expected, Equipment left, Equipment right, bool useDecos
@@ -157,6 +174,14 @@ namespace SimModelTest.Domain
                     // スロットが大きい方が上位互換
                     { true, s2, s1, true},
                     { false, s1, s2, true},
+                    
+                    // スロットの汎用性が大きい方が上位互換
+                    { true, s1double, s1, true},
+                    { false, s1, s1double, true},
+                    
+                    // スロットが大きくても互換性がないなら別物
+                    { false, s3weapon, s1, true},
+                    { false, s1, s3weapon, true},
 
                     // スキルの多い方が上位互換
                     { true, s1skill, baseCharm, true},

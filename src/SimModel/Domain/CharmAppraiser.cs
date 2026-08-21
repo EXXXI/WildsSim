@@ -52,7 +52,7 @@ namespace SimModel.Domain
                     Deco deco = new Deco()
                     {
                         Name = GenericDecoName(type, size),
-                        SlotType1 = type,
+                        SlotType1 = type == 2 ? 3 : type, // 両対応スロットには両要求装飾品を入れる
                         Slot1 = size,
                         Skills = new List<Skill>() { new Skill(GenericDecoName(type,size), 1) }
                     };
@@ -71,7 +71,7 @@ namespace SimModel.Domain
         /// <returns></returns>
         private static string GenericDecoName(int type, int size)
         {
-            return $"_{GenericTypeName(type)}汎珠【{GenericSizeName(size)}】";
+            return $"_temP_{GenericTypeName(type)}汎珠【{GenericSizeName(size)}】";
         }
 
         /// <summary>

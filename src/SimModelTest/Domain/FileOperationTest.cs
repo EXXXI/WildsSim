@@ -44,7 +44,7 @@ namespace SimModelTest.Domain
             Assert.Single(result, x => x.Name == "未実装スキル");
 
             // SpecificNamesの確認
-            var groupSkill = Assert.Single(result, x => x.Name == "よわシリーズ");
+            var groupSkill = Assert.Single(result, x => x.Name == "よわグループ");
             Assert.Equal(3, groupSkill.Level);
             Assert.Equal("グループスキル", groupSkill.Category);
             Assert.Equal("よわよわ", groupSkill.SpecificNames[3]);
@@ -278,7 +278,7 @@ namespace SimModelTest.Domain
             Assert.False(sampleEquip.IsVirtual);
             Assert.Null(sampleEquip.Upper);
             Assert.Equal(5, sampleEquip.Skills.Count);
-            Assert.Single(sampleEquip.Skills, s => s.Name == "つよシリーズ" && s.Level == 1);
+            Assert.Single(sampleEquip.Skills, s => s.Name == "つよグループ" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよの力" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "防具スキル" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよ防具スキル全" && s.Level == 1);
@@ -368,8 +368,8 @@ namespace SimModelTest.Domain
                 {
                     { mockFilePath, new MockFileData("" +
                     "名前,レア度,スロット1,スロット2,スロット3,入手時期,初期防御力,最終防御力,火耐性,水耐性,雷耐性,氷耐性,龍耐性,スキル系統1,スキル値1,スキル系統2,スキル値2,スキル系統3,スキル値3,スキル系統4,スキル値4,スキル系統5,スキル値5,スキル系統6,スキル値6,スキル系統7,スキル値7,生産素材1,個数,生産素材2,個数,生産素材3,個数,生産素材4,個数,ワンセット,仮番号\n" +
-                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわシリーズ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
-                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよシリーズ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
+                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわグループ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
+                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよグループ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
                 });
             FileOperation fileOperation = new(config, mockfs);
 
@@ -426,7 +426,7 @@ namespace SimModelTest.Domain
             Assert.False(sampleEquip.IsVirtual);
             Assert.Null(sampleEquip.Upper);
             Assert.Equal(5, sampleEquip.Skills.Count);
-            Assert.Single(sampleEquip.Skills, s => s.Name == "つよシリーズ" && s.Level == 1);
+            Assert.Single(sampleEquip.Skills, s => s.Name == "つよグループ" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよの力" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "防具スキル" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよ防具スキル全" && s.Level == 1);
@@ -516,8 +516,8 @@ namespace SimModelTest.Domain
                 {
                     { mockFilePath, new MockFileData("" +
                     "名前,レア度,スロット1,スロット2,スロット3,入手時期,初期防御力,最終防御力,火耐性,水耐性,雷耐性,氷耐性,龍耐性,スキル系統1,スキル値1,スキル系統2,スキル値2,スキル系統3,スキル値3,スキル系統4,スキル値4,スキル系統5,スキル値5,スキル系統6,スキル値6,スキル系統7,スキル値7,生産素材1,個数,生産素材2,個数,生産素材3,個数,生産素材4,個数,ワンセット,仮番号\n" +
-                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわシリーズ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
-                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよシリーズ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
+                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわグループ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
+                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよグループ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
                 });
             FileOperation fileOperation = new(config, mockfs);
 
@@ -574,7 +574,7 @@ namespace SimModelTest.Domain
             Assert.False(sampleEquip.IsVirtual);
             Assert.Null(sampleEquip.Upper);
             Assert.Equal(5, sampleEquip.Skills.Count);
-            Assert.Single(sampleEquip.Skills, s => s.Name == "つよシリーズ" && s.Level == 1);
+            Assert.Single(sampleEquip.Skills, s => s.Name == "つよグループ" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよの力" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "防具スキル" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよ防具スキル全" && s.Level == 1);
@@ -664,8 +664,8 @@ namespace SimModelTest.Domain
                 {
                     { mockFilePath, new MockFileData("" +
                     "名前,レア度,スロット1,スロット2,スロット3,入手時期,初期防御力,最終防御力,火耐性,水耐性,雷耐性,氷耐性,龍耐性,スキル系統1,スキル値1,スキル系統2,スキル値2,スキル系統3,スキル値3,スキル系統4,スキル値4,スキル系統5,スキル値5,スキル系統6,スキル値6,スキル系統7,スキル値7,生産素材1,個数,生産素材2,個数,生産素材3,個数,生産素材4,個数,ワンセット,仮番号\n" +
-                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわシリーズ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
-                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよシリーズ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
+                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわグループ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
+                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよグループ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
                 });
             FileOperation fileOperation = new(config, mockfs);
 
@@ -722,7 +722,7 @@ namespace SimModelTest.Domain
             Assert.False(sampleEquip.IsVirtual);
             Assert.Null(sampleEquip.Upper);
             Assert.Equal(5, sampleEquip.Skills.Count);
-            Assert.Single(sampleEquip.Skills, s => s.Name == "つよシリーズ" && s.Level == 1);
+            Assert.Single(sampleEquip.Skills, s => s.Name == "つよグループ" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよの力" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "防具スキル" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよ防具スキル全" && s.Level == 1);
@@ -812,8 +812,8 @@ namespace SimModelTest.Domain
                 {
                     { mockFilePath, new MockFileData("" +
                     "名前,レア度,スロット1,スロット2,スロット3,入手時期,初期防御力,最終防御力,火耐性,水耐性,雷耐性,氷耐性,龍耐性,スキル系統1,スキル値1,スキル系統2,スキル値2,スキル系統3,スキル値3,スキル系統4,スキル値4,スキル系統5,スキル値5,スキル系統6,スキル値6,スキル系統7,スキル値7,生産素材1,個数,生産素材2,個数,生産素材3,個数,生産素材4,個数,ワンセット,仮番号\n" +
-                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわシリーズ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
-                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよシリーズ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
+                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわグループ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
+                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよグループ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
                 });
             FileOperation fileOperation = new(config, mockfs);
 
@@ -870,7 +870,7 @@ namespace SimModelTest.Domain
             Assert.False(sampleEquip.IsVirtual);
             Assert.Null(sampleEquip.Upper);
             Assert.Equal(5, sampleEquip.Skills.Count);
-            Assert.Single(sampleEquip.Skills, s => s.Name == "つよシリーズ" && s.Level == 1);
+            Assert.Single(sampleEquip.Skills, s => s.Name == "つよグループ" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよの力" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "防具スキル" && s.Level == 1);
             Assert.Single(sampleEquip.Skills, s => s.Name == "つよ防具スキル全" && s.Level == 1);
@@ -960,8 +960,8 @@ namespace SimModelTest.Domain
                 {
                     { mockFilePath, new MockFileData("" +
                     "名前,レア度,スロット1,スロット2,スロット3,入手時期,初期防御力,最終防御力,火耐性,水耐性,雷耐性,氷耐性,龍耐性,スキル系統1,スキル値1,スキル系統2,スキル値2,スキル系統3,スキル値3,スキル系統4,スキル値4,スキル系統5,スキル値5,スキル系統6,スキル値6,スキル系統7,スキル値7,生産素材1,個数,生産素材2,個数,生産素材3,個数,生産素材4,個数,ワンセット,仮番号\n" +
-                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわシリーズ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
-                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよシリーズ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
+                    "よわ頭,1,0,0,0,0,10,,0,0,0,0,0,よわグループ,1,よわの力,1,防具スキル,1,,,,,,,,,,,,,,,,,,10\n" +
+                    "つよ頭,8,0,0,0,20,,5,-10,-10,-10,-10,つよグループ,1,つよの力,1,防具スキル,1,つよ防具スキル全,1,つよ防具スキル頭,1,,,,,,,,,,,,,,20\n") }
                 });
             FileOperation fileOperation = new(config, mockfs);
 
@@ -2609,7 +2609,7 @@ namespace SimModelTest.Domain
             Assert.Equal("防具スキル", group1skill.Name);
             Assert.Equal(1, group1skill.Level);
             var group2skill = Assert.Single(result[2]);
-            Assert.Equal("つよ防具スキル", group2skill.Name);
+            Assert.Equal("つよ防具スキル全", group2skill.Name);
             Assert.Equal(1, group2skill.Level);
         }
 
@@ -2775,7 +2775,7 @@ namespace SimModelTest.Domain
             Assert.False(sampleWeapon.IsVirtual);
             Assert.Null(sampleWeapon.Upper);
             Assert.Equal(2, sampleWeapon.Skills.Count);
-            Assert.Equal("よわシリーズ", sampleWeapon.Skills[0].Name);
+            Assert.Equal("よわグループ", sampleWeapon.Skills[0].Name);
             Assert.Equal(1, sampleWeapon.Skills[0].Level);
             Assert.Equal("つよの力", sampleWeapon.Skills[1].Name);
             Assert.Equal(1, sampleWeapon.Skills[1].Level);

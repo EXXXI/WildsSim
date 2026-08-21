@@ -19,8 +19,7 @@ namespace SimModel.Domain
         const string WaistRowName = "waist";
         const string LegRowName = "leg";
         const string CharmRowName = "charm";
-        const string WeaponSlot1RowName = "" +
-            "weaponslot1";
+        const string WeaponSlot1RowName = "weaponslot1";
         const string WeaponSlot2RowName = "weaponslot2";
         const string WeaponSlot3RowName = "weaponslot3";
         const string WeaponSlot4RowName = "weaponslot4";
@@ -473,7 +472,15 @@ namespace SimModel.Domain
             {
                 for (int i = 0; i < weaponSlotCond.Length; i++)
                 {
-                    weaponSlotCond[i] = weaponSlotCond[i] * -1;
+                    if (equip.SlotType1 == 2)
+                    {
+                        // 両対応の装飾品は全スキル計算以外では0
+                        weaponSlotCond[i] = 0;
+                    }
+                    else
+                    {
+                        weaponSlotCond[i] = weaponSlotCond[i] * -1;
+                    }
                 }
             }
             Constraints[WeaponSlot1RowName].SetCoefficient(xvar, weaponSlotCond[0]);
@@ -487,7 +494,15 @@ namespace SimModel.Domain
             {
                 for (int i = 0; i < armorSlotCond.Length; i++)
                 {
-                    armorSlotCond[i] = armorSlotCond[i] * -1;
+                    if (equip.SlotType1 == 2)
+                    {
+                        // 両対応の装飾品は全スキル計算以外では0
+                        armorSlotCond[i] = 0;
+                    }
+                    else
+                    {
+                        armorSlotCond[i] = armorSlotCond[i] * -1;
+                    }
                 }
             }
             Constraints[ArmorSlot1RowName].SetCoefficient(xvar, armorSlotCond[0]);
@@ -510,7 +525,7 @@ namespace SimModel.Domain
             Constraints[AllSlot4RowName].SetCoefficient(xvar, allSlotCond[3]);
 
             // 防御・耐性情報
-            Constraints[DefRowName].SetCoefficient(xvar, equip.Maxdef);
+            Constraints[DefRowName].SetCoefficient(xvar, Condition.IsTranscending ? equip.TranscendingDef : equip.Maxdef);
             Constraints[FireRowName].SetCoefficient(xvar, equip.Fire);
             Constraints[WaterRowName].SetCoefficient(xvar, equip.Water);
             Constraints[ThunderRowName].SetCoefficient(xvar, equip.Thunder);
