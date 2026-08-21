@@ -1,4 +1,5 @@
 ﻿using Csv;
+using SimModel.Config;
 using SimModel.Domain;
 using SimModel.ExceptionClass;
 using SimModel.Model;
@@ -14,7 +15,7 @@ namespace WildsSim.Config
     /// <summary>
     /// View関連の設定
     /// </summary>
-    internal class ViewConfig
+    internal class ViewConfig : ConfigBase
     {
         /// <summary>
         /// インスタンス
@@ -58,10 +59,10 @@ namespace WildsSim.Config
 
                 foreach (ICsvLine line in CsvReader.ReadFromText(csv))
                 {
-                    MaxSlotSize = ParseUtil.LoadConfigItem(line, @"スロットの最大の大きさ", 4);
-                    DefaultLimit = ParseUtil.LoadConfigItem(line, @"デフォルトの頑張り度", 100).ToString();
-                    NoSkillName = ParseUtil.LoadConfigItem(line, @"スキル未選択時の表示", @"スキル選択");
-                    UseSavedColumnIndexes = ParseUtil.LoadConfigItem(line, @"グリッドの列順保存有無", @"有").Equals(@"有");
+                    MaxSlotSize = LoadConfigItem(line, @"スロットの最大の大きさ", 4);
+                    DefaultLimit = LoadConfigItem(line, @"デフォルトの頑張り度", 100).ToString();
+                    NoSkillName = LoadConfigItem(line, @"スキル未選択時の表示", @"スキル選択");
+                    UseSavedColumnIndexes = LoadConfigItem(line, @"グリッドの列順保存有無", @"有").Equals(@"有");
                 }
             }
             catch (System.IO.IOException ex)

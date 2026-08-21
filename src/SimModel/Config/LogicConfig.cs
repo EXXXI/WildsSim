@@ -8,7 +8,7 @@ namespace SimModel.Config
     /// <summary>
     /// SimModel側の設定
     /// </summary>
-    public class LogicConfig
+    public class LogicConfig : ConfigBase
     {
         /// <summary>
         /// ロジック設定ファイル
@@ -82,14 +82,14 @@ namespace SimModel.Config
 
                 foreach (ICsvLine line in CsvReader.ReadFromText(csv))
                 {
-                    MaxSlotSize = ParseUtil.LoadConfigItem(line, @"スロットの最大の大きさ", MaxSlotSize);
-                    MaxRecentSkillCount = ParseUtil.LoadConfigItem(line, @"最近使ったスキルの記憶容量", MaxRecentSkillCount);
-                    MaxCharmSkillCount = ParseUtil.LoadConfigItem(line, @"追加護石のスキル最大個数", MaxCharmSkillCount);
-                    MaxDegreeOfParallelism = ParseUtil.LoadConfigItem(line, @"最大並列処理数", MaxDegreeOfParallelism);
-                    AllowUnavailableEquipments = ParseUtil.LoadConfigItem(line, @"入手不可装備の利用有無", AllowUnavailableEquipments);
-                    UseCalcUpperCharm = ParseUtil.LoadConfigItem(line, @"下位互換護石の検出有無", UseCalcUpperCharm);
-                    ArtianSkillCount = ParseUtil.LoadConfigItem(line, @"アーティア武器のスキル数", ArtianSkillCount);
-                    DefaultMySetName = ParseUtil.LoadConfigItem(line, @"マイセットのデフォルト名", DefaultMySetName);
+                    MaxSlotSize = LoadConfigItem(line, @"スロットの最大の大きさ", MaxSlotSize);
+                    MaxRecentSkillCount = LoadConfigItem(line, @"最近使ったスキルの記憶容量", MaxRecentSkillCount);
+                    MaxCharmSkillCount = LoadConfigItem(line, @"追加護石のスキル最大個数", MaxCharmSkillCount);
+                    MaxDegreeOfParallelism = LoadConfigItem(line, @"最大並列処理数", MaxDegreeOfParallelism);
+                    AllowUnavailableEquipments = LoadConfigItem(line, @"入手不可装備の利用有無", AllowUnavailableEquipments);
+                    UseCalcUpperCharm = LoadConfigItem(line, @"下位互換護石の検出有無", UseCalcUpperCharm);
+                    ArtianSkillCount = LoadConfigItem(line, @"アーティア武器のスキル数", ArtianSkillCount);
+                    DefaultMySetName = LoadConfigItem(line, @"マイセットのデフォルト名", DefaultMySetName);
                 }
             }
             catch (System.IO.IOException ex)

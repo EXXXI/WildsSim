@@ -2,9 +2,7 @@
 using SimModel.Model;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Windows;
 
 namespace SimModel.Domain
 {
@@ -21,7 +19,8 @@ namespace SimModel.Domain
         const string WaistRowName = "waist";
         const string LegRowName = "leg";
         const string CharmRowName = "charm";
-        const string WeaponSlot1RowName = "weaponslot1";
+        const string WeaponSlot1RowName = "" +
+            "weaponslot1";
         const string WeaponSlot2RowName = "weaponslot2";
         const string WeaponSlot3RowName = "weaponslot3";
         const string WeaponSlot4RowName = "weaponslot4";
@@ -55,17 +54,17 @@ namespace SimModel.Domain
         /// <summary>
         /// ソルバ
         /// </summary>
-        public Solver SimSolver { get; set; }
+        private Solver SimSolver { get; set; }
 
         /// <summary>
         /// 変数の辞書
         /// </summary>
-        public Dictionary<string, Variable> Variables { get; set; } = new();
+        private Dictionary<string, Variable> Variables { get; set; } = new();
 
         /// <summary>
         /// 制約式の辞書
         /// </summary>
-        public Dictionary<string, Constraint> Constraints { get; set; } = new();
+        private Dictionary<string, Constraint> Constraints { get; set; } = new();
 
         /// <summary>
         /// 検索結果
@@ -123,7 +122,7 @@ namespace SimModel.Domain
         private List<Clude> Cludes { get; }
 
         /// <summary>
-        /// 固定・除外設定一覧
+        /// 全装備一覧
         /// </summary>
         private IEnumerable<Equipment> AllEquips { get; }
 
