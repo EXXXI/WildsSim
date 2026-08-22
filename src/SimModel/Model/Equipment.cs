@@ -1,8 +1,5 @@
-﻿using SimModel.Config;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 using System.Text;
 
 namespace SimModel.Model
@@ -51,7 +48,13 @@ namespace SimModel.Model
                 {
                     CalcTranscendingSlots();
                 }
+#pragma warning disable CS8629 // Null 許容値型は Null になる場合があります。
                 return transcendingSlot1.Value;
+#pragma warning restore CS8629 // Null 許容値型は Null になる場合があります。
+            }
+            private set
+            {
+                transcendingSlot1 = value;
             }
         }
 
@@ -66,7 +69,13 @@ namespace SimModel.Model
                 {
                     CalcTranscendingSlots();
                 }
+#pragma warning disable CS8629 // Null 許容値型は Null になる場合があります。
                 return transcendingSlot2.Value;
+#pragma warning restore CS8629 // Null 許容値型は Null になる場合があります。
+            }
+            private set
+            {
+                transcendingSlot2 = value;
             }
         }
 
@@ -81,7 +90,13 @@ namespace SimModel.Model
                 {
                     CalcTranscendingSlots();
                 }
+#pragma warning disable CS8629 // Null 許容値型は Null になる場合があります。
                 return transcendingSlot3.Value;
+#pragma warning restore CS8629 // Null 許容値型は Null になる場合があります。
+            }
+            private set
+            {
+                transcendingSlot3 = value;
             }
         }
 
@@ -429,16 +444,16 @@ namespace SimModel.Model
             if (!IsTranscendingSlotTarget)
             {
                 // 防具5部位以外や、レア5,6以外は処理しない
-                transcendingSlot1 = Slot1;
-                transcendingSlot2 = Slot2;
-                transcendingSlot3 = Slot3;
+                TranscendingSlot1 = Slot1;
+                TranscendingSlot2 = Slot2;
+                TranscendingSlot3 = Slot3;
                 return;
             }
 
             // レア5は全スロットを+1(計+3)、レア6はスロット1,2を+1(計+2)。元々Lv3のスロットは変化しない
-            transcendingSlot1 = Math.Min(Slot1 + 1, 3);
-            transcendingSlot2 = Math.Min(Slot2 + 1, 3);
-            transcendingSlot3 = (Rare == 6) ? Slot3 : Math.Min(Slot3 + 1, 3);
+            TranscendingSlot1 = Math.Min(Slot1 + 1, 3);
+            TranscendingSlot2 = Math.Min(Slot2 + 1, 3);
+            TranscendingSlot3 = (Rare == 6) ? Slot3 : Math.Min(Slot3 + 1, 3);
             return;
         }
 
