@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace SimModel.Model
+﻿namespace SimModel.Model
 {
     /// <summary>
     /// 装飾品

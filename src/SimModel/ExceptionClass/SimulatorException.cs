@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SimModel.ExceptionClass
 {
@@ -10,12 +6,12 @@ namespace SimModel.ExceptionClass
     /// このシミュレーターとして想定内の例外を表す例外クラス
     /// </summary>
     public class SimulatorException : Exception
-    {
-
-        public SimulatorException(string message) : base(message)
-        {
-        }
-
+    {   
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="innerException"></param>
         public SimulatorException(string message, System.Exception innerException) : base(message, innerException)
         {
         }
