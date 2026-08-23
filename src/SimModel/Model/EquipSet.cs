@@ -387,7 +387,7 @@ namespace SimModel.Model
         }
 
         /// <summary>
-        /// 装飾品のCSV表記 3行
+        /// スキルのCSV表記 3行
         /// </summary>
         public string SkillsDispMultiLine
         {
