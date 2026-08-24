@@ -115,7 +115,7 @@ namespace SimModel.Model
         /// <summary>
         /// 全装備キャッシュ
         /// </summary>
-        private IEnumerable<Equipment>? _allEquipments = null;
+        private List<Equipment>? _allEquipments = null;
         /// <summary>
         /// 全装備
         /// </summary>
@@ -124,7 +124,7 @@ namespace SimModel.Model
             {
                 if (_allEquipments == null)
                 {
-                    _allEquipments = Weapons.Union(Artians).Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos);
+                    _allEquipments = Weapons.Union(Artians).Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos).ToList();
                 }
                 return _allEquipments;
             }
