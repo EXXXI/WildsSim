@@ -167,7 +167,7 @@ namespace SimModel.Model
                 else
                 {
                     sb.Append($"武器種:{WeaponType}, ");
-                    sb.AppendLine($"最低攻撃力:{MinAttack}");
+                    sb.AppendLine($"最低攻撃力:{MinAttack?.ToString() ?? none}");
                 }
                 sb.AppendLine($"防御力:{Def?.ToString() ?? none}");
                 sb.Append($"火:{Fire?.ToString() ?? none},");
@@ -215,6 +215,7 @@ namespace SimModel.Model
             Dragon = condition.Dragon;
             IsBestCharmSearch = condition.IsBestCharmSearch;
             IsBestArtianSearch = condition.IsBestArtianSearch;
+            IsTranscending = condition.IsTranscending;
         }
 
         /// <summary>
@@ -225,6 +226,11 @@ namespace SimModel.Model
         // 
         public bool AddSkill(Skill additionalSkill)
         {
+            if (additionalSkill == null)
+            {
+                return false;
+            }
+
             foreach (var skill in Skills)
             {
                 if(skill.Name == additionalSkill.Name)
