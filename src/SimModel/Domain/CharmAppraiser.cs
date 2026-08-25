@@ -17,12 +17,6 @@ namespace SimModel.Domain
         private List<Deco>? GenericDecos { get; set; }
 
         /// <summary>
-        /// SearcherFactoryのインスタンス
-        /// DIで注入される
-        /// </summary>
-        private readonly SearcherFactory _searcherFactory;
-
-        /// <summary>
         /// マスタ管理クラスのインスタンス
         /// DIで注入される
         /// </summary>
@@ -31,11 +25,9 @@ namespace SimModel.Domain
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        /// <param name="searcherFactory"></param>
         /// <param name="masters"></param>
-        public CharmAppraiser(SearcherFactory searcherFactory, Masters masters)
+        public CharmAppraiser(Masters masters)
         {
-            _searcherFactory = searcherFactory;
             _masters = masters;
         }
 
@@ -121,9 +113,9 @@ namespace SimModel.Domain
         {
             // 右防具に汎用装飾品を詰めて、左防具でそれを再現できたら上位互換であると判定する
 
-            //検索
+            // 検索
             Searcher searcher = MakeCharmSearcher(right, [left], useDecos);
-            searcher.ExecSearch(1);
+            searcher.ExecSearch(1).GetAwaiter().GetResult();
 
             // 1件でもヒットすれば上位互換
             bool result = (searcher.ResultSets.Count > 0);
@@ -144,7 +136,7 @@ namespace SimModel.Domain
             // 護石に汎用装飾品を詰めて、他の護石でそれを再現できたら上位互換であると判定する
 
             Searcher searcher = MakeCharmSearcher(charm, _masters.AdditionalCharms.Except([charm]).ToList(), useDecos);
-            searcher.ExecSearch(1);
+            searcher.ExecSearch(1).GetAwaiter().GetResult();
 
             Equipment? UpperCharm = null;
             // 目的関数で空きスロット数、スロットサイズを優先しているので、1件目が最優
@@ -216,7 +208,7 @@ namespace SimModel.Domain
                 range.Decos = GenericDecos;
             }
 
-            Searcher searcher = _searcherFactory.Create(condition, range);
+            Searcher searcher = new(condition, range);
             return searcher;
         }
     }

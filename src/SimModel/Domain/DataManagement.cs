@@ -84,13 +84,13 @@ namespace SimModel.Domain
         /// </summary>
         private void LoadSkill()
         {
-            Masters.Skills = _fileOperation.LoadSkillCSV();
+            var skills = _fileOperation.LoadSkillCSV();
 
             // どの防具・護石・武器にも存在しないスキルを除外
             // アーティア・追加護石がまだ読み込まれていないため、AllEquipmentsは使わない
             var equips = Masters.Weapons.Union(Masters.Heads).Union(Masters.Bodys).Union(Masters.Arms)
                 .Union(Masters.Waists).Union(Masters.Legs).Union(Masters.Charms).Union(_masters.Decos);
-            Masters.Skills = Masters.Skills.Where(skill =>
+            Masters.Skills = skills.Where(skill =>
                 equips.Any(e => e.Skills.Any(s => s.Name == skill.Name)))
                 .ToList();
         }

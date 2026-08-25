@@ -10,14 +10,6 @@ namespace SimModelTest.Domain
     public class CharmAppraiserTest : TestDataSetUp
     {
         /// <summary>
-        /// コンストラクタ
-        /// </summary>
-        public CharmAppraiserTest() : base()
-        {
-            // Base(TestDataSetUp)で別々のDIコンテナを生成し、テストデータを準備
-        }
-
-        /// <summary>
         /// IsLeftUpperの通常の挙動を確認
         /// </summary>
         [Theory]
@@ -30,7 +22,6 @@ namespace SimModelTest.Domain
             // テスト
             bool actual = appraiser.IsLeftUpper(left, right, useDecos);
             Assert.Equal(expected, actual);
-
         }
 
         /// <summary>

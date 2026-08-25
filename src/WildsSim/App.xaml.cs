@@ -33,15 +33,18 @@ namespace WildsSim
             // DIコンテナにサービスを登録
             var services = new ServiceCollection();
             services.AddSimModelServices();
-            services.AddSingleton<ArtianTabViewModel, ArtianTabViewModel>();
-            services.AddSingleton<CharmTabViewModel, CharmTabViewModel>();
-            services.AddSingleton<CludeTabViewModel, CludeTabViewModel>();
-            services.AddSingleton<DecoTabViewModel, DecoTabViewModel>();
-            services.AddSingleton<LicenseTabViewModel, LicenseTabViewModel>();
-            services.AddSingleton<MySetTabViewModel, MySetTabViewModel>();
-            services.AddSingleton<SimulatorTabViewModel, SimulatorTabViewModel>();
-            services.AddSingleton<SkillSelectTabViewModel, SkillSelectTabViewModel>();
+            services.AddSingleton<ArtianTabViewModel>();
+            services.AddSingleton<CharmTabViewModel>();
+            services.AddSingleton<CludeTabViewModel>();
+            services.AddSingleton<DecoTabViewModel>();
+            services.AddSingleton<LicenseTabViewModel>();
+            services.AddSingleton<MySetTabViewModel>();
+            services.AddSingleton<SimulatorTabViewModel>();
+            services.AddSingleton<SkillSelectTabViewModel>();
             ServiceProvider = services.BuildServiceProvider();
+
+            // データのロードのため、Simulatorを最初にインスタンス化
+            ServiceProvider.GetRequiredService<Simulator>();
 
             base.OnStartup(e);
 

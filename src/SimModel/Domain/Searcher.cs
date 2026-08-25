@@ -3,6 +3,8 @@ using SimModel.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SimModel.Domain
 {
@@ -71,11 +73,6 @@ namespace SimModel.Domain
         public List<EquipSet> ResultSets { get; set; }
 
         /// <summary>
-        /// 中断フラグ
-        /// </summary>
-        public bool IsCanceling { get; set; } = false;
-
-        /// <summary>
         /// 検索対象の武器一覧
         /// </summary>
         private List<Weapon> Weapons { get; }
@@ -123,7 +120,7 @@ namespace SimModel.Domain
         /// <summary>
         /// 全装備一覧
         /// </summary>
-        private IEnumerable<Equipment> AllEquips { get; }
+        private List<Equipment> AllEquips { get; }
 
         /// <summary>
         /// コンストラクタ：検索条件を指定する
@@ -145,7 +142,7 @@ namespace SimModel.Domain
             Cludes = range.Cludes;
 
             AllEquips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
-                .Union(Charms).Union(Decos);
+                .Union(Charms).Union(Decos).ToList();
 
             SimSolver = Solver.CreateSolver("SCIP");
 
@@ -167,7 +164,7 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="limit">頑張り度</param>
         /// <returns>全件検索完了した場合true</returns>
-        public bool ExecSearch(int limit)
+        public async Task<bool> ExecSearch(int limit, CancellationToken? token = null)
         {
             // 目標検索件数
             int target = ResultSets.Count + limit;
@@ -205,7 +202,7 @@ namespace SimModel.Domain
                 }
 
                 // 中断確認
-                if (IsCanceling)
+                if (token?.IsCancellationRequested ?? false)
                 {
                     return false;
                 }

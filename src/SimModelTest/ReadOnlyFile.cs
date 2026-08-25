@@ -43,17 +43,5 @@ namespace SimModelTest
         {
             WriteLog.Clear();
         }
-
-        /// <summary>
-        /// 特定のパスのWriteLogをクリアする
-        /// </summary>
-        /// <param name="path"></param>
-        public void ClearWriteLog(string path)
-        {
-            if (WriteLog.ContainsKey(path))
-            {
-                WriteLog[path].Clear();
-            }
-        }
     }
 }

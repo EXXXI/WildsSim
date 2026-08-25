@@ -9,6 +9,7 @@
 	<DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     <DebugType Condition="'$(Configuration)'=='ReleaseWithSymbol'">none</DebugType>
 	<Configurations>Debug;Release;ReleaseWithSymbol</Configurations>
+	<CodePage>65001</CodePage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithSymbol|AnyCPU'">
@@ -34,7 +35,7 @@
 
   <ItemGroup>
     <None Update="conf\LogicConfig.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="libglpk_cli_native.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SimModel.Model
+﻿namespace SimModel.Model
 {
+    /// <summary>
+    /// 武器
+    /// </summary>
     public class Weapon : Equipment
     {
         /// <summary>

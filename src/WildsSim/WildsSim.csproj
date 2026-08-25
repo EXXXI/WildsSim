@@ -10,6 +10,7 @@
 	<DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     <DebugType Condition="'$(Configuration)'=='ReleaseWithSymbol'">none</DebugType>
 	<Configurations>Debug;Release;ReleaseWithSymbol</Configurations>
+	<CodePage>65001</CodePage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithSymbol|AnyCPU'">

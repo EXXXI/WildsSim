@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SimModel.Domain;
 using SimModel.Model;
+using SimModel.Service;
 
 namespace SimModelTest.Domain
 {
@@ -10,7 +11,7 @@ namespace SimModelTest.Domain
         /// ExecSearchのテスト(正常系・武器指定)
         /// </summary>
         [Fact]
-        public void ExecSearch_normal()
+        public async Task ExecSearch_normal()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -26,7 +27,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             var set = Assert.Single(searcher.ResultSets);
             foreach (var skill in condition.Skills)
             {
@@ -41,7 +42,7 @@ namespace SimModelTest.Domain
         [Theory]
         [InlineData(6, 10, true)] // つよ4よわ1の5パターン + つよ5の1パターン
         [InlineData(3, 3, false)]
-        public void ExecSearch_limit(int expectedCount, int limit, bool allSearched)
+        public async Task ExecSearch_limit(int expectedCount, int limit, bool allSearched)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -56,7 +57,7 @@ namespace SimModelTest.Domain
             Searcher searcher = new(condition, range);
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             Assert.Equal(allSearched, result);
             foreach (var set in searcher.ResultSets)
@@ -72,7 +73,7 @@ namespace SimModelTest.Domain
         /// ExecSearchのテスト(正常系・武器種指定)
         /// </summary>
         [Fact]
-        public void ExecSearch_weaponType()
+        public async Task ExecSearch_weaponType()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -89,7 +90,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             var set = Assert.Single(searcher.ResultSets);
             foreach (var skill in condition.Skills)
             {
@@ -108,7 +109,7 @@ namespace SimModelTest.Domain
         [InlineData(1, 139, false)]
         [InlineData(0, 141, false)]
         [InlineData(6, 132, false)] // つよ4よわ1の5パターン + つよ5の1パターン
-        public void ExecSearch_def(int expectedCount, int def, bool isTrancending)
+        public async Task ExecSearch_def(int expectedCount, int def, bool isTrancending)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -125,7 +126,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -144,7 +145,7 @@ namespace SimModelTest.Domain
         [InlineData(1, 0)] // 攻撃力0だと武器なしの結果が出た際にまとめられる
         [InlineData(3, 10)]
         [InlineData(2, 95)]
-        public void ExecSearch_regist(int expectedCount, int attack)
+        public async Task ExecSearch_regist(int expectedCount, int attack)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -161,7 +162,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -177,7 +178,7 @@ namespace SimModelTest.Domain
         /// ExecSearchのテスト(正常系・通常スキル固定)
         /// </summary>
         [Fact]
-        public void ExecSearch_fix()
+        public async Task ExecSearch_fix()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -193,7 +194,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(5, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -211,7 +212,7 @@ namespace SimModelTest.Domain
         [Theory]
         [InlineData(17, 0)] // ワンセット防具が混じる
         [InlineData(16, 3)]
-        public void ExecSearch_groupFix(int expectedCount, int fixLevel)
+        public async Task ExecSearch_groupFix(int expectedCount, int fixLevel)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -227,7 +228,7 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -245,7 +246,7 @@ namespace SimModelTest.Domain
         [InlineData(7, 0)] // ワンセット防具が混じる
         [InlineData(20, 2)]
         [InlineData(6, 4)]
-        public void ExecSearch_seriesFix(int expectedCount, int fixLevel)
+        public async Task ExecSearch_seriesFix(int expectedCount, int fixLevel)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -261,7 +262,7 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -278,7 +279,7 @@ namespace SimModelTest.Domain
         [Theory]
         [InlineData(0, false)]
         [InlineData(1, true)]
-        public void ExecSearch_trancending(int expectedCount, bool isTrancending)
+        public async Task ExecSearch_trancending(int expectedCount, bool isTrancending)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -295,7 +296,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -312,7 +313,7 @@ namespace SimModelTest.Domain
         [Theory]
         [InlineData(0, false)]
         [InlineData(1, true)]
-        public void ExecSearch_bestCharm(int expectedCount, bool isBestCharmSearch)
+        public async Task ExecSearch_bestCharm(int expectedCount, bool isBestCharmSearch)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -329,7 +330,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -346,7 +347,7 @@ namespace SimModelTest.Domain
         [Theory]
         [InlineData(0, false)]
         [InlineData(10, true)]
-        public void ExecSearch_bestArtian(int expectedCount, bool isBestArtianSearch)
+        public async Task ExecSearch_bestArtian(int expectedCount, bool isBestArtianSearch)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -364,7 +365,7 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -379,7 +380,7 @@ namespace SimModelTest.Domain
         /// ExecSearchのテスト(正常系・防具除外)
         /// </summary>
         [Fact]
-        public void ExecSearch_exclude()
+        public async Task ExecSearch_exclude()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -396,7 +397,7 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Single(searcher.ResultSets);
             foreach (var set in searcher.ResultSets)
             {
@@ -412,7 +413,7 @@ namespace SimModelTest.Domain
         /// ExecSearchのテスト(正常系・防具固定)
         /// </summary>
         [Fact]
-        public void ExecSearch_include()
+        public async Task ExecSearch_include()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -429,7 +430,7 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Single(searcher.ResultSets);
             foreach (var set in searcher.ResultSets)
             {
@@ -447,7 +448,7 @@ namespace SimModelTest.Domain
         [Theory]
         [InlineData(0, false)]
         [InlineData(1, true)]
-        public void ExecSearch_decoCount(int expectedCount, bool hasAllDecos)
+        public async Task ExecSearch_decoCount(int expectedCount, bool hasAllDecos)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -464,7 +465,7 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
             foreach (var set in searcher.ResultSets)
             {
@@ -483,7 +484,7 @@ namespace SimModelTest.Domain
         [InlineData(2, "スロ3武器スキル")]
         [InlineData(3, "スロ3両対応スキル")]
         [InlineData(1, "スロ3両要求スキル")]
-        public void ExecSearch_deco(int expectedCount, string decoSkillName)
+        public async Task ExecSearch_deco(int expectedCount, string decoSkillName)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -500,8 +501,42 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Equal(expectedCount, searcher.ResultSets.Count);
+            foreach (var set in searcher.ResultSets)
+            {
+                foreach (var skill in condition.Skills)
+                {
+                    Assert.True(set.Skills.Where(s => s.Name == skill.Name).First().Level >= skill.Level);
+                }
+            }
+        }
+
+        /// <summary>
+        /// ExecSearchのテスト(正常系・キャンセル)
+        /// </summary>
+        [Fact]
+        public async Task ExecSearch_cancel()
+        {
+            // DIコンテナから取得
+            var masters = ServiceProvider.GetRequiredService<Masters>();
+
+            // テストデータ
+            SearchCondition condition = new SearchCondition();
+            condition.AddSkill(new Skill("防具スキル", 6));
+            condition.AddSkill(new Skill("スロ1武器スキル", 1));
+            condition.IsSpecificWeapon = false;
+            SearchRange range = new(condition, masters);
+            Searcher searcher = new(condition, range);
+            int limit = 1000;
+
+            // テスト
+            var tokenSource = new CancellationTokenSource();
+            var token = tokenSource.Token;
+            var task = Task.Run(() => searcher.ExecSearch(limit, token));
+            tokenSource.Cancel();
+            var result = await task;
+            Assert.True(searcher.ResultSets.Count < 627);
             foreach (var set in searcher.ResultSets)
             {
                 foreach (var skill in condition.Skills)
@@ -516,7 +551,7 @@ namespace SimModelTest.Domain
         /// 検索結果0件
         /// </summary>
         [Fact]
-        public void ExecSearch_nullWeaponName()
+        public async Task ExecSearch_nullWeaponName()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -532,7 +567,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Empty(searcher.ResultSets);
         }
 
@@ -541,7 +576,7 @@ namespace SimModelTest.Domain
         /// 検索結果0件
         /// </summary>
         [Fact]
-        public void ExecSearch_emptyWeaponName()
+        public async Task ExecSearch_emptyWeaponName()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -557,7 +592,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Empty(searcher.ResultSets);
         }
 
@@ -566,7 +601,7 @@ namespace SimModelTest.Domain
         /// 検索結果0件
         /// </summary>
         [Fact]
-        public void ExecSearch_notExistWeaponName()
+        public async Task ExecSearch_notExistWeaponName()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -582,7 +617,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Empty(searcher.ResultSets);
         }
 
@@ -592,7 +627,7 @@ namespace SimModelTest.Domain
         /// スロットのみデータで検索
         /// </summary>
         [Fact]
-        public void ExecSearch_noWeaponType()
+        public async Task ExecSearch_noWeaponType()
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -608,7 +643,7 @@ namespace SimModelTest.Domain
             int limit = 10;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             foreach (var set in searcher.ResultSets)
             {
                 foreach (var skill in condition.Skills)
@@ -626,7 +661,7 @@ namespace SimModelTest.Domain
         [InlineData(null)]
         [InlineData("")]
         [InlineData("dummy")]
-        public void ExecSearch_invalidExclude(string? name)
+        public async Task ExecSearch_invalidExclude(string? name)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -643,7 +678,7 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Single(searcher.ResultSets);
             foreach (var set in searcher.ResultSets)
             {
@@ -662,7 +697,7 @@ namespace SimModelTest.Domain
         [InlineData(null)]
         [InlineData("")]
         [InlineData("dummy")]
-        public void ExecSearch_invalidInclude(string? name)
+        public async Task ExecSearch_invalidInclude(string? name)
         {
             // DIコンテナから取得
             var masters = ServiceProvider.GetRequiredService<Masters>();
@@ -679,7 +714,7 @@ namespace SimModelTest.Domain
             int limit = 20;
 
             // テスト
-            var result = searcher.ExecSearch(limit);
+            var result = await searcher.ExecSearch(limit);
             Assert.Single(searcher.ResultSets);
             foreach (var set in searcher.ResultSets)
             {

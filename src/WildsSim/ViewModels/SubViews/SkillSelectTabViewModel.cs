@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Automation;
 using WildsSim.ViewModels.BindableWrapper;
+using System.Threading;
 
 namespace WildsSim.ViewModels.SubViews
 {
@@ -294,7 +295,9 @@ namespace WildsSim.ViewModels.SubViews
             MainVM.IsIndeterminate.Value = true;
 
             // 検索
-            List<EquipSet> result = await Task.Run(() => Simulator.Search(condition, searchLimit));
+            TokenSource = new();
+            CancellationToken token = TokenSource.Token;
+            List<EquipSet> result = await Task.Run(() => Simulator.Search(condition, searchLimit, token));
 
             // ビジーフラグ解除
             IsBusy.Value = false;
@@ -332,7 +335,9 @@ namespace WildsSim.ViewModels.SubViews
 
             // 追加スキル検索
             SearchCondition condition = MakeCondition();
-            List<Skill> result = await Task.Run(() => Simulator.SearchExtraSkill(condition, MainVM.Progress));
+            TokenSource = new();
+            CancellationToken token = TokenSource.Token;
+            List<Skill> result = await Task.Run(() => Simulator.SearchExtraSkill(condition, MainVM.Progress, token));
             MainVM.Progress.Value = 0;
 
             // 追加スキル表示用VMをセット

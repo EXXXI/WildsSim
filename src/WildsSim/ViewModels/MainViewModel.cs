@@ -3,6 +3,7 @@ using Prism.Mvvm;
 using Reactive.Bindings;
 using SimModel.Service;
 using System.Reactive.Linq;
+using System.Threading;
 using WildsSim.ViewModels.SubViews;
 
 namespace WildsSim.ViewModels
@@ -110,6 +111,25 @@ namespace WildsSim.ViewModels
         /// </summary>
         public ReactiveCommand CancelCommand { get; private set; }
 
+        /// <summary>
+        /// キャンセル用トークン
+        /// </summary>
+        private CancellationTokenSource? tokenSource;
+        /// <summary>
+        /// キャンセル用トークン
+        /// </summary>
+        public CancellationTokenSource? TokenSource {
+            get
+            {
+                return tokenSource;
+            }
+            set 
+            {
+                tokenSource?.Dispose();
+                tokenSource = value;
+            }
+        }
+
 
         /// <summary>
         /// コンストラクタ：起動時処理
@@ -191,7 +211,7 @@ namespace WildsSim.ViewModels
         /// </summary>
         private void Cancel()
         {
-            Simulator.Cancel();
+            TokenSource?.Cancel();
         }
     }
 }

@@ -200,7 +200,7 @@ namespace SimModel.Model
             Skills = new List<Skill>();
             foreach (var skill in condition.Skills)
             {
-                Skill newSkill = new Skill(skill.Name, skill.Level, skill.IsFixed);
+                Skill newSkill = new(skill.Name, skill.Level) { IsFixed = skill.IsFixed };
                 Skills.Add(newSkill);
             }
             IsSpecificWeapon = condition.IsSpecificWeapon;

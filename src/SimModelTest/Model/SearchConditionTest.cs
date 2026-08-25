@@ -17,7 +17,7 @@ namespace SimModelTest.Model
             // テストデータ
             List<Skill> skills = [
                 new("防具スキル", 2), 
-                new("つよの力", 2, isFixed: true)
+                new("つよの力", 2) { IsFixed = true }
                 ];
 
             // get

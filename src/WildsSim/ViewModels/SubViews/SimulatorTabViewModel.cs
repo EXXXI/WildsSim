@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using WildsSim.Util;
@@ -125,7 +126,9 @@ namespace WildsSim.ViewModels.SubViews
             MainVM.IsIndeterminate.Value = true;
 
             // もっと検索
-            List<EquipSet> result = await Task.Run(() => Simulator.SearchMore(Limit));
+            TokenSource = new();
+            CancellationToken token = TokenSource.Token;
+            List<EquipSet> result = await Task.Run(() => Simulator.SearchMore(Limit, token));
             SearchResult.ChangeCollection(BindableEquipSet.BeBindableList(result));
 
             // ビジーフラグ解除
@@ -159,7 +162,9 @@ namespace WildsSim.ViewModels.SubViews
             IsBusy.Value = true;
 
             // 追加スキル検索
-            List<EquipSet> result = await Task.Run(() => Simulator.SearchCharm(MainVM.Progress));
+            TokenSource = new();
+            CancellationToken token = TokenSource.Token;
+            List<EquipSet> result = await Task.Run(() => Simulator.SearchCharm(MainVM.Progress, token));
             MainVM.Progress.Value = 0;
             SearchResult.ChangeCollection(BindableEquipSet.BeBindableList(result));
 

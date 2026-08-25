@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
 using SimModel.Config;
 using SimModel.Domain;
@@ -43,23 +44,18 @@ namespace SimModelTest
         protected TestDataSetUp()
         {
             var services = new ServiceCollection();
-            services.AddSingleton<Simulator, Simulator>();
-            services.AddSingleton<SearcherFactory, SearcherFactory>();
-            services.AddSingleton<DataManagement, DataManagement>();
-            services.AddSingleton<FileOperation, FileOperation>();
-            services.AddSingleton<CharmAppraiser, CharmAppraiser>();
-            services.AddSingleton<LogicConfig, LogicConfig>();
-            services.AddSingleton<Masters, Masters>();
+            services.AddSimModelServices();
 
             var fileSystem = new FileSystem();
             ROFile = new ReadOnlyFile(fileSystem);
             var fileSystemMock = new Mock<IFileSystem>();
             fileSystemMock.SetupGet(x => x.File).Returns(ROFile);
             fileSystemMock.SetupGet(x => x.Directory).Returns(fileSystem.Directory); // MakeSaveForder用
-            services.AddSingleton<IFileSystem>(fileSystemMock.Object);
+            services.Replace(ServiceDescriptor.Singleton<IFileSystem>(fileSystemMock.Object));
 
+            // Simulatorのインスタンスを生成することで、dataManagement.LoadData()を済ませておく
             ServiceProvider = services.BuildServiceProvider();
-            ServiceProvider.GetRequiredService<DataManagement>().LoadData();
+            ServiceProvider.GetRequiredService<Simulator>(); 
             ClearAllWriteLog();
         }
 
@@ -68,24 +64,6 @@ namespace SimModelTest
         /// </summary>
         protected void ClearAllWriteLog()
         {
-            ROFile.ClearAllWriteLog();
-        }
-
-        /// <summary>
-        /// ReadOnlyFileのWriteLogをクリアする
-        /// </summary>
-        /// <param name="path"></param>
-        protected void ClearWriteLog(string path)
-        {
-            ROFile.ClearWriteLog(path);
-        }
-
-        /// <summary>
-        /// Masterの再読み込みとWriteLogのクリア
-        /// </summary>
-        protected void Reload()
-        {
-            ServiceProvider.GetRequiredService<DataManagement>().LoadData();
             ROFile.ClearAllWriteLog();
         }
     }

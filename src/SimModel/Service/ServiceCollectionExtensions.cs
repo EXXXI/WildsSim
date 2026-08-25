@@ -1,4 +1,4 @@
-// SimModel/DependencyInjection/ServiceCollectionExtensions.cs
+ï»¿// SimModel/DependencyInjection/ServiceCollectionExtensions.cs
 using Microsoft.Extensions.DependencyInjection;
 using SimModel.Config;
 using SimModel.Domain;
@@ -7,20 +7,28 @@ using System.IO.Abstractions;
 
 namespace SimModel.Service
 {
+    /// <summary>
+    /// ServiceCollectionæ‹¡å¼µãƒ¡ã‚½ãƒƒãƒ‰ã‚¯ãƒ©ã‚¹
+    /// SimModelã®ã‚µãƒ¼ãƒ“ã‚¹ç™»éŒ²ç”¨
+    /// </summary>
     public static class ServiceCollectionExtensions
     {
+        /// <summary>
+        /// SimModelã®ã‚µãƒ¼ãƒ“ã‚¹ã‚’ç™»éŒ²
+        /// </summary>
+        /// <param name="services">ã‚µãƒ¼ãƒ“ã‚¹</param>
+        /// <returns>ã‚µãƒ¼ãƒ“ã‚¹</returns>
         public static IServiceCollection AddSimModelServices(this IServiceCollection services)
         {
-            // ‚±‚±‚ÅSimModel‚ÌƒT[ƒrƒX‚ğ“o˜^‚·‚é
-            // –{—ˆ‚ÍIF‚ÆÀ‘•‚ğ•ª—£‚·‚×‚«‚¾‚ªAˆê’UŒ©‘—‚è(•K—v‚É‰‚¶‚Ä•ÏX‚·‚é)
-            services.AddSingleton<Simulator, Simulator>();
-            services.AddSingleton<SearcherFactory, SearcherFactory>();
-            services.AddSingleton<DataManagement, DataManagement>();
-            services.AddSingleton<FileOperation, FileOperation>();
-            services.AddSingleton<CharmAppraiser, CharmAppraiser>();
-            services.AddSingleton<LogicConfig, LogicConfig>();
+            // ã“ã“ã§SimModelã®ã‚µãƒ¼ãƒ“ã‚¹ã‚’ç™»éŒ²ã™ã‚‹
+            // æœ¬æ¥ã¯IFã¨å®Ÿè£…ã‚’åˆ†é›¢ã™ã¹ãã ãŒã€ä¸€æ—¦è¦‹é€ã‚Š(å¿…è¦ã«å¿œã˜ã¦å¤‰æ›´ã™ã‚‹)
+            services.AddSingleton<Simulator>();
+            services.AddSingleton<DataManagement>();
+            services.AddSingleton<FileOperation>();
+            services.AddSingleton<CharmAppraiser>();
+            services.AddSingleton<LogicConfig>();
             services.AddSingleton<IFileSystem, FileSystem>();
-            services.AddSingleton<Masters, Masters>();
+            services.AddSingleton<Masters>();
 
             return services;
         }

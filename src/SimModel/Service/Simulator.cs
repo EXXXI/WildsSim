@@ -2,9 +2,8 @@
 using SimModel.Config;
 using SimModel.Domain;
 using SimModel.Model;
-using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimModel.Service
@@ -44,10 +43,16 @@ namespace SimModel.Service
         /// </summary>
         static private Logger logger = LogManager.GetCurrentClassLogger();
 
+        /// <summary>
+        /// データ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
         private readonly DataManagement _dataManagement;
 
-        private readonly SearcherFactory _searcherFactory;
-
+        /// <summary>
+        /// 護石関連計算クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
         private readonly CharmAppraiser _charmAppraiser;
 
         /// <summary>
@@ -62,11 +67,10 @@ namespace SimModel.Service
         /// </summary>
         private readonly LogicConfig _logicConfig;
 
-        public Simulator(DataManagement dataManagement, SearcherFactory searcherFactory, CharmAppraiser charmAppraiser, LogicConfig logicConfig, Masters masters)
+        public Simulator(DataManagement dataManagement, CharmAppraiser charmAppraiser, LogicConfig logicConfig, Masters masters)
         {
             _dataManagement = dataManagement;
             _dataManagement.LoadData();
-            _searcherFactory = searcherFactory;
             _charmAppraiser = charmAppraiser;
             _logicConfig = logicConfig;
             _masters = masters;
@@ -78,21 +82,24 @@ namespace SimModel.Service
         /// <param name="condition">検索条件</param>
         /// <param name="limit">頑張り度</param>
         /// <returns>検索結果</returns>
-        public List<EquipSet> Search(SearchCondition condition, int limit)
+        public async Task<List<EquipSet>> Search(SearchCondition condition, int limit, CancellationToken? token = null)
         {
             ResetIsCanceling();
 
             // 検索
-            if (Searcher != null)
-            {
-                Searcher.Dispose();
-            }
+            Searcher?.Dispose();
             SearchRange range = new(condition, _masters);
-            Searcher = _searcherFactory.Create(condition, range);
-            IsSearchedAll = Searcher.ExecSearch(limit);
+            Searcher = new(condition, range);
+            IsSearchedAll = await Searcher.ExecSearch(limit, token);
 
             // 最近使ったスキル更新
             UpdateRecentSkill(condition.Skills);
+
+            // 中断時はフラグを立てる
+            if (token?.IsCancellationRequested ?? false)
+            {
+                IsCanceling = true;
+            }
 
             return Searcher.ResultSets;
         }
@@ -102,7 +109,7 @@ namespace SimModel.Service
         /// </summary>
         /// <param name="limit">頑張り度</param>
         /// <returns>検索結果</returns>
-        public List<EquipSet> SearchMore(int limit)
+        public async Task<List<EquipSet>> SearchMore(int limit, CancellationToken? token = null)
         {
             ResetIsCanceling();
 
@@ -112,7 +119,13 @@ namespace SimModel.Service
                 return new List<EquipSet>();
             }
 
-            IsSearchedAll = Searcher.ExecSearch(limit);
+            IsSearchedAll = await Searcher.ExecSearch(limit, token);
+
+            // 中断時はフラグを立てる
+            if (token?.IsCancellationRequested ?? false)
+            {
+                IsCanceling = true;
+            }
 
             return Searcher.ResultSets;
         }
@@ -122,7 +135,7 @@ namespace SimModel.Service
         /// </summary>
         /// <param name="condition">検索条件</param>
         /// <returns>検索結果</returns>
-        public List<Skill> SearchExtraSkill(SearchCondition condition, Reactive.Bindings.ReactivePropertySlim<double>? progress = null)
+        public async Task<List<Skill>> SearchExtraSkill(SearchCondition condition, Reactive.Bindings.ReactivePropertySlim<double>? progress = null, CancellationToken? token = null)
         {
             ResetIsCanceling();
 
@@ -144,11 +157,10 @@ namespace SimModel.Service
                     MaxDegreeOfParallelism = _logicConfig.MaxDegreeOfParallelism
                 },
                 () => new List<Skill>(),
-                (skill, loop, subResult) =>
+                (skill, loop, subResult) => 
                 {
                     // 中断チェック
-                    // TODO: もし時間がかかるようならCancelToken等でちゃんとループを終了させること
-                    if (IsCanceling)
+                    if (token?.IsCancellationRequested ?? false)
                     {
                         return subResult;
                     }
@@ -166,8 +178,8 @@ namespace SimModel.Service
                         if (isNewSkill)
                         {
                             // 頑張り度1で検索
-                            using Searcher exSearcher = _searcherFactory.Create(exCondition, range);
-                            exSearcher.ExecSearch(1);
+                            using Searcher exSearcher = new(exCondition, range);
+                            exSearcher.ExecSearch(1).GetAwaiter().GetResult();
 
                             // 1件でもヒットすれば追加スキル一覧に追加
                             if (exSearcher.ResultSets.Count > 0)
@@ -216,6 +228,12 @@ namespace SimModel.Service
                 }
             }
 
+            // 中断時はフラグを立てる
+            if (token?.IsCancellationRequested ?? false)
+            {
+                IsCanceling = true;
+            }
+
             return sortedSkills;
         }
 
@@ -223,7 +241,7 @@ namespace SimModel.Service
         /// 護石検索
         /// </summary>
         /// <returns>検索結果</returns>
-        public List<EquipSet> SearchCharm(Reactive.Bindings.ReactivePropertySlim<double>? progress = null)
+        public async Task<List<EquipSet>> SearchCharm(Reactive.Bindings.ReactivePropertySlim<double>? progress = null, CancellationToken? token = null)
         {
             ResetIsCanceling();
 
@@ -270,8 +288,7 @@ namespace SimModel.Service
                 (targetCharm, loop, subResult) =>
                 {
                     // 中断チェック
-                    // TODO: もし時間がかかるようならCancelToken等でちゃんとループを終了させること
-                    if (IsCanceling)
+                    if (token?.IsCancellationRequested ?? false)
                     {
                         return subResult;
                     }
@@ -285,8 +302,8 @@ namespace SimModel.Service
                     range.Cludes = cludesWithoutCharm;
 
                     // 頑張り度1で検索
-                    using Searcher exSearcher = _searcherFactory.Create(exCondition, range);
-                    exSearcher.ExecSearch(1);
+                    using Searcher exSearcher = new(exCondition, range);
+                    exSearcher.ExecSearch(1).GetAwaiter().GetResult();
 
                     // 1件でもヒットすれば結果に追加
                     if (exSearcher.ResultSets.Count > 0)
@@ -314,6 +331,12 @@ namespace SimModel.Service
                     }
                 }
             );
+
+            // (中断時用プログレスバー補正)
+            if (progress != null)
+            {
+                progress.Value = mainProgressRate;
+            }
 
             // 下位互換の護石で済む場合削除
             // TODO: HasUpperCharmで少し高速化できそう。検索本体に比べて恩恵が少なく、処理も複雑になりそうなので保留中
@@ -346,6 +369,12 @@ namespace SimModel.Service
                         progress.Value += (1 - mainProgressRate) / resultSets.Count;
                 }
 
+            }
+
+            // 中断時はフラグを立てる
+            if (token?.IsCancellationRequested ?? false)
+            {
+                IsCanceling = true;
             }
 
             return filtered;
@@ -443,36 +472,22 @@ namespace SimModel.Service
         }
 
         /// <summary>
+        /// マイセットの順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        public void MoveMySet(int dropIndex, int targetIndex)
+        {
+            _dataManagement.MoveMySet(dropIndex, targetIndex);
+        }
+
+        /// <summary>
         /// 最近使ったスキル更新
         /// </summary>
         /// <param name="skills">検索で使ったスキル</param>
-        public void UpdateRecentSkill(List<Skill> skills)
+        private void UpdateRecentSkill(List<Skill> skills)
         {
             _dataManagement.UpdateRecentSkill(skills);
-        }
-
-        /// <summary>
-        /// 中断フラグをオン
-        /// </summary>
-        public void Cancel()
-        {
-            IsCanceling = true;
-            if (Searcher != null)
-            {
-                Searcher.IsCanceling = true;
-            }
-        }
-
-        /// <summary>
-        /// 中断フラグをリセット
-        /// </summary>
-        public void ResetIsCanceling()
-        {
-            IsCanceling = false;
-            if (Searcher != null)
-            {
-                Searcher.IsCanceling = false;
-            }
         }
 
         /// <summary>
@@ -511,16 +526,6 @@ namespace SimModel.Service
         public void SaveDecoCount(Deco deco, int count)
         {
             _dataManagement.SaveDecoCount(deco, count);
-        }
-
-        /// <summary>
-        /// マイセットの順番入れ替え
-        /// </summary>
-        /// <param name="dropIndex">入れ替え元</param>
-        /// <param name="targetIndex">入れ替え先</param>
-        public void MoveMySet(int dropIndex, int targetIndex)
-        {
-            _dataManagement.MoveMySet(dropIndex, targetIndex);
         }
 
         /// <summary>
@@ -577,6 +582,14 @@ namespace SimModel.Service
         public void MoveArtian(int dropIndex, int targetIndex)
         {
             _dataManagement.MoveArtian(dropIndex, targetIndex);
+        }
+
+        /// <summary>
+        /// 中断フラグをリセット
+        /// </summary>
+        private void ResetIsCanceling()
+        {
+            IsCanceling = false;
         }
     }
 }
