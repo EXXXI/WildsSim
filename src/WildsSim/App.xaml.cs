@@ -19,7 +19,7 @@ namespace WildsSim
         /// <summary>
         /// ロガー
         /// </summary>
-        static Logger logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         public static IServiceProvider ServiceProvider { get; private set; }
 

@@ -36,7 +36,26 @@ namespace SimModelTest.Model
         }
 
         /// <summary>
-        /// SkillCSVのテスト
+        /// WeaponDispNameのテスト
+        /// </summary>
+        [Fact]
+        public void WeaponDispNameTest_normal()
+        {
+            // テストデータ
+            string testWeaponName = "test";
+            string testWeaponDispName = "disptest";
+
+            // 初期状態はWeaponNameを返す
+            SearchCondition cond = new() { WeaponName = testWeaponName};
+            Assert.Equal(testWeaponName, cond.WeaponDispName);
+
+            // 毎時的な設定があればそちらを返す
+            cond.WeaponDispName = testWeaponDispName;
+            Assert.Equal(testWeaponDispName, cond.WeaponDispName);
+        }
+
+        /// <summary>
+        /// Descriptionのテスト
         /// </summary>
         [Theory]
         [InlineData("限界突破強化:なし\r\n武器種:大剣, 最低攻撃力:20\r\n防御力:0\r\n火:0,水:0,雷:0,氷:0,龍:0\r\n防具スキルLv2\r\nつよ防具スキル全Lv1(固定)", "0入力")]
@@ -62,6 +81,7 @@ namespace SimModelTest.Model
         [InlineData("攻撃null")]
         [InlineData("デフォルト")]
         [InlineData("武器指定")]
+        [InlineData("アーティア指定")]
         public void CopyTest_normal(string condName)
         {
             // テストデータ

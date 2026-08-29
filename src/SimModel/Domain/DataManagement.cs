@@ -72,7 +72,7 @@ namespace SimModel.Domain
             _masters.Artians = _fileOperation.LoadArtianCSV();
             _masters.Cludes = _fileOperation.LoadCludeCSV();
             _masters.RecentSkillNames = _fileOperation.LoadRecentSkillCSV();
-            _masters.MyConditions = _fileOperation.LoadMyConditionCSV();
+            LoadMyCondition(); // 後処理が必要なためまとめて別メソッドに切り出し
             LoadMySet(); // 後処理が必要なためまとめて別メソッドに切り出し
 
             // 念のため全装備キャッシュをクリア
@@ -104,6 +104,25 @@ namespace SimModel.Domain
 
             // 下位互換護石の計算
             CalcLowerCharm();
+        }
+
+        /// <summary>
+        /// マイ検索条件読み込み関連処理
+        /// </summary>
+        private void LoadMyCondition()
+        {
+            _masters.MyConditions = _fileOperation.LoadMyConditionCSV();
+            foreach (var cond in _masters.MyConditions)
+            {
+                if (cond.WeaponName != null)
+                {
+                    var artian = _masters.Artians.Where(a => a.Name == cond.WeaponName);
+                    if (artian.Any())
+                    {
+                        cond.WeaponDispName = artian.First().DispName;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -712,7 +731,7 @@ namespace SimModel.Domain
             // 除外・固定設定があったら削除
             DeleteClude(artian.Name);
 
-            // この護石を使っているマイセットがあったら削除
+            // このアーティアを使っているマイセットがあったら削除
             List<EquipSet> delMySets = new();
             foreach (var set in _masters.MySets)
             {

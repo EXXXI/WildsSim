@@ -265,18 +265,6 @@ namespace SimModel.Service
             SearchCondition condition = Searcher.Condition;
             List<Equipment> targetCharms = condition.MakeRelatedCharms(Masters.ShiningCharmCombos, Masters.ShiningCharmGroups);
 
-
-            // 護石以外の除外固定設定を取得
-            List<Clude> cludesWithoutCharm = new();
-            foreach (var clude in _masters.Cludes)
-            {
-                Equipment? equip = _masters.GetEquipByName(clude.Name);
-                if (equip != null && equip.Kind != EquipKind.charm)
-                {
-                    cludesWithoutCharm.Add(clude);
-                }
-            }
-
             // 走査
             List<EquipSet> resultSets = new();
             Parallel.ForEach(targetCharms,
@@ -299,7 +287,7 @@ namespace SimModel.Service
                     // 護石を固定
                     SearchRange range = new(exCondition, _masters);
                     range.Charms = new List<Equipment> { targetCharm };
-                    range.Cludes = cludesWithoutCharm;
+                    range.Cludes = _masters.Cludes; // 検索範囲の護石は理想護石であり、護石の除外固定はそのまま渡しても無視されるので問題なし
 
                     // 頑張り度1で検索
                     using Searcher exSearcher = new(exCondition, range);

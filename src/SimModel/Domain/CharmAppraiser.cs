@@ -79,7 +79,7 @@ namespace SimModel.Domain
                 0 => "防",
                 1 => "攻",
                 2 => "両",
-                _ => throw new ArgumentException("Invalid type")
+                _ => throw new ArgumentException("Invalid type") // 呼び出されないはず
             };
         }
 
@@ -97,7 +97,7 @@ namespace SimModel.Domain
                 2 => "２",
                 3 => "３",
                 4 => "４",
-                _ => throw new ArgumentException("Invalid type")
+                _ => throw new ArgumentException("Invalid type") // 呼び出されないはず
             };
         }
 

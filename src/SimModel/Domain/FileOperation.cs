@@ -592,7 +592,7 @@ namespace SimModel.Domain
                 body.Add(new string[] { clude.Name, kind });
             }
 
-            string export = CsvWriter.WriteToText(new string[] { "対象", "種別" }, body);
+            string export = CsvWriter.WriteToText(["対象", "種別"], body);
             try
             {
             _fileSystem.File.WriteAllText(CludeCsv, export);

@@ -31,7 +31,7 @@ namespace WildsSim.ViewModels.BindableWrapper
         {
             Original = condition;
             Description.Value = condition.Description;
-            DispName.Value = condition.DispName;
+            DispName.Value = condition.DispName ?? string.Empty;
         }
     }
 }

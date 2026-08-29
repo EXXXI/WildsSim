@@ -24,7 +24,26 @@ namespace SimModel.Model
         /// <summary>
         /// 武器名(武器指定時のみ有効)
         /// </summary>
-        public string WeaponName { get; set; }
+        public string? WeaponName { get; set; }
+
+        /// <summary>
+        /// 武器表示名(武器指定時のみ有効)
+        /// </summary>
+        private string? weaponDispName = null;
+        /// <summary>
+        /// 武器表示名(武器指定時のみ有効)
+        /// </summary>
+        public string? WeaponDispName
+        {
+            get
+            {
+                return weaponDispName ?? WeaponName;
+            }
+            set
+            {
+                weaponDispName = value;
+            }
+        }
 
         /// <summary>
         /// 武器種(武器非指定時のみ有効)
@@ -74,12 +93,12 @@ namespace SimModel.Model
         /// <summary>
         /// マイ検索条件保存用ID
         /// </summary>
-        public string ID { get; set; }
+        public string? ID { get; set; }
 
         /// <summary>
         /// マイ検索条件保存用名前
         /// </summary>
-        public string DispName { get; set; }
+        public string? DispName { get; set; }
 
         /// <summary>
         /// 理論値護石検索フラグ
@@ -130,7 +149,9 @@ namespace SimModel.Model
                 {
                     if (string.IsNullOrWhiteSpace(splitted[i]))
                     {
-                        return;
+                        // 基本存在しないので、あったとしても2項目分無視する
+                        i++;
+                        continue;
                     }
                     string name = splitted[i];
                     string levelStr = splitted[++i];
@@ -162,7 +183,7 @@ namespace SimModel.Model
                 }
                 if (IsSpecificWeapon)
                 {
-                    sb.AppendLine($"武器:{WeaponName}");
+                    sb.AppendLine($"武器:{WeaponDispName}");
                 }
                 else
                 {
@@ -205,6 +226,11 @@ namespace SimModel.Model
             }
             IsSpecificWeapon = condition.IsSpecificWeapon;
             WeaponName = condition.WeaponName;
+            if (condition.WeaponName != null &&
+                condition.WeaponName != condition.WeaponDispName)
+            {
+                WeaponDispName = condition.WeaponDispName;
+            }
             WeaponType = condition.WeaponType;
             MinAttack = condition.MinAttack; 
             Def = condition.Def;

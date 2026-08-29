@@ -11,7 +11,6 @@ namespace SimModel.Model
     {
         // Loadしたきり変更されないマスタはstaticで保持する
         // Saveする必要があるマスタはstaticで保持しない(テスト時にテスト同士で干渉しないように)
-        // TODO: Decoも所持数データがあるため非staticにしたい
 
         /// <summary>
         /// スキルマスタ 本体はSkill.SkillMasterに保持される

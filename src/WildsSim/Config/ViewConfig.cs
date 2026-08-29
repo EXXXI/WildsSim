@@ -28,19 +28,14 @@ namespace WildsSim.Config
         private const string ConfCsv = "conf/viewConfig.csv";
 
         /// <summary>
-        /// スロットの最大の大きさ
-        /// </summary>
-        public int MaxSlotSize { get; set; }
-
-        /// <summary>
         /// デフォルトの頑張り度
         /// </summary>
-        public string DefaultLimit { get; set; }
+        public string DefaultLimit { get; set; } = "100";
 
         /// <summary>
         /// スキル未選択時の表示
         /// </summary>
-        public string NoSkillName { get; set; }
+        public string NoSkillName { get; set; } = "スキル選択";
 
         /// <summary>
         /// グリッドの列順保存有無
@@ -59,9 +54,8 @@ namespace WildsSim.Config
 
                 foreach (ICsvLine line in CsvReader.ReadFromText(csv))
                 {
-                    MaxSlotSize = LoadConfigItem(line, @"スロットの最大の大きさ", 4);
-                    DefaultLimit = LoadConfigItem(line, @"デフォルトの頑張り度", 100).ToString();
-                    NoSkillName = LoadConfigItem(line, @"スキル未選択時の表示", @"スキル選択");
+                    DefaultLimit = LoadConfigItem(line, @"デフォルトの頑張り度", DefaultLimit).ToString();
+                    NoSkillName = LoadConfigItem(line, @"スキル未選択時の表示", NoSkillName);
                     UseSavedColumnIndexes = LoadConfigItem(line, @"グリッドの列順保存有無", @"有").Equals(@"有");
                 }
             }

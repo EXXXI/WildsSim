@@ -517,7 +517,7 @@ namespace SimModel.Model
             {
                 if (string.IsNullOrWhiteSpace(newSkill.Name))
                 {
-                    continue;
+                    continue; // 基本存在せず、あったとしても無視する
                 }
 
                 bool exist = false;

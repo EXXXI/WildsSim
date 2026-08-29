@@ -9,14 +9,7 @@ namespace SimModelTest.Domain
     /// DataManagementのテスト
     /// </summary>
     public class DataManagementTest : TestDataSetUp
-    {
-        /// <summary>
-        /// コンストラクタ
-        /// </summary>
-        public DataManagementTest() : base() 
-        {
-            // Base(TestDataSetUp)で別々のDIコンテナを生成し、テストデータを準備
-        }   
+    { 
 
         #region LoadData
 
@@ -68,6 +61,8 @@ namespace SimModelTest.Domain
             var sameCharm = masters.AdditionalCharms.Where(c => c.DispName == "未実装スキルLv3, 0-0-0").First();
             Assert.NotNull(sameCharm.Upper); 
             Assert.False(sameCharm.Upper.Value.Item2);
+            // マイ検索条件のアーティア武器の武器名は登録されていることを確認
+            var artianCond = Assert.Single(masters.MyConditions.Where(c => c.WeaponDispName == "登録済アーティア"));
         }
 
         /// <summary>
@@ -1233,18 +1228,20 @@ namespace SimModelTest.Domain
         /// <summary>
         /// DeleteArtianのテスト(正常系)
         /// </summary>
-        [Fact]
-        public void DeleteArtian_normal()
+        [Theory]
+        [InlineData("17d1d296-0c36-4b40-a954-87ef527bd2cd", true)] // マイセット入り
+        [InlineData("17d1d296-ghkl-4b40-a954-87ef527bd2cd", false)] // マイセットなし
+        public void DeleteArtian_normal(string weaponName, bool inMyset)
         {
             // DIコンテナから取得
             var dataManagement = ServiceProvider.GetRequiredService<DataManagement>();
             var masters = ServiceProvider.GetRequiredService<Masters>();
 
             // テストデータ
-            Weapon artian = masters.Artians.Where(c => c.Name == "17d1d296-0c36-4b40-a954-87ef527bd2cd").First();
+            Weapon artian = masters.Artians.Where(c => c.Name == weaponName).First();
             int count = masters.Artians.Count;
             // 除外固定削除の確認用
-            masters.Cludes.Add(new() { Name = "17d1d296-0c36-4b40-a954-87ef527bd2cd", Kind = CludeKind.exclude });
+            masters.Cludes.Add(new() { Name = weaponName, Kind = CludeKind.exclude });
 
             // テスト
             dataManagement.DeleteArtian(artian);
@@ -1253,7 +1250,10 @@ namespace SimModelTest.Domain
             Assert.DoesNotContain(masters.MySets, set => set.Weapon == artian);
             Assert.DoesNotContain(masters.Cludes, c => c.Name == artian.Name);
             Assert.Single(WriteLog["save/clude.csv"]);
-            Assert.Single(WriteLog["save/myset.csv"]);
+            if (inMyset)
+            {
+                Assert.Single(WriteLog["save/myset.csv"]);
+            }
             Assert.Single(WriteLog["save/artian.csv"]);
             // 全装備にも反映
             Assert.DoesNotContain(artian, masters.AllEquipments);

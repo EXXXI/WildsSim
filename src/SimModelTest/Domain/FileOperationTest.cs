@@ -325,6 +325,30 @@ namespace SimModelTest.Domain
         }
 
         /// <summary>
+        /// LoadHeadCSVのテスト(異常系・defUpGradeがnull)
+        /// </summary>
+        [Fact]
+        public void LoadHeadCSVTest_nullUpgrade()
+        {
+            // 通常のファイルはFileSystem上に用意
+            IFileSystem fs = new FileSystem();
+            LogicConfig config = new(fs);
+
+            // 通常のファイルはFileSystem上に用意
+            FileOperation fileOperation = new(config, fs);
+
+            // テスト
+            var result = fileOperation.LoadHeadCSV(null);
+
+            // サンプルとしてつよのデータを抽出して確認
+            string kindName = "頭";
+            var sampleEquip = Assert.Single(result, x => x.Name == "つよ" + kindName);
+            Assert.Equal(20, sampleEquip.Mindef);
+            Assert.Equal(20, sampleEquip.Maxdef);
+            Assert.Equal(20, sampleEquip.TranscendingDef);
+        }
+
+        /// <summary>
         /// LoadHeadCSVのテスト(異常系・ファイルなし)
         /// </summary>
         [Fact]
@@ -470,6 +494,30 @@ namespace SimModelTest.Domain
             Assert.Equal(10, equip.Mindef);
             Assert.Equal(10, equip.Maxdef);
             Assert.Equal(10, equip.TranscendingDef);
+        }
+
+        /// <summary>
+        /// LoadBodyCSVのテスト(異常系・defUpGradeがnull)
+        /// </summary>
+        [Fact]
+        public void LoadBodyCSVTest_nullUpgrade()
+        {
+            // 通常のファイルはFileSystem上に用意
+            IFileSystem fs = new FileSystem();
+            LogicConfig config = new(fs);
+
+            // 通常のファイルはFileSystem上に用意
+            FileOperation fileOperation = new(config, fs);
+
+            // テスト
+            var result = fileOperation.LoadBodyCSV(null);
+
+            // サンプルとしてつよのデータを抽出して確認
+            string kindName = "胴";
+            var sampleEquip = Assert.Single(result, x => x.Name == "つよ" + kindName);
+            Assert.Equal(20, sampleEquip.Mindef);
+            Assert.Equal(20, sampleEquip.Maxdef);
+            Assert.Equal(20, sampleEquip.TranscendingDef);
         }
 
         /// <summary>
@@ -621,6 +669,30 @@ namespace SimModelTest.Domain
         }
 
         /// <summary>
+        /// LoadArmCSVのテスト(異常系・defUpGradeがnull)
+        /// </summary>
+        [Fact]
+        public void LoadArmCSVTest_nullUpgrade()
+        {
+            // 通常のファイルはFileSystem上に用意
+            IFileSystem fs = new FileSystem();
+            LogicConfig config = new(fs);
+
+            // 通常のファイルはFileSystem上に用意
+            FileOperation fileOperation = new(config, fs);
+
+            // テスト
+            var result = fileOperation.LoadArmCSV(null);
+
+            // サンプルとしてつよのデータを抽出して確認
+            string kindName = "腕";
+            var sampleEquip = Assert.Single(result, x => x.Name == "つよ" + kindName);
+            Assert.Equal(20, sampleEquip.Mindef);
+            Assert.Equal(20, sampleEquip.Maxdef);
+            Assert.Equal(20, sampleEquip.TranscendingDef);
+        }
+
+        /// <summary>
         /// LoadArmCSVのテスト(異常系・ファイルなし)
         /// </summary>
         [Fact]
@@ -769,6 +841,30 @@ namespace SimModelTest.Domain
         }
 
         /// <summary>
+        /// LoadWaistCSVのテスト(異常系・defUpGradeがnull)
+        /// </summary>
+        [Fact]
+        public void LoadWaistCSVTest_nullUpgrade()
+        {
+            // 通常のファイルはFileSystem上に用意
+            IFileSystem fs = new FileSystem();
+            LogicConfig config = new(fs);
+
+            // 通常のファイルはFileSystem上に用意
+            FileOperation fileOperation = new(config, fs);
+
+            // テスト
+            var result = fileOperation.LoadWaistCSV(null);
+
+            // サンプルとしてつよのデータを抽出して確認
+            string kindName = "腰";
+            var sampleEquip = Assert.Single(result, x => x.Name == "つよ" + kindName);
+            Assert.Equal(20, sampleEquip.Mindef);
+            Assert.Equal(20, sampleEquip.Maxdef);
+            Assert.Equal(20, sampleEquip.TranscendingDef);
+        }
+
+        /// <summary>
         /// LoadWaistCSVのテスト(異常系・ファイルなし)
         /// </summary>
         [Fact]
@@ -914,6 +1010,30 @@ namespace SimModelTest.Domain
             Assert.Equal(10, equip.Mindef);
             Assert.Equal(10, equip.Maxdef);
             Assert.Equal(10, equip.TranscendingDef);
+        }
+
+        /// <summary>
+        /// LoadLegCSVのテスト(異常系・defUpGradeがnull)
+        /// </summary>
+        [Fact]
+        public void LoadLegCSVTest_nullUpgrade()
+        {
+            // 通常のファイルはFileSystem上に用意
+            IFileSystem fs = new FileSystem();
+            LogicConfig config = new(fs);
+
+            // 通常のファイルはFileSystem上に用意
+            FileOperation fileOperation = new(config, fs);
+
+            // テスト
+            var result = fileOperation.LoadLegCSV(null);
+
+            // サンプルとしてつよのデータを抽出して確認
+            string kindName = "足";
+            var sampleEquip = Assert.Single(result, x => x.Name == "つよ" + kindName);
+            Assert.Equal(20, sampleEquip.Mindef);
+            Assert.Equal(20, sampleEquip.Maxdef);
+            Assert.Equal(20, sampleEquip.TranscendingDef);
         }
 
         /// <summary>
@@ -1648,6 +1768,49 @@ namespace SimModelTest.Domain
         }
 
         /// <summary>
+        /// LoadMySetCSVのテスト(正常系・限界突破列なし)
+        /// </summary>
+        [Fact]
+        public void LoadMySetCSVTest_oldFile()
+        {
+            // 通常のファイルはFileSystem上に用意
+            IFileSystem fs = new FileSystem();
+            LogicConfig config = new(fs);
+            FileOperation tempFileOperation = new(config, fs);
+
+            // 特殊データ入りのMockFileSystem
+            string mockFilePath = "save/myset.csv";
+            IFileSystem mockfs = new MockFileSystem(new Dictionary<string, MockFileData>
+                {
+                    { mockFilePath, new MockFileData("武器,頭,胴,腕,腰,足,護石,装飾品,名前\r\n" +
+                    "スロットのみ_0-0-0,つよ頭,つよ胴,つよ腕,つよ腰,つよ足,テスト護石Ⅰ,,つよセット")
+                    }
+                });
+            FileOperation fileOperation = new(config, mockfs);
+
+            // 装備データが必要なのでロード
+            var defUpgrades = tempFileOperation.LoadDefUpgradeCSV();
+            var weapons = tempFileOperation.LoadWeaponCSV();
+            var heads = tempFileOperation.LoadHeadCSV(defUpgrades);
+            var bodies = tempFileOperation.LoadBodyCSV(defUpgrades);
+            var arms = tempFileOperation.LoadArmCSV(defUpgrades);
+            var waists = tempFileOperation.LoadWaistCSV(defUpgrades);
+            var legs = tempFileOperation.LoadLegCSV(defUpgrades);
+            var charms = tempFileOperation.LoadCharmCSV();
+            var decos = tempFileOperation.LoadDecoCSV();
+            var artians = tempFileOperation.LoadArtianCSV();
+            var additionalCharms = tempFileOperation.LoadAdditionalCharmCSV();
+            var allEquipments = weapons.Union(heads).Union(bodies).Union(arms).Union(waists).Union(legs).Union(charms).Union(decos).Union(artians).Union(additionalCharms).ToList();
+
+            // テスト
+            var result = fileOperation.LoadMySetCSV(allEquipments);
+
+            // 限界突破実装前のデータであることが想定されるためFalse扱い
+            var sampleSet = Assert.Single(result, x => x.Name == "つよセット");
+            Assert.False(sampleSet.IsTranscending);
+        }
+
+        /// <summary>
         /// LoadMySetCSVのテスト(正常系・ファイルなし)
         /// </summary>
         [Fact]
@@ -2043,6 +2206,33 @@ namespace SimModelTest.Domain
         }
 
         /// <summary>
+        /// LoadMyConditionCSVのテスト(正常系・限界突破列なし)
+        /// </summary>
+        [Fact]
+        public void LoadMyConditionCSVTest_oldFile()
+        {
+            // 通常のファイルはFileSystem上に用意
+            IFileSystem fs = new FileSystem();
+            LogicConfig config = new(fs);
+
+            // 特殊データ入りのMockFileSystem
+            string mockFilePath = "save/condition.csv";
+            IFileSystem mockfs = new MockFileSystem(new Dictionary<string, MockFileData>
+                {
+                    { mockFilePath, new MockFileData("ID,名前,武器指定有無,武器名,武器種,攻撃力,防御力,火耐性,水耐性,雷耐性,氷耐性,龍耐性,スキル\r\n" +
+                    "ca6cc050-e8c0-4b18-a5af-eec7a177b853,デフォルト,True,スロットのみ_0-0-0,指定なし,null,null,null,null,null,null,null,\"防具スキル,2,つよ防具スキル全,1\"\r\n") }
+                });
+            FileOperation fileOperation = new(config, mockfs);
+
+            // テスト
+            var result = fileOperation.LoadMyConditionCSV();
+
+            // 限界突破ありで読み込まれることを確認
+            var defCond = Assert.Single(result, cond => cond.DispName == "デフォルト");
+            Assert.True(defCond.IsTranscending);
+        }
+
+        /// <summary>
         /// LoadMyConditionCSVのテスト(正常系・ファイルなし)
         /// </summary>
         [Fact]
@@ -2237,7 +2427,7 @@ namespace SimModelTest.Domain
             Assert.Equal(2, skill.Level);
         }
         /// <summary>
-        /// LoadAdditionalCharmCSVのテスト(正常系・泣シミュフォーマット)
+        /// LoadAdditionalCharmCSVのテスト(正常系・泣シミュフォーマット&IDなし)
         /// </summary>
         [Fact]
         public void LoadAdditionalCharmCSVTest_another()
@@ -2254,7 +2444,7 @@ namespace SimModelTest.Domain
                     "スキル系統1,スキル値1,スキル系統2,スキル値2,スキル系統3,スキル値3,(泣用防具スロ1),(泣用防具スロ2),(泣用防具スロ3),(泣用武器スロ1),(泣用武器スロ2),(泣用武器スロ3),スロット1,スロット2,スロット3,スロット1タイプ,スロット2タイプ,スロット3タイプ,内部管理ID,マイセット登録有無\r\n" +
                     ",,,,,,3,2,1,0,0,0\r\n" +
                     ",,,,,,0,0,0,3,2,1\r\n" +
-                    "スロ1不足スキル,2,,,,,0,0,0,0,0,0") }
+                    "スロ1不足スキル,2,,,,,0,0,0,0,0,0,0,0,0,0,0,0,,") }
                 });
             FileOperation fileOperation = new(config, mockfs);
 
@@ -2718,7 +2908,7 @@ namespace SimModelTest.Domain
             string mockFilePath = "MHWilds_DEF_UPGRADE.csv";
             IFileSystem mockfs = new MockFileSystem(new Dictionary<string, MockFileData>
                 {
-                    { mockFilePath, new MockFileData("レア度,最大強化,限界突破強化\r\n" +
+                    { mockFilePath, new MockFileData("#レア度,最大強化,限界突破強化\r\n" +
                     "1,11,11\r\n" +
                     "5,\r\n" +
                     "6,9,9\r\n" +
@@ -2804,6 +2994,32 @@ namespace SimModelTest.Domain
             // テスト
             var ex = Assert.Throws<SimulatorException>(() => fileOperation.LoadArtianCSV());
             Assert.Equal($"ファイル {mockFilePath} の読み込みに失敗しました。エラー箇所: 2行目", ex.Message);
+        }
+
+        /// <summary>
+        /// LoadArtianCSVのテスト(正常系・IDのない行)
+        /// </summary>
+        [Fact]
+        public void LoadArtianCSVTest_noID()
+        {
+            // 通常のファイルはFileSystem上に用意
+            IFileSystem fs = new FileSystem();
+            LogicConfig config = new(fs);
+
+            // 特殊データ入りのMockFileSystem
+            string mockFilePath = "save/artian.csv";
+            IFileSystem mockfs = new MockFileSystem(new Dictionary<string, MockFileData>
+                {
+                    { mockFilePath, new MockFileData("" +
+                    "武器種,名前,スキル系統1,スキル値1,スキル系統2,スキル値2,内部管理ID,マイセット登録有無\r\n" +
+                    "大剣,登録済アーティア,よわグループ,1,つよの力,1,,\r\n") }
+                });
+            FileOperation fileOperation = new(config, mockfs);
+
+            // テスト
+            var result = fileOperation.LoadArtianCSV();
+            var sampleWeapon = Assert.Single(result, x => x.DispName == "登録済アーティア");
+            Assert.False(string.IsNullOrEmpty(sampleWeapon.Name));
         }
 
         /// <summary>

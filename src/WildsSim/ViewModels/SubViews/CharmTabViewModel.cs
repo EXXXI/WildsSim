@@ -17,12 +17,6 @@ namespace WildsSim.ViewModels.SubViews
 {
     internal class CharmTabViewModel : ChildViewModelBase
     {
-
-        /// <summary>
-        /// スロットの最大の大きさ
-        /// </summary>
-        private int MaxSlotSize { get; } = ViewConfig.Instance.MaxSlotSize;
-
         /// <summary>
         /// 護石画面のスキル選択部品のVM
         /// </summary>
@@ -129,7 +123,7 @@ namespace WildsSim.ViewModels.SubViews
 
             // スロットの選択肢を生成し、画面に反映
             ObservableCollection<string> slots = new();
-            for (int i = 0; i <= MaxSlotSize; i++)
+            for (int i = 0; i <= _logicConfig.MaxSlotSize; i++)
             {
                 slots.Add(i.ToString());
             }

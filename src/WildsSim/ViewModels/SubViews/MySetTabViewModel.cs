@@ -196,7 +196,10 @@ namespace WildsSim.ViewModels.SubViews
         {
             // マイセット画面用のVMの設定
             MySetList.ChangeCollection(BindableEquipSet.BeBindableList(_masters.MySets));
-            if (!MySetList.Value.Contains(MyDetailSet.Value))
+
+            // 選択中のものが無くなったら一番上を選択
+            if (MyDetailSet.Value == null ||
+                !MySetList.Value.Contains(MyDetailSet.Value))
             {
                 MyDetailSet.Value = MySetList.Value.Count > 0 ? MySetList.Value[0] : null;
             }

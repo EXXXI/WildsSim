@@ -391,7 +391,7 @@ namespace SimModel.Model
                         dispName.Append("(両)");
                         break;
                     default:
-                        break;
+                        break; // 存在しない
                 }
             }
             dispName.Append('-');
@@ -410,7 +410,7 @@ namespace SimModel.Model
                         dispName.Append("(両)");
                         break;
                     default:
-                        break;
+                        break; // 存在しない
                 }
             }
             dispName.Append('-');
@@ -429,7 +429,7 @@ namespace SimModel.Model
                         dispName.Append("(両)");
                         break;
                     default:
-                        break;
+                        break; // 存在しない
                 }
             }
             DispName = dispName.ToString();

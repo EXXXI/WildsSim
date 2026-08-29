@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Reactive.Bindings;
 using SimModel.Model;
 using SimModel.Service;
 
@@ -10,8 +11,36 @@ namespace SimModelTest.Service
     public class SimulatorTest : TestDataSetUp
     {
         /// <summary>
+        /// Searchのテスト(正常系)
+        /// 細かい内部挙動のテストはSearcherのテストで行うためここでは導通と理想装備検索フラグのみ確認
+        /// </summary>
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public async Task SearchTest_normal(bool isBestCharm, bool isBestArtian)
+        {
+            // テストデータ
+            var simulator = ServiceProvider.GetRequiredService<Simulator>();
+            SearchCondition condition = new SearchCondition();
+            condition.AddSkill(new Skill("防具スキル", 6));
+            condition.AddSkill(new Skill("つよ防具スキル全", 4));
+            condition.IsSpecificWeapon = true;
+            condition.WeaponName = "スロットのみ_0-0-0";
+            condition.IsBestCharmSearch = isBestCharm;
+            condition.IsBestArtianSearch = isBestArtian;
+
+            //テスト
+            var result = await simulator.Search(condition, 3);
+            Assert.NotEmpty(result);
+            Assert.Single(WriteLog["save/recentSkill.csv"]);
+            Assert.Equal(isBestCharm, simulator.IsBestCharmSearch);
+            Assert.Equal(isBestArtian, simulator.IsBestArtianSearch);
+        }
+
+        /// <summary>
         /// SearchMoreのテスト(正常系)
-        /// Searchのテストも兼ねる
         /// </summary>
         [Fact]
         public async Task SearchMoreTest_normal()
@@ -54,8 +83,7 @@ namespace SimModelTest.Service
         }
 
         /// <summary>
-        /// SearchMoreのテスト
-        /// progress関連は確認しない
+        /// SearchExtraSkillのテスト(正常系)
         /// </summary>
         [Fact]
         public async Task SearchExtraSkillTest_normal()
@@ -87,6 +115,28 @@ namespace SimModelTest.Service
         }
 
         /// <summary>
+        /// SearchExtraSkillのテスト(正常系・progressあり)
+        /// </summary>
+        [Fact]
+        public async Task SearchExtraSkillTest_progress()
+        {
+            // テストデータ
+            var simulator = ServiceProvider.GetRequiredService<Simulator>();
+            SearchCondition condition = new SearchCondition();
+            condition.AddSkill(new Skill("防具スキル", 6));
+            condition.AddSkill(new Skill("よわグループ", 3));
+            condition.AddSkill(new Skill("よわの力", 2));
+            condition.AddSkill(new Skill("つよの力", 2));
+            condition.IsSpecificWeapon = true;
+            condition.WeaponName = "スロットのみ_0-0-0";
+            ReactivePropertySlim<double> progress = new();
+
+            //テスト
+            var result = await simulator.SearchExtraSkill(condition, progress: progress);
+            Assert.Equal(1, progress.Value, 0.001);
+        }
+
+        /// <summary>
         /// SearchCharmのテスト(正常系)
         /// </summary>
         [Fact]
@@ -101,12 +151,43 @@ namespace SimModelTest.Service
             condition.IsSpecificWeapon = true;
             condition.WeaponName = "スロットのみ_0-0-0";
 
+            // 護石の除外固定が機能しないことを確認する
+            var masters = ServiceProvider.GetRequiredService<Masters>();
+            masters.Cludes.Add(new() { Name = "テスト護石Ⅰ", Kind = CludeKind.include });
+
             //テスト
             var result1 = await simulator.Search(condition, 10);
             Assert.Empty(result1);
             var result2 = await simulator.SearchCharm();
             var set = Assert.Single(result2);
             Assert.True(set.Charm.IsVirtual);
+        }
+
+        /// <summary>
+        /// SearchCharmのテスト(正常系・progressあり)
+        /// </summary>
+        [Fact]
+        public async Task SearchCharm_progress()
+        {
+            // テストデータ
+            var simulator = ServiceProvider.GetRequiredService<Simulator>();
+            SearchCondition condition = new SearchCondition();
+            condition.AddSkill(new Skill("防具スキル", 6));
+            condition.AddSkill(new Skill("つよ防具スキル全", 1));
+            condition.AddSkill(new Skill("スロ1防具スキル", 1));
+            condition.IsSpecificWeapon = true;
+            condition.WeaponName = "スロットのみ_0-0-0";
+            ReactivePropertySlim<double> progress = new();
+
+            // 護石の除外固定が機能しないことを確認する
+            var masters = ServiceProvider.GetRequiredService<Masters>();
+            masters.Cludes.Add(new() { Name = "テスト護石Ⅰ", Kind = CludeKind.include });
+
+            //テスト
+            var result1 = await simulator.Search(condition, 10);
+            Assert.Empty(result1);
+            var result2 = await simulator.SearchCharm(progress: progress);
+            Assert.Equal(1, progress.Value, 0.001);
         }
 
         /// <summary>
