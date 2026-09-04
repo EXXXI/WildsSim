@@ -10,6 +10,7 @@
 	<DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     <DebugType Condition="'$(Configuration)'=='ReleaseWithSymbol'">none</DebugType>
 	<Configurations>Debug;Release;ReleaseWithSymbol</Configurations>
+	<CodePage>65001</CodePage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithSymbol|AnyCPU'">
@@ -52,6 +53,7 @@
 
   <ItemGroup>
     <PackageReference Include="DotNetKit.Wpf.AutoCompleteComboBox" Version="1.6.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
     <PackageReference Include="NLog" Version="5.4.0" />
     <PackageReference Include="Prism.Wpf" Version="9.0.537" />
     <PackageReference Include="ReactiveProperty" Version="9.7.0" />

@@ -116,8 +116,7 @@ namespace WildsSim.ViewModels.Controls
         private void ApplyRename()
         {
             IsRenaming.Value = false;
-            Condition.Original.DispName = InputName.Value;
-            Simulator.UpdateMyCondition(Condition.Original);
+            Simulator.ChangeNameOfMyCondition(InputName.Value, Condition.Original);
             SkillSelectTabVM.LoadMyCondition();
         }
     }

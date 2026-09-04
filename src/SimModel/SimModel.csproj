@@ -9,6 +9,7 @@
 	<DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     <DebugType Condition="'$(Configuration)'=='ReleaseWithSymbol'">none</DebugType>
 	<Configurations>Debug;Release;ReleaseWithSymbol</Configurations>
+	<CodePage>65001</CodePage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithSymbol|AnyCPU'">
@@ -26,13 +27,15 @@
   <ItemGroup>
     <PackageReference Include="Csv" Version="2.0.128" />
     <PackageReference Include="Google.OrTools" Version="9.12.4544" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
 	<PackageReference Include="NLog" Version="5.4.0" />
 	<PackageReference Include="ReactiveProperty" Version="9.7.0" />
+	<PackageReference Include="System.IO.Abstractions" Version="22.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="conf\LogicConfig.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="libglpk_cli_native.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -111,6 +114,12 @@
     </None>
   </ItemGroup>
 
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>SimModelTest</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+	
 	<PropertyGroup>
 		<RestoreSources>lib;$(RestoreSources);https://api.nuget.org/v3/index.json</RestoreSources>
 	</PropertyGroup>

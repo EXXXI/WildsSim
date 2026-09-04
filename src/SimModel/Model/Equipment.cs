@@ -1,8 +1,5 @@
-﻿using SimModel.Config;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 using System.Text;
 
 namespace SimModel.Model
@@ -51,7 +48,13 @@ namespace SimModel.Model
                 {
                     CalcTranscendingSlots();
                 }
+#pragma warning disable CS8629 // Null 許容値型は Null になる場合があります。
                 return transcendingSlot1.Value;
+#pragma warning restore CS8629 // Null 許容値型は Null になる場合があります。
+            }
+            private set
+            {
+                transcendingSlot1 = value;
             }
         }
 
@@ -66,7 +69,13 @@ namespace SimModel.Model
                 {
                     CalcTranscendingSlots();
                 }
+#pragma warning disable CS8629 // Null 許容値型は Null になる場合があります。
                 return transcendingSlot2.Value;
+#pragma warning restore CS8629 // Null 許容値型は Null になる場合があります。
+            }
+            private set
+            {
+                transcendingSlot2 = value;
             }
         }
 
@@ -81,7 +90,13 @@ namespace SimModel.Model
                 {
                     CalcTranscendingSlots();
                 }
+#pragma warning disable CS8629 // Null 許容値型は Null になる場合があります。
                 return transcendingSlot3.Value;
+#pragma warning restore CS8629 // Null 許容値型は Null になる場合があります。
+            }
+            private set
+            {
+                transcendingSlot3 = value;
             }
         }
 
@@ -113,8 +128,25 @@ namespace SimModel.Model
         /// <summary>
         /// 限界突破防御力
         /// </summary>
-        public int TranscendingDef { get; set; }
-
+        private int? transcendingDef = null;
+        /// <summary>
+        /// 限界突破防御力
+        /// </summary>
+        public int TranscendingDef
+        {
+            get
+            {
+                if (transcendingDef == null)
+                {
+                    return Maxdef;
+                }
+                return transcendingDef.Value;
+            }
+            set
+            {
+                transcendingDef = value;
+            }
+        }
         /// <summary>
         /// 火耐性
         /// </summary>
@@ -359,10 +391,10 @@ namespace SimModel.Model
                         dispName.Append("(両)");
                         break;
                     default:
-                        break;
+                        break; // 存在しない
                 }
             }
-            dispName.Append("-");
+            dispName.Append('-');
             dispName.Append(Slot2);
             if (Slot2 != 0)
             {
@@ -378,10 +410,10 @@ namespace SimModel.Model
                         dispName.Append("(両)");
                         break;
                     default:
-                        break;
+                        break; // 存在しない
                 }
             }
-            dispName.Append("-");
+            dispName.Append('-');
             dispName.Append(Slot3);
             if (Slot3 != 0)
             {
@@ -397,7 +429,7 @@ namespace SimModel.Model
                         dispName.Append("(両)");
                         break;
                     default:
-                        break;
+                        break; // 存在しない
                 }
             }
             DispName = dispName.ToString();
@@ -412,16 +444,16 @@ namespace SimModel.Model
             if (!IsTranscendingSlotTarget)
             {
                 // 防具5部位以外や、レア5,6以外は処理しない
-                transcendingSlot1 = Slot1;
-                transcendingSlot2 = Slot2;
-                transcendingSlot3 = Slot3;
+                TranscendingSlot1 = Slot1;
+                TranscendingSlot2 = Slot2;
+                TranscendingSlot3 = Slot3;
                 return;
             }
 
             // レア5は全スロットを+1(計+3)、レア6はスロット1,2を+1(計+2)。元々Lv3のスロットは変化しない
-            transcendingSlot1 = Math.Min(Slot1 + 1, 3);
-            transcendingSlot2 = Math.Min(Slot2 + 1, 3);
-            transcendingSlot3 = (Rare == 6) ? Slot3 : Math.Min(Slot3 + 1, 3);
+            TranscendingSlot1 = Math.Min(Slot1 + 1, 3);
+            TranscendingSlot2 = Math.Min(Slot2 + 1, 3);
+            TranscendingSlot3 = (Rare == 6) ? Slot3 : Math.Min(Slot3 + 1, 3);
             return;
         }
 
@@ -442,144 +474,5 @@ namespace SimModel.Model
             }
         }
 
-        /// <summary>
-        /// 第一引数の防具が第二引数の防具の上位互換の場合true
-        /// 護石比較用
-        /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
-        /// <param name="useDecos">装飾品を考慮する場合true</param>
-        /// <returns></returns>
-        static public bool IsLeftUpper(Equipment left, Equipment right, bool useDecos = false)
-        {
-            // スキルチェック
-            List<Skill> shortageSkills = new();
-            foreach (var skill in right.Skills)
-            {
-                if (!left.Skills.Any(s => s.Name == skill.Name))
-                {
-                    shortageSkills.Add(skill);
-                }
-                else if (left.Skills.First(s => s.Name == skill.Name).Level < skill.Level)
-                {
-                    shortageSkills.Add(new Skill(skill.Name, skill.Level - left.Skills.First(s => s.Name == skill.Name).Level));
-                }
-            }
-            if (!useDecos && shortageSkills.Count > 0)
-            {
-                return false;
-            }
-
-            // 足りないスキルに必要な装飾品を整理
-            int[] wSlotShortageData = [0, 0, 0, 0];
-            int[] aSlotShortageData = [0, 0, 0, 0];
-            foreach (var skill in shortageSkills)
-            {
-                Deco? deco = Masters.Decos.Where(d => d.Skills.Any(s => s.Name == skill.Name) && (d.SlotType1 == 0 || d.Slot1 == 1)).FirstOrDefault();
-                if (deco == null)
-                {
-                    // 必要な装飾品が存在しない場合、上位互換ではない
-                    return false;
-                }
-                // スロット整理
-                for (int i = 0; i < deco.Slot1; i++)
-                {
-                    if (deco.SlotType1 == 1)
-                    {
-                        wSlotShortageData[i] += skill.Level;
-                    }
-                    else
-                    {
-                        aSlotShortageData[i] += skill.Level;
-                    }
-                }
-            }
-
-            // スロット整理
-            int[] wSlotDataLeft = [0, 0, 0, 0];
-            int[] aSlotDataLeft = [0, 0, 0, 0];
-            for (int i = 0; i < left.Slot1; i++)
-            {
-                if (left.SlotType1 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            for (int i = 0; i < left.Slot2; i++)
-            {
-                if (left.SlotType2 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            for (int i = 0; i < left.Slot3; i++)
-            {
-                if (left.SlotType3 == 1)
-                {
-                    wSlotDataLeft[i]++;
-                }
-                else
-                {
-                    aSlotDataLeft[i]++;
-                }
-            }
-            int[] wSlotDataRight = [0, 0, 0, 0];
-            int[] aSlotDataRight = [0, 0, 0, 0];
-            for (int i = 0; i < right.Slot1; i++)
-            {
-                if (right.SlotType1 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-            for (int i = 0; i < right.Slot2; i++)
-            {
-                if (right.SlotType2 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-            for (int i = 0; i < right.Slot3; i++)
-            {
-                if (right.SlotType3 == 1)
-                {
-                    wSlotDataRight[i]++;
-                }
-                else
-                {
-                    aSlotDataRight[i]++;
-                }
-            }
-
-            // スロットチェック
-            for (int i = 0; i < 4; i++)
-            {
-                if (wSlotDataLeft[i] < wSlotDataRight[i] + wSlotShortageData[i])
-                {
-                    return false;
-                }
-                if (aSlotDataLeft[i] < aSlotDataRight[i] + aSlotShortageData[i])
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 }

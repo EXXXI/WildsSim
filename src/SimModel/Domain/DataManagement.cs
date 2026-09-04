@@ -1,6 +1,5 @@
 ﻿using SimModel.Config;
 using SimModel.Model;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,33 +7,157 @@ namespace SimModel.Domain
 {
     /// <summary>
     /// データ管理クラス
+    /// Mastersのデータと保存用実ファイルについて、同期を取りながら管理する
     /// </summary>
-    static internal class DataManagement
+    public class DataManagement
     {
         /// <summary>
-        /// 最近使ったスキルの記憶容量
+        /// ファイル操作クラスのインスタンス
+        /// DIで注入される
         /// </summary>
-        static public int MaxRecentSkillCount { get; } = LogicConfig.Instance.MaxRecentSkillCount;
+        private readonly FileOperation _fileOperation;
+
+        /// <summary>
+        /// 護石関連操作クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly CharmAppraiser _charmAppraiser;
+
+        /// <summary>
+        /// ロジックの設定クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly LogicConfig _logicConfig;
+
+        /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="fileOperation"></param>
+        public DataManagement(FileOperation fileOperation, CharmAppraiser charmAppraiser, LogicConfig logicConfig, Masters masters)
+        {
+            _fileOperation = fileOperation;
+            _charmAppraiser = charmAppraiser;
+            _logicConfig = logicConfig;
+            _masters = masters;
+        }
+
+        /// <summary>
+        /// 初期データ読み込み
+        /// </summary>
+        internal void LoadData()
+        {
+            // マスタデータ類の読み込み
+            Masters.DefUpgrades = _fileOperation.LoadDefUpgradeCSV();
+            Masters.Heads = _fileOperation.LoadHeadCSV(Masters.DefUpgrades);
+            Masters.Bodys = _fileOperation.LoadBodyCSV(Masters.DefUpgrades);
+            Masters.Arms = _fileOperation.LoadArmCSV(Masters.DefUpgrades);
+            Masters.Waists = _fileOperation.LoadWaistCSV(Masters.DefUpgrades);
+            Masters.Legs = _fileOperation.LoadLegCSV(Masters.DefUpgrades);
+            Masters.Charms = _fileOperation.LoadCharmCSV();
+            _masters.Decos = _fileOperation.LoadDecoCSV();
+            Masters.Weapons = _fileOperation.LoadWeaponCSV();
+            LoadSkill(); // 後処理が必要なためまとめて別メソッドに切り出し
+            Masters.ShiningCharmCombos = _fileOperation.LoadAdditionalCharmComboCSV();
+            Masters.ShiningCharmGroups = _fileOperation.LoadAdditionalCharmGroupCSV();
+
+            // セーブデータ類の読み込み
+            _fileOperation.MakeSaveFolder();
+            LoadAdditionalCharm(); // 後処理が必要なためまとめて別メソッドに切り出し
+            _masters.Artians = _fileOperation.LoadArtianCSV();
+            _masters.Cludes = _fileOperation.LoadCludeCSV();
+            _masters.RecentSkillNames = _fileOperation.LoadRecentSkillCSV();
+            LoadMyCondition(); // 後処理が必要なためまとめて別メソッドに切り出し
+            LoadMySet(); // 後処理が必要なためまとめて別メソッドに切り出し
+
+            // 念のため全装備キャッシュをクリア
+            _masters.ClearAllEquipmentsCache();
+        }
+
+        /// <summary>
+        /// スキル読み込み関連処理
+        /// </summary>
+        private void LoadSkill()
+        {
+            var skills = _fileOperation.LoadSkillCSV();
+
+            // どの防具・護石・武器にも存在しないスキルを除外
+            // アーティア・追加護石がまだ読み込まれていないため、AllEquipmentsは使わない
+            var equips = Masters.Weapons.Union(Masters.Heads).Union(Masters.Bodys).Union(Masters.Arms)
+                .Union(Masters.Waists).Union(Masters.Legs).Union(Masters.Charms).Union(_masters.Decos);
+            Masters.Skills = skills.Where(skill =>
+                equips.Any(e => e.Skills.Any(s => s.Name == skill.Name)))
+                .ToList();
+        }
+
+        /// <summary>
+        /// 追加護石読み込み関連処理
+        /// </summary>
+        private void LoadAdditionalCharm()
+        {
+            _masters.AdditionalCharms = _fileOperation.LoadAdditionalCharmCSV();
+
+            // 下位互換護石の計算
+            CalcLowerCharm();
+        }
+
+        /// <summary>
+        /// マイ検索条件読み込み関連処理
+        /// </summary>
+        private void LoadMyCondition()
+        {
+            _masters.MyConditions = _fileOperation.LoadMyConditionCSV();
+            foreach (var cond in _masters.MyConditions)
+            {
+                if (cond.WeaponName != null)
+                {
+                    var artian = _masters.Artians.Where(a => a.Name == cond.WeaponName);
+                    if (artian.Any())
+                    {
+                        cond.WeaponDispName = artian.First().DispName;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// マイセット読み込み関連処理
+        /// </summary>
+        private void LoadMySet()
+        {
+            // マスタへ反映
+            _masters.MySets = _fileOperation.LoadMySetCSV(_masters.AllEquipments);
+
+            // マイセット利用状況の反映のため護石、アーティアを再書き込み
+            _fileOperation.SaveAdditionalCharmCSV(_masters.AdditionalCharms, _masters.MySets);
+            _fileOperation.SaveArtianCSV(_masters.Artians, _masters.MySets);
+        }
 
         /// <summary>
         /// 除外設定を追加
         /// </summary>
         /// <param name="name">防具名</param>
         /// <returns>除外情報</returns>
-        static internal Clude? AddExclude(string name)
+        internal Clude? AddExclude(string name)
         {
-            Equipment? equip = Masters.GetEquipByName(name);
+            Equipment? equip = _masters.GetEquipByName(name);
             if ((equip == null) ||
                 ((equip is Weapon weapon) && (weapon.WeaponType == WeaponType.指定なし)))
             {
                 // スロット指定用の武器は除外しない
                 return null;
             }
-            if (equip.IsVirtual)
-            {
-                // 仮想装備は処理しない
-                return null;
-            }
+            // 仮想装備はMastersに含まれないため、equip == nullの時点で検出される
+            //if (equip.IsVirtual)
+            //{
+            //    // 仮想装備は処理しない
+            //    return null;
+            //}
             return AddClude(equip.Name, CludeKind.exclude);
         }
 
@@ -43,32 +166,33 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="name">防具名</param>
         /// <returns>固定情報</returns>
-        static internal Clude? AddInclude(string name)
+        internal Clude? AddInclude(string name)
         {
-            Equipment? equip = Masters.GetEquipByName(name);
+            Equipment? equip = _masters.GetEquipByName(name);
             if ((equip == null) || 
                 (equip.Kind == EquipKind.deco) ||
-                (equip is Weapon weapon))
+                (equip is Weapon))
             {
                 // 装飾品と武器は固定しない
                 return null;
             }
-            if (equip.IsVirtual)
-            {
-                // 仮想装備は処理しない
-                return null;
-            }
+            // 仮想装備はMastersに含まれないため、equip == nullの時点で検出される
+            //if (equip.IsVirtual)
+            //{
+            //    // 仮想装備は処理しない
+            //    return null;
+            //}
 
             // 同じ装備種類の固定装備があった場合、固定を解除する
             string? toDelete = null;
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in _masters.Cludes)
             {
                 if (clude.Kind == CludeKind.exclude)
                 {
                     continue;
                 }
 
-                Equipment? oldEquip = Masters.GetEquipByName(clude.Name);
+                Equipment? oldEquip = _masters.GetEquipByName(clude.Name);
                 if (oldEquip == null || oldEquip.Kind.Equals(equip.Kind))
                 {
                     toDelete = clude.Name;
@@ -76,41 +200,46 @@ namespace SimModel.Domain
             }
             if(toDelete != null)
             {
-                DeleteClude(toDelete);
+                DeleteClude(toDelete, false);
             }
 
             // 追加
             return AddClude(equip.Name, CludeKind.include);
         }
 
-        /// <summary>
-        /// 指定レア度以下を全て除外設定に追加
-        /// </summary>
-        /// <param name="rare">レア度</param>
-        static internal void ExcludeByRare(int rare)
-        {
-            var equips = Masters.Heads.Union(Masters.Bodys).Union(Masters.Arms).Union(Masters.Waists).Union(Masters.Legs);
-            foreach (var equip in equips)
-            {
-                if (equip.Rare <= rare)
-                {
-                    AddClude(equip.Name, CludeKind.exclude);
-                }
-            }
-        }
+        // TODO: 護石・装飾品のレア度整備やアーティア・追加護石のレア度入力が必要なため保留
+        ///// <summary>
+        ///// 指定レア度以下を全て除外設定に追加
+        ///// </summary>
+        ///// <param name="rare">レア度</param>
+        //internal void ExcludeByRare(int rare)
+        //{
+        //    var equips = Masters.Heads.Union(Masters.Bodys).Union(Masters.Arms).Union(Masters.Waists).Union(Masters.Legs);
+        //    foreach (var equip in equips)
+        //    {
+        //        if (equip.Rare <= rare)
+        //        {
+        //            AddClude(equip.Name, CludeKind.exclude, false);
+        //        }
+        //    }
+
+        //    // マスタへ反映
+        //    _fileOperation.SaveCludeCSV(_masters.Cludes);
+        //}
 
         /// <summary>
         /// 除外・固定の追加
         /// </summary>
         /// <param name="name">防具名</param>
         /// <param name="kind">除外or固定</param>
+        /// <param name="doSave">trueの場合ファイルへの保存を実行(非指定時true、一括実行時のfalse指定を想定)</param>
         /// <returns>除外固定情報</returns>
-        static private Clude? AddClude(string name, CludeKind kind)
+        private Clude? AddClude(string name, CludeKind kind, bool doSave = true)
         {
             Clude? ret = null;
 
             bool existClude = false;
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in _masters.Cludes)
             {
                 if (clude.Name.Equals(name))
                 {
@@ -127,12 +256,15 @@ namespace SimModel.Domain
                 clude.Name = name;
                 clude.Kind = kind;
                 // 追加
-                Masters.Cludes.Add(clude);
+                _masters.Cludes.Add(clude);
                 ret = clude;
             }
 
-            // マスタへ反映
-            FileOperation.SaveCludeCSV();
+            if (doSave)
+            {
+                // マスタへ反映
+                _fileOperation.SaveCludeCSV(_masters.Cludes);
+            }
 
             // 追加した設定
             return ret;
@@ -142,79 +274,83 @@ namespace SimModel.Domain
         /// 除外・固定設定の削除
         /// </summary>
         /// <param name="name">防具名</param>
-        static internal void DeleteClude(string name)
+        /// <param name="doSave">trueの場合ファイルへの保存を実行(非指定時true、一括実行時のfalse指定を想定)</param>
+        internal void DeleteClude(string name, bool doSave = true)
         {
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in _masters.Cludes)
             {
                 if (clude.Name.Equals(name))
                 {
                     // 削除
-                    Masters.Cludes.Remove(clude);
+                    _masters.Cludes.Remove(clude);
                     break;
                 }
             }
 
-            // マスタへ反映
-            FileOperation.SaveCludeCSV();
+            if (doSave)
+            {
+                // マスタへ反映
+                _fileOperation.SaveCludeCSV(_masters.Cludes);
+            }
         }
 
         /// <summary>
         /// 除外・固定設定の全削除
         /// </summary>
-        static internal void DeleteAllClude()
+        internal void DeleteAllClude()
         {
-            Masters.Cludes.Clear();
+            _masters.Cludes.Clear();
 
             // マスタへ反映
-            FileOperation.SaveCludeCSV();
+            _fileOperation.SaveCludeCSV(_masters.Cludes);
         }
 
         /// <summary>
         /// 防具の除外・固定設定の全削除
         /// </summary>
-        static internal void DeleteAllArmorClude()
+        internal void DeleteAllArmorClude()
         {
-            // 武器だけ抽出
+            // 武器と判別不能(データのない装備名)だけ抽出
             List<Clude> weaponCludes = new();
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in _masters.Cludes)
             {
-                Equipment equip = Masters.GetEquipByName(clude.Name);
-                if ((equip != null) && (equip is Weapon))
+                Equipment? equip = _masters.GetEquipByName(clude.Name);
+                if ((equip == null) || (equip is Weapon))
                 {
                     weaponCludes.Add(clude);
                 }
             }
 
             // 抽出したものと入れ替え
-            Masters.Cludes.Clear();
-            Masters.Cludes.AddRange(weaponCludes);
+            _masters.Cludes.Clear();
+            _masters.Cludes.AddRange(weaponCludes);
 
             // マスタへ反映
-            FileOperation.SaveCludeCSV();
+            _fileOperation.SaveCludeCSV(_masters.Cludes);
         }
 
         /// <summary>
-        /// 防具の除外・固定設定の全削除
+        /// 武器の除外・固定設定の全削除
         /// </summary>
-        static internal void DeleteAllWeaponClude()
+        internal void DeleteAllWeaponClude()
         {
-            // 防具だけ抽出
+            // 防具と判別不能(データのない装備名)だけ抽出
             List<Clude> armorCludes = new();
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in _masters.Cludes)
             {
-                Equipment equip = Masters.GetEquipByName(clude.Name);
-                if ((equip != null) && (equip is not Weapon))
+                Equipment? equip = _masters.GetEquipByName(clude.Name);
+                if ((equip == null) || (equip is not Weapon))
                 {
                     armorCludes.Add(clude);
                 }
             }
 
             // 抽出したものと入れ替え
-            Masters.Cludes.Clear();
-            Masters.Cludes.AddRange(armorCludes);
+            _masters.Cludes.Clear();
+            _masters.Cludes.AddRange(armorCludes);
 
             // マスタへ反映
-            FileOperation.SaveCludeCSV();
+            _fileOperation.SaveCludeCSV(_masters.Cludes);
         }
 
         /// <summary>
@@ -222,25 +358,38 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="set">マイセット</param>
         /// <returns>追加したマイセット</returns>
-        static internal EquipSet? AddMySet(EquipSet set)
+        internal EquipSet? AddMySet(EquipSet set)
         {
-            // 削除できる装備(護石・アーティア)について、マスタに存在しているかチェック
-            if (set.Charm != null &&
-                !Masters.Charms.Union(Masters.AdditionalCharms).Any(c => c.Name.Equals(set.Charm.Name)))
+            // null指定は無視
+            if (set == null)
             {
                 return null;
             }
-            if (set.Weapon != null &&
-                !Masters.Weapons.Union(Masters.Artians).Any(c => c.Name.Equals(set.Weapon.Name)))
+
+            // 削除できる装備(護石・アーティア)について、マスタに存在しているかチェック
+            // 装備無し(NameがEmpty)は登録可
+            if (!string.IsNullOrEmpty(set.Charm.Name) &&
+                !Masters.Charms.Union(_masters.AdditionalCharms).Any(c => c.Name.Equals(set.Charm.Name)))
             {
                 return null;
+            }
+            if (!string.IsNullOrEmpty(set.Weapon.Name) &&
+                !Masters.Weapons.Union(_masters.Artians).Any(c => c.Name.Equals(set.Weapon.Name)))
+            {
+                return null;
+            }
+
+            // 名前がないなら自動生成
+            if (string.IsNullOrEmpty(set.Name))
+            {
+                set.Name = _logicConfig.DefaultMySetName;
             }
 
             // 追加
-            Masters.MySets.Add(set);
+            _masters.MySets.Add(set);
 
             // マスタへ反映
-            FileOperation.SaveMySetCSV();
+            SaveMySet();
 
             return set;
         }
@@ -249,50 +398,98 @@ namespace SimModel.Domain
         /// マイセットの削除
         /// </summary>
         /// <param name="set">マイセット</param>
-        static internal void DeleteMySet(EquipSet set)
+        /// <param name="doSave">trueの場合ファイルへの保存を実行(非指定時true、一括実行時のfalse指定を想定)</param>
+        internal void DeleteMySet(EquipSet set, bool doSave = true)
         {
             // 削除
-            Masters.MySets.Remove(set);
+            bool done = _masters.MySets.Remove(set);
 
             // マスタへ反映
-            FileOperation.SaveMySetCSV();
+            if (done && doSave)
+            {
+                SaveMySet();            
+            }
+        }
+
+        /// <summary>
+        /// マイセットの順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        internal void MoveMySet(int dropIndex, int targetIndex)
+        {
+            // 引数チェック
+            int setCount = _masters.MySets.Count;
+            if (dropIndex < 0 || dropIndex >= setCount ||
+                targetIndex < 0 || targetIndex >= setCount ||
+                dropIndex == targetIndex)
+            {
+                return;
+            }
+
+            EquipSet set = _masters.MySets[dropIndex];
+            _masters.MySets.RemoveAt(dropIndex);
+            _masters.MySets.Insert(targetIndex, set);
+
+            SaveMySet();
+        }
+
+        /// <summary>
+        /// マイセットの名前変更
+        /// </summary>
+        /// <param name="name">変更する名前</param>
+        /// <param name="set">マイセット</param>
+        internal void ChangeNameOfMySet(string name, EquipSet set)
+        {
+            // 引数チェック
+            if (string.IsNullOrEmpty(name) ||
+                set == null ||
+                set.Name == name ||
+                !_masters.MySets.Contains(set))
+            {
+                return;
+            }
+            
+            set.Name = name;
+            SaveMySet();
         }
 
         /// <summary>
         /// マイセットの変更を保存
         /// </summary>
-        static internal void SaveMySet()
+        private void SaveMySet()
         {
             // マスタへ反映
-            FileOperation.SaveMySetCSV();
-        }
+            _fileOperation.SaveMySetCSV(_masters.MySets);
 
-        /// <summary>
-        /// マイセットを再読み込み
-        /// </summary>
-        static internal void LoadMySet()
-        {
-            // マスタへ反映
-            FileOperation.LoadMySetCSV();
+            // マイセット利用状況の反映のため護石、アーティアを再書き込み
+            _fileOperation.SaveAdditionalCharmCSV(_masters.AdditionalCharms, _masters.MySets);
+            _fileOperation.SaveArtianCSV(_masters.Artians, _masters.MySets);
         }
 
         /// <summary>
         /// 最近使ったスキルの更新
         /// </summary>
         /// <param name="skills">検索したスキル</param>
-        internal static void UpdateRecentSkill(List<Skill> skills)
+        internal void UpdateRecentSkill(List<Skill> skills)
         {
-            List<string> newNames = new List<string>();
+            List<string> newNames = new();
 
             // 今回の検索条件をリストに追加
+            // 直近の検索分は上限を超えていても保持する
             foreach (var skill in skills)
             {
                 newNames.Add(skill.Name);
             }
 
             // 今までの検索条件をリストに追加
-            foreach (var oldName in Masters.RecentSkillNames)
+            foreach (var oldName in _masters.RecentSkillNames)
             {
+                // 最大数に達していたらそこで終了
+                if (_logicConfig.MaxRecentSkillCount <= newNames.Count)
+                {
+                    break;
+                }
                 bool isDuplicate = false;
                 foreach (var newName in newNames)
                 {
@@ -306,79 +503,70 @@ namespace SimModel.Domain
                 {
                     newNames.Add(oldName);
                 }
-
-                // 最大数に達したらそこで終了
-                if (MaxRecentSkillCount <= newNames.Count)
-                {
-                    break;
-                }
             }
 
             // 新しいリストに入れ替え
-            Masters.RecentSkillNames = newNames;
+            _masters.RecentSkillNames.Clear();
+            _masters.RecentSkillNames.AddRange(newNames);
 
             // マスタへ反映
-            FileOperation.SaveRecentSkillCSV();
+            _fileOperation.SaveRecentSkillCSV(_masters.RecentSkillNames);
         }
 
         /// <summary>
         /// マイ検索条件の追加
         /// </summary>
         /// <param name="condition">検索条件</param>
-        internal static void AddMyCondition(SearchCondition condition)
+        internal void AddMyCondition(SearchCondition condition)
         {
+            // nullは無視
+            if (condition == null)
+            {
+                return;
+            }
+
             // 追加
-            Masters.MyConditions.Add(condition);
+            _masters.MyConditions.Add(condition);
 
             // マスタへ反映
-            FileOperation.SaveMyConditionCSV();
+            _fileOperation.SaveMyConditionCSV(_masters.MyConditions);
         }
 
         /// <summary>
         /// マイ検索条件の削除
         /// </summary>
         /// <param name="condition">検索条件</param>
-        internal static void DeleteMyCondition(SearchCondition condition)
+        internal void DeleteMyCondition(SearchCondition condition)
         {
             // 削除
-            Masters.MyConditions.Remove(condition);
+            bool done = _masters.MyConditions.Remove(condition);
 
             // マスタへ反映
-            FileOperation.SaveMyConditionCSV();
+            if (done)
+            {
+                _fileOperation.SaveMyConditionCSV(_masters.MyConditions);
+            }
         }
 
         /// <summary>
         /// マイ検索条件の更新
         /// </summary>
-        /// <param name="newCondition">新データ</param>
-        internal static void UpdateMyCondition(SearchCondition newCondition)
+        /// <param name="name">名前</param>
+        /// <param name="condition">更新対象データ</param>
+        internal void ChangeNameOfMyCondition(string name, SearchCondition condition)
         {
-            foreach (var condition in Masters.MyConditions)
+            // 引数チェック
+            if (string.IsNullOrEmpty(name) ||
+                condition == null ||
+                condition.DispName == name ||
+                !_masters.MyConditions.Contains(condition))
             {
-                if (condition.ID == newCondition.ID)
-                {
-                    condition.DispName = newCondition.DispName;
-                    condition.IsSpecificWeapon = newCondition.IsSpecificWeapon;
-                    condition.WeaponName = newCondition.WeaponName;
-                    condition.WeaponType = newCondition.WeaponType;
-                    condition.MinAttack = newCondition.MinAttack;
-                    condition.Def = newCondition.Def;
-                    condition.Fire = newCondition.Fire;
-                    condition.Water = newCondition.Water;
-                    condition.Thunder = newCondition.Thunder;
-                    condition.Ice = newCondition.Ice;
-                    condition.Dragon = newCondition.Dragon;
-                    condition.Skills = newCondition.Skills;
-
-                    // マスタへ反映
-                    FileOperation.SaveMyConditionCSV();
-
-                    return;
-                }
+                return;
             }
 
-            // 万一更新先が見つからなかった場合は新規登録
-            AddMyCondition(newCondition);
+            condition.DispName = name;
+
+            _fileOperation.SaveMyConditionCSV(_masters.MyConditions);
         }
 
         /// <summary>
@@ -386,54 +574,66 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="deco">対象の装飾品</param>
         /// <param name="count">変更後の個数</param>
-        internal static void SaveDecoCount(Deco deco, int count)
+        internal void SaveDecoCount(Deco deco, int count)
         {
+            // 引数チェック
+            if (count < 0 ||
+                deco == null ||
+                !_masters.Decos.Contains(deco))
+            {
+                return;
+            }
+
+
             deco.DecoCount = count;
-            FileOperation.SaveDecoCountJson();
-        }
-
-        /// <summary>
-        /// マイセットの順番入れ替え
-        /// </summary>
-        /// <param name="dropIndex">入れ替え元</param>
-        /// <param name="targetIndex">入れ替え先</param>
-        internal static void MoveMySet(int dropIndex, int targetIndex)
-        {
-            EquipSet set = Masters.MySets[dropIndex];
-            Masters.MySets.RemoveAt(dropIndex);
-            Masters.MySets.Insert(targetIndex, set);
-
-            FileOperation.SaveMySetCSV();
+            _fileOperation.SaveDecoCountJson(_masters.Decos);
         }
 
         /// <summary>
         /// 護石の追加
         /// </summary>
         /// <param name="charm">護石</param>
-        internal static void AddCharm(Equipment charm)
+        internal void AddCharm(Equipment charm)
         {
+            // 引数チェック
+            if (charm == null ||
+                _masters.AdditionalCharms.Contains(charm))
+            {
+                return;
+            }
+
             // 追加
-            Masters.AdditionalCharms.Add(charm);
+            _masters.AdditionalCharms.Add(charm);
+
+            // 全装備キャッシュをクリア
+            _masters.ClearAllEquipmentsCache();
 
             // 下位互換の再計算
-            Masters.CalcLowerCharm();
+            CalcLowerCharm();
 
             // マスタへ反映
-            FileOperation.SaveAdditionalCharmCSV();
+            _fileOperation.SaveAdditionalCharmCSV(_masters.AdditionalCharms, _masters.MySets);
         }
 
         /// <summary>
         /// 護石の削除
         /// </summary>
         /// <param name="condition">検索条件</param>
-        internal static void DeleteCharm(Equipment charm)
+        internal void DeleteCharm(Equipment charm)
         {
+            // 引数チェック
+            if (charm == null ||
+                !_masters.AdditionalCharms.Contains(charm))
+            {
+                return;
+            }
+
             // 除外・固定設定があったら削除
             DeleteClude(charm.Name);
 
             // この護石を使っているマイセットがあったら削除
             List<EquipSet> delMySets = new();
-            foreach (var set in Masters.MySets)
+            foreach (var set in _masters.MySets)
             {
                 if (set.Charm.Name != null && set.Charm.Name.Equals(charm.Name))
                 {
@@ -442,17 +642,28 @@ namespace SimModel.Domain
             }
             foreach (var set in delMySets)
             {
-                DeleteMySet(set);
+                DeleteMySet(set, false);
             }
 
             // 削除
-            Masters.AdditionalCharms.Remove(charm);
+            _masters.AdditionalCharms.Remove(charm);
+
+            // 全装備キャッシュをクリア
+            _masters.ClearAllEquipmentsCache();
 
             // 下位互換の再計算
-            Masters.CalcLowerCharm();
+            CalcLowerCharm();
 
             // マスタへ反映
-            FileOperation.SaveAdditionalCharmCSV();
+            if (delMySets.Count > 0)
+            {
+                // MySetに付随して護石も保存される
+                SaveMySet();
+            }
+            else 
+            { 
+                _fileOperation.SaveAdditionalCharmCSV(_masters.AdditionalCharms, _masters.MySets);
+            }
         }
 
         /// <summary>
@@ -460,54 +671,69 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="dropIndex">入れ替え元</param>
         /// <param name="targetIndex">入れ替え先</param>
-        internal static void MoveCharm(int dropIndex, int targetIndex)
+        internal void MoveCharm(int dropIndex, int targetIndex)
         {
-            Equipment charm = Masters.AdditionalCharms[dropIndex];
-            Masters.AdditionalCharms.RemoveAt(dropIndex);
-            Masters.AdditionalCharms.Insert(targetIndex, charm);
+            // 引数チェック
+            int charmCount = _masters.AdditionalCharms.Count;
+            if (dropIndex < 0 || dropIndex >= charmCount ||
+                targetIndex < 0 || targetIndex >= charmCount ||
+                dropIndex == targetIndex)
+            {
+                return;
+            }
 
-            FileOperation.SaveAdditionalCharmCSV();
+            Equipment charm = _masters.AdditionalCharms[dropIndex];
+            _masters.AdditionalCharms.RemoveAt(dropIndex);
+            _masters.AdditionalCharms.Insert(targetIndex, charm);
+
+            // 全装備キャッシュをクリア
+            _masters.ClearAllEquipmentsCache();
+
+            _fileOperation.SaveAdditionalCharmCSV(_masters.AdditionalCharms, _masters.MySets);
         }
 
         /// <summary>
         /// アーティアの追加
         /// </summary>
         /// <param name="artian">アーティア</param>
-        internal static void AddArtian(Weapon artian)
+        internal void AddArtian(Weapon artian)
         {
+            // 引数チェック
+            if (artian == null ||
+                _masters.Artians.Contains(artian))
+            {
+                return;
+            }
+
             // 追加
-            Masters.Artians.Add(artian);
+            _masters.Artians.Add(artian);
+
+            // 全装備キャッシュをクリア
+            _masters.ClearAllEquipmentsCache();
 
             // マスタへ反映
-            FileOperation.SaveArtianCSV();
-        }
-
-        /// <summary>
-        /// アーティアの順番入れ替え
-        /// </summary>
-        /// <param name="dropIndex">入れ替え元</param>
-        /// <param name="targetIndex">入れ替え先</param>
-        internal static void MoveArtian(int dropIndex, int targetIndex)
-        {
-            Weapon artian = Masters.Artians[dropIndex];
-            Masters.Artians.RemoveAt(dropIndex);
-            Masters.Artians.Insert(targetIndex, artian);
-
-            FileOperation.SaveArtianCSV();
+            _fileOperation.SaveArtianCSV(_masters.Artians, _masters.MySets);
         }
 
         /// <summary>
         /// アーティアの削除
         /// </summary>
         /// <param name="artian">アーティア</param>
-        internal static void DeleteArtian(Weapon artian)
+        internal void DeleteArtian(Weapon artian)
         {
+            // 引数チェック
+            if (artian == null ||
+                !_masters.Artians.Contains(artian))
+            {
+                return;
+            }
+
             // 除外・固定設定があったら削除
             DeleteClude(artian.Name);
 
-            // この護石を使っているマイセットがあったら削除
+            // このアーティアを使っているマイセットがあったら削除
             List<EquipSet> delMySets = new();
-            foreach (var set in Masters.MySets)
+            foreach (var set in _masters.MySets)
             {
                 if (set.Weapon.Name != null && set.Weapon.Name.Equals(artian.Name))
                 {
@@ -516,14 +742,79 @@ namespace SimModel.Domain
             }
             foreach (var set in delMySets)
             {
-                DeleteMySet(set);
+                DeleteMySet(set, false);
             }
 
             // 削除
-            Masters.Artians.Remove(artian);
+            _masters.Artians.Remove(artian);
+
+            // 全装備キャッシュをクリア
+            _masters.ClearAllEquipmentsCache();
 
             // マスタへ反映
-            FileOperation.SaveArtianCSV();
+            if (delMySets.Count > 0)
+            {
+                // MySetに付随してアーティアも保存される
+                SaveMySet();
+            }
+            else
+            {
+                _fileOperation.SaveArtianCSV(_masters.Artians, _masters.MySets);
+            }
+        }
+
+        /// <summary>
+        /// アーティアの順番入れ替え
+        /// </summary>
+        /// <param name="dropIndex">入れ替え元</param>
+        /// <param name="targetIndex">入れ替え先</param>
+        internal void MoveArtian(int dropIndex, int targetIndex)
+        {
+            // 引数チェック
+            int charmCount = _masters.Artians.Count;
+            if (dropIndex < 0 || dropIndex >= charmCount ||
+                targetIndex < 0 || targetIndex >= charmCount ||
+                dropIndex == targetIndex)
+            {
+                return;
+            }
+
+            Weapon artian = _masters.Artians[dropIndex];
+            _masters.Artians.RemoveAt(dropIndex);
+            _masters.Artians.Insert(targetIndex, artian);
+
+            // 全装備キャッシュをクリア
+            _masters.ClearAllEquipmentsCache();
+
+            _fileOperation.SaveArtianCSV(_masters.Artians, _masters.MySets);
+        }
+
+        /// <summary>
+        /// 護石の下位互換検出
+        /// </summary>
+        private void CalcLowerCharm()
+        {
+            if (!_logicConfig.UseCalcUpperCharm)
+            {
+                return;
+            }
+
+            foreach (var charm in _masters.AdditionalCharms)
+            {
+                charm.Upper = null;
+                Equipment? upper = _charmAppraiser.HasUpperCharm(charm);
+                if (upper != null)
+                {
+                    if (_charmAppraiser.IsLeftUpper(charm, upper))
+                    {
+                        charm.Upper = (upper, false);
+                    }
+                    else
+                    {
+                        charm.Upper = (upper, true);
+                    }
+                }
+            }
         }
     }
 }

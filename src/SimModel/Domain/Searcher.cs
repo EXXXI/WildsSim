@@ -2,16 +2,16 @@
 using SimModel.Model;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Windows;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SimModel.Domain
 {
     /// <summary>
     /// 検索を実施するクラス
     /// </summary>
-    internal class Searcher : IDisposable
+    public class Searcher : IDisposable
     {
         // 制約式・変数の名称
         const string WeaponRowName = "weapon";
@@ -45,6 +45,7 @@ namespace SimModel.Domain
         const string CludeRowPrefix = "clude_";
         const string EquipColPrefix = "equip_";
         const string OneSetRowPrefix = "oneset_";
+        private const int MaxDecoCount = 7;
 
         /// <summary>
         /// 検索条件
@@ -54,17 +55,17 @@ namespace SimModel.Domain
         /// <summary>
         /// ソルバ
         /// </summary>
-        public Solver SimSolver { get; set; }
+        private Solver SimSolver { get; set; }
 
         /// <summary>
         /// 変数の辞書
         /// </summary>
-        public Dictionary<string, Variable> Variables { get; set; } = new();
+        private Dictionary<string, Variable> Variables { get; set; } = new();
 
         /// <summary>
         /// 制約式の辞書
         /// </summary>
-        public Dictionary<string, Constraint> Constraints { get; set; } = new();
+        private Dictionary<string, Constraint> Constraints { get; set; } = new();
 
         /// <summary>
         /// 検索結果
@@ -72,100 +73,76 @@ namespace SimModel.Domain
         public List<EquipSet> ResultSets { get; set; }
 
         /// <summary>
-        /// 中断フラグ
-        /// </summary>
-        public bool IsCanceling { get; set; } = false;
-
-        /// <summary>
         /// 検索対象の武器一覧
         /// </summary>
-        private List<Weapon> Weapons { get; set; }
+        private List<Weapon> Weapons { get; }
 
         /// <summary>
         /// 検索対象の頭一覧
         /// </summary>
-        private List<Equipment> Heads { get; set; }
+        private List<Equipment> Heads { get; }
 
         /// <summary>
         /// 検索対象の胴一覧
         /// </summary>
-        private List<Equipment> Bodys { get; set; }
+        private List<Equipment> Bodys { get; }
 
         /// <summary>
         /// 検索対象の腕一覧
         /// </summary>
-        private List<Equipment> Arms { get; set; }
+        private List<Equipment> Arms { get; }
 
         /// <summary>
         /// 検索対象の腰一覧
         /// </summary>
-        private List<Equipment> Waists { get; set; }
+        private List<Equipment> Waists { get; }
 
         /// <summary>
         /// 検索対象の足一覧
         /// </summary>
-        private List<Equipment> Legs { get; set; }
+        private List<Equipment> Legs { get; }
 
         /// <summary>
         /// 検索対象の護石一覧
         /// </summary>
-        private List<Equipment> Charms { get; set; }
+        private List<Equipment> Charms { get; }
+
+        /// <summary>
+        /// 検索対象の装飾品一覧
+        /// </summary>
+        private List<Deco> Decos { get; }
+
+        /// <summary>
+        /// 固定・除外設定一覧
+        /// </summary>
+        private List<Clude> Cludes { get; }
+
+        /// <summary>
+        /// 全装備一覧
+        /// </summary>
+        private List<Equipment> AllEquips { get; }
 
         /// <summary>
         /// コンストラクタ：検索条件を指定する
         /// </summary>
         /// <param name="condition"></param>
-        public Searcher(SearchCondition condition)
+        public Searcher(SearchCondition condition, SearchRange range)
         {
             Condition = condition;
             ResultSets = new List<EquipSet>();
 
-            if (condition.IsSpecificWeapon)
-            {
-                Weapons = new();
-                Weapon? weapon = Masters.Weapons.Union(Masters.Artians).Where(w => w.Name == condition.WeaponName).FirstOrDefault();
-                if (weapon != null)
-                {
-                    Weapons.Add(weapon);
-                }
-            }
-            else
-            {
-                if (condition.IsBestArtianSearch)
-                {
-                    // 理論値検索
-                    Weapons = Masters.Weapons.Union(Masters.Artians).Union(condition.MakeRelatedArtians()).Where(w => w.WeaponType == condition.WeaponType).ToList();
-                }
-                else
-                {
-                    // 通常
-                    Weapons = Masters.Weapons.Union(Masters.Artians).Where(w => w.WeaponType == condition.WeaponType).ToList();
-                }
-            }
+            Weapons = range.Weapons;
+            Heads = range.Heads;
+            Bodys = range.Bodys;
+            Arms = range.Arms;
+            Waists = range.Waists;
+            Legs = range.Legs;
+            Charms = range.Charms;
+            Decos = range.Decos;
+            Cludes = range.Cludes;
 
-            Heads = Masters.Heads;
-            Bodys = Masters.Bodys;
-            Arms = Masters.Arms;
-            Waists = Masters.Waists;
-            Legs = Masters.Legs;
-            if (condition.FixCharm == null)
-            {
-                if (condition.IsBestCharmSearch)
-                {
-                    // 理論値護石検索
-                    Charms = Masters.Charms.Union(Masters.AdditionalCharms).Union(condition.MakeRelatedCharms()).ToList();
-                }
-                else
-                {
-                    // 通常
-                    Charms = Masters.Charms.Union(Masters.AdditionalCharms).ToList();
-                }
-            }
-            else
-            {
-                // 護石検索用
-                Charms = new List<Equipment>() { condition.FixCharm };
-            }
+            AllEquips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
+                .Union(Charms).Union(Decos).ToList();
 
             SimSolver = Solver.CreateSolver("SCIP");
 
@@ -187,7 +164,7 @@ namespace SimModel.Domain
         /// </summary>
         /// <param name="limit">頑張り度</param>
         /// <returns>全件検索完了した場合true</returns>
-        public bool ExecSearch(int limit)
+        public async Task<bool> ExecSearch(int limit, CancellationToken? token = null)
         {
             // 目標検索件数
             int target = ResultSets.Count + limit;
@@ -225,7 +202,7 @@ namespace SimModel.Domain
                 }
 
                 // 中断確認
-                if (IsCanceling)
+                if (token?.IsCancellationRequested ?? false)
                 {
                     return false;
                 }
@@ -239,16 +216,14 @@ namespace SimModel.Domain
         private void SetVariables()
         {
             // 各装備は0個以上で整数
-            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
-                .Union(Charms).Union(Masters.Decos);
-            foreach (var equip in equips)
+            foreach (var equip in AllEquips)
             {
                 string key = EquipColPrefix + equip.Name;
                 Variable value;
                 if (equip is Deco deco)
                 {
                     // 装飾品は所持数を上限とする
-                    value = SimSolver.MakeIntVar(0.0, deco.DecoCount, key);
+                    value = SimSolver.MakeIntVar(0.0, Condition.HasAllDecos ? MaxDecoCount : deco.DecoCount, key);
                 }
                 else
                 {
@@ -328,8 +303,14 @@ namespace SimModel.Domain
             }
 
             // 除外固定装備設定
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in Cludes)
             {
+                if (!AllEquips.Any(e => e.Name == clude.Name))
+                {
+                    // 検索対象外装備の除外固定は無視
+                    continue;
+                }
+
                 int fix = 0;
                 if (clude.Kind.Equals(CludeKind.include))
                 {
@@ -362,9 +343,7 @@ namespace SimModel.Domain
             Objective objective = SimSolver.Objective();
 
             // 各装備の防御力が、目的関数における各装備の項の係数となる
-            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
-                .Union(Charms).Union(Masters.Decos);
-            foreach (var equip in equips)
+            foreach (var equip in AllEquips)
             {
                 string key = EquipColPrefix + equip.Name;
                 objective.SetCoefficient(Variables[key], Score(equip));
@@ -425,16 +404,14 @@ namespace SimModel.Domain
         private void SetDatas()
         {
             // 防具データ
-            var equips = Weapons.Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs)
-                .Union(Charms).Union(Masters.Decos);
-            foreach (var equip in equips)
+            foreach (var equip in AllEquips)
             {
                 string key = EquipColPrefix + equip.Name;
                 SetEquipData(Variables[key], equip);
             }
 
             // 除外固定データ
-            foreach (var clude in Masters.Cludes)
+            foreach (var clude in Cludes)
             {
                 if(Constraints.ContainsKey(CludeRowPrefix + clude.Name) && Variables.ContainsKey(EquipColPrefix + clude.Name))
                 {
@@ -492,7 +469,15 @@ namespace SimModel.Domain
             {
                 for (int i = 0; i < weaponSlotCond.Length; i++)
                 {
-                    weaponSlotCond[i] = weaponSlotCond[i] * -1;
+                    if (equip.SlotType1 == 2)
+                    {
+                        // 両対応の装飾品は全スキル計算以外では0
+                        weaponSlotCond[i] = 0;
+                    }
+                    else
+                    {
+                        weaponSlotCond[i] = weaponSlotCond[i] * -1;
+                    }
                 }
             }
             Constraints[WeaponSlot1RowName].SetCoefficient(xvar, weaponSlotCond[0]);
@@ -506,7 +491,15 @@ namespace SimModel.Domain
             {
                 for (int i = 0; i < armorSlotCond.Length; i++)
                 {
-                    armorSlotCond[i] = armorSlotCond[i] * -1;
+                    if (equip.SlotType1 == 2)
+                    {
+                        // 両対応の装飾品は全スキル計算以外では0
+                        armorSlotCond[i] = 0;
+                    }
+                    else
+                    {
+                        armorSlotCond[i] = armorSlotCond[i] * -1;
+                    }
                 }
             }
             Constraints[ArmorSlot1RowName].SetCoefficient(xvar, armorSlotCond[0]);
@@ -529,7 +522,7 @@ namespace SimModel.Domain
             Constraints[AllSlot4RowName].SetCoefficient(xvar, allSlotCond[3]);
 
             // 防御・耐性情報
-            Constraints[DefRowName].SetCoefficient(xvar, equip.Maxdef);
+            Constraints[DefRowName].SetCoefficient(xvar, Condition.IsTranscending ? equip.TranscendingDef : equip.Maxdef);
             Constraints[FireRowName].SetCoefficient(xvar, equip.Fire);
             Constraints[WaterRowName].SetCoefficient(xvar, equip.Water);
             Constraints[ThunderRowName].SetCoefficient(xvar, equip.Thunder);
@@ -583,12 +576,7 @@ namespace SimModel.Domain
                     string name = keyValuePair.Key.Replace(EquipColPrefix, string.Empty);
 
                     // 存在チェック
-                    Equipment? equip = Masters.GetEquipByName(name);
-                    if (equip == null || string.IsNullOrWhiteSpace(equip.Name))
-                    {
-                        // 即席の理論値装備はマスタに存在しないため、再検索
-                        equip = Charms.Union(Weapons).FirstOrDefault(e => e.Name == name);
-                    }
+                    Equipment? equip = AllEquips.Where(equip => equip.Name == name).FirstOrDefault();
                     if (equip == null || string.IsNullOrWhiteSpace(equip.Name))
                     {
                         // 存在しない装備名の場合無視
@@ -709,7 +697,7 @@ namespace SimModel.Domain
         /// <param name="newName">新セットの防具名</param>
         /// <param name="oldName">旧セットの防具名</param>
         /// <returns></returns>
-        private bool IsDuplicateEquipName(string newName, string oldName)
+        private static bool IsDuplicateEquipName(string newName, string oldName)
         {
             return string.IsNullOrWhiteSpace(newName) || newName.Equals(oldName);
         }

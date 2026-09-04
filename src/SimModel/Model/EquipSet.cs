@@ -1,5 +1,4 @@
-﻿using SimModel.Config;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -58,7 +57,7 @@ namespace SimModel.Model
         /// <summary>
         /// マイセット用名前
         /// </summary>
-        public string Name { get; set; } = LogicConfig.Instance.DefaultMySetName;
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// 限界突破有無
@@ -302,7 +301,7 @@ namespace SimModel.Model
 
 
         /// <summary>
-        /// 装飾品のCSV表記 Set可能
+        /// 装飾品のCSV表記
         /// </summary>
         public string DecoNameCSV
         {
@@ -320,24 +319,6 @@ namespace SimModel.Model
                     isFirst = false;
                 }
                 return sb.ToString();
-            }
-            set
-            {
-                Decos = new List<Equipment>();
-                string[] splitted = value.Split(',');
-                foreach (var decoName in splitted)
-                {
-                    if (string.IsNullOrWhiteSpace(decoName))
-                    {
-                        continue;
-                    }
-                    Equipment? deco = Masters.GetEquipByName(decoName);
-                    if (deco != null)
-                    {
-                        Decos.Add(deco);
-                    }
-                }
-                SortDecos();
             }
         }
 
@@ -405,7 +386,7 @@ namespace SimModel.Model
         }
 
         /// <summary>
-        /// 装飾品のCSV表記 3行
+        /// スキルのCSV表記 3行
         /// </summary>
         public string SkillsDispMultiLine
         {
@@ -530,13 +511,13 @@ namespace SimModel.Model
         /// <param name="baseSkills">スキル一覧</param>
         /// <param name="newSkills">追加するスキル</param>
         /// <returns>合わせたスキル一覧</returns>
-        private List<Skill> JoinSkill(List<Skill> baseSkills, List<Skill> newSkills)
+        private static List<Skill> JoinSkill(List<Skill> baseSkills, List<Skill> newSkills)
         {
             foreach (var newSkill in newSkills)
             {
                 if (string.IsNullOrWhiteSpace(newSkill.Name))
                 {
-                    continue;
+                    continue; // 基本存在せず、あったとしても無視する
                 }
 
                 bool exist = false;

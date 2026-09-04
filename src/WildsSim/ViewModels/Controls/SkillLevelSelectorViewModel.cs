@@ -59,7 +59,7 @@ namespace WildsSim.ViewModels.Controls
         {
             get
             {
-                return new Skill(SkillName, SelectedLevel.Value.Level, isFixed: IsFixDisp.Value == FixStr);
+                return new Skill(SkillName, SelectedLevel.Value.Level) { IsFixed = IsFixDisp.Value == FixStr };
             }
         }
 

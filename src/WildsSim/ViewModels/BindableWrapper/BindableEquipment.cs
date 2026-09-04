@@ -110,7 +110,7 @@ namespace WildsSim.ViewModels.BindableWrapper
         /// <returns></returns>
         static public ObservableCollection<BindableEquipment> BeBindableList(List<Equipment> list, string? filter)
         {
-            return BeBindableList(list, null, 0);
+            return BeBindableList(list, filter, 0);
         }
 
         /// <summary>
