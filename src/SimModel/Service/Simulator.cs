@@ -1,9 +1,9 @@
-﻿using SimModel.Config;
+﻿using NLog;
+using SimModel.Config;
 using SimModel.Domain;
 using SimModel.Model;
-using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimModel.Service
@@ -16,7 +16,7 @@ namespace SimModel.Service
         /// <summary>
         /// 検索インスタンス
         /// </summary>
-        private Searcher Searcher { get; set; }
+        private Searcher? Searcher { get; set; }
 
         /// <summary>
         /// 全件検索完了フラグ
@@ -39,32 +39,41 @@ namespace SimModel.Service
         public bool IsBestArtianSearch { get { return Searcher?.Condition?.IsBestArtianSearch ?? false; } }
 
         /// <summary>
-        /// データ読み込み
+        /// ログ出力用
         /// </summary>
-        public void LoadData()
-        {
-            // マスタデータ類の読み込み
-            FileOperation.LoadDefUpgradeCSV();
-            FileOperation.LoadHeadCSV();
-            FileOperation.LoadBodyCSV();
-            FileOperation.LoadArmCSV();
-            FileOperation.LoadWaistCSV();
-            FileOperation.LoadLegCSV();
-            FileOperation.LoadCharmCSV();
-            FileOperation.LoadDecoCSV();
-            FileOperation.LoadWeaponCSV();
-            FileOperation.LoadSkillCSV();
-            FileOperation.LoadAdditionalCharmComboCSV();
-            FileOperation.LoadAdditionalCharmGroupCSV();
+        static private Logger logger = LogManager.GetCurrentClassLogger();
 
-            // セーブデータ類の読み込み
-            FileOperation.MakeSaveFolder();
-            FileOperation.LoadAdditionalCharmCSV();
-            FileOperation.LoadArtianCSV();
-            FileOperation.LoadCludeCSV();
-            FileOperation.LoadRecentSkillCSV();
-            FileOperation.LoadMyConditionCSV();
-            FileOperation.LoadMySetCSV();
+        /// <summary>
+        /// データ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly DataManagement _dataManagement;
+
+        /// <summary>
+        /// 護石関連計算クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly CharmAppraiser _charmAppraiser;
+
+        /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
+        /// <summary>
+        /// ロジックの設定クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly LogicConfig _logicConfig;
+
+        public Simulator(DataManagement dataManagement, CharmAppraiser charmAppraiser, LogicConfig logicConfig, Masters masters)
+        {
+            _dataManagement = dataManagement;
+            _dataManagement.LoadData();
+            _charmAppraiser = charmAppraiser;
+            _logicConfig = logicConfig;
+            _masters = masters;
         }
 
         /// <summary>
@@ -73,20 +82,24 @@ namespace SimModel.Service
         /// <param name="condition">検索条件</param>
         /// <param name="limit">頑張り度</param>
         /// <returns>検索結果</returns>
-        public List<EquipSet> Search(SearchCondition condition, int limit)
+        public async Task<List<EquipSet>> Search(SearchCondition condition, int limit, CancellationToken? token = null)
         {
             ResetIsCanceling();
 
             // 検索
-            if (Searcher != null)
-            {
-                Searcher.Dispose();
-            }
-            Searcher = new Searcher(condition);
-            IsSearchedAll = Searcher.ExecSearch(limit);
+            Searcher?.Dispose();
+            SearchRange range = new(condition, _masters);
+            Searcher = new(condition, range);
+            IsSearchedAll = await Searcher.ExecSearch(limit, token);
 
             // 最近使ったスキル更新
             UpdateRecentSkill(condition.Skills);
+
+            // 中断時はフラグを立てる
+            if (token?.IsCancellationRequested ?? false)
+            {
+                IsCanceling = true;
+            }
 
             return Searcher.ResultSets;
         }
@@ -96,7 +109,7 @@ namespace SimModel.Service
         /// </summary>
         /// <param name="limit">頑張り度</param>
         /// <returns>検索結果</returns>
-        public List<EquipSet> SearchMore(int limit)
+        public async Task<List<EquipSet>> SearchMore(int limit, CancellationToken? token = null)
         {
             ResetIsCanceling();
 
@@ -106,7 +119,13 @@ namespace SimModel.Service
                 return new List<EquipSet>();
             }
 
-            IsSearchedAll = Searcher.ExecSearch(limit);
+            IsSearchedAll = await Searcher.ExecSearch(limit, token);
+
+            // 中断時はフラグを立てる
+            if (token?.IsCancellationRequested ?? false)
+            {
+                IsCanceling = true;
+            }
 
             return Searcher.ResultSets;
         }
@@ -116,7 +135,7 @@ namespace SimModel.Service
         /// </summary>
         /// <param name="condition">検索条件</param>
         /// <returns>検索結果</returns>
-        public List<Skill> SearchExtraSkill(SearchCondition condition, Reactive.Bindings.ReactivePropertySlim<double>? progress = null)
+        public async Task<List<Skill>> SearchExtraSkill(SearchCondition condition, Reactive.Bindings.ReactivePropertySlim<double>? progress = null, CancellationToken? token = null)
         {
             ResetIsCanceling();
 
@@ -128,18 +147,20 @@ namespace SimModel.Service
                 progress.Value = 0.0;
             }
 
+            // 検索範囲は変更しないのでここで1つだけ生成
+            SearchRange range = new(condition, _masters);
+
             // 全スキル全レベルを走査
             Parallel.ForEach(Masters.Skills,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
+                    MaxDegreeOfParallelism = _logicConfig.MaxDegreeOfParallelism
                 },
                 () => new List<Skill>(),
-                (skill, loop, subResult) =>
+                (skill, loop, subResult) => 
                 {
                     // 中断チェック
-                    // TODO: もし時間がかかるようならCancelToken等でちゃんとループを終了させること
-                    if (IsCanceling)
+                    if (token?.IsCancellationRequested ?? false)
                     {
                         return subResult;
                     }
@@ -157,13 +178,18 @@ namespace SimModel.Service
                         if (isNewSkill)
                         {
                             // 頑張り度1で検索
-                            using Searcher exSearcher = new Searcher(exCondition);
-                            exSearcher.ExecSearch(1);
+                            using Searcher exSearcher = new(exCondition, range);
+                            exSearcher.ExecSearch(1).GetAwaiter().GetResult();
 
                             // 1件でもヒットすれば追加スキル一覧に追加
                             if (exSearcher.ResultSets.Count > 0)
                             {
                                 subResult.Add(exSkill);
+                            }
+                            else
+                            {
+                                // ヒットしなかった場合、上位Lvは確認不要
+                                break;
                             }
                         }
                     }
@@ -202,6 +228,12 @@ namespace SimModel.Service
                 }
             }
 
+            // 中断時はフラグを立てる
+            if (token?.IsCancellationRequested ?? false)
+            {
+                IsCanceling = true;
+            }
+
             return sortedSkills;
         }
 
@@ -209,45 +241,42 @@ namespace SimModel.Service
         /// 護石検索
         /// </summary>
         /// <returns>検索結果</returns>
-        public List<EquipSet> SearchCharm(Reactive.Bindings.ReactivePropertySlim<double>? progress = null)
+        public async Task<List<EquipSet>> SearchCharm(Reactive.Bindings.ReactivePropertySlim<double>? progress = null, CancellationToken? token = null)
         {
             ResetIsCanceling();
+
+            // まだ検索がされていない場合、0件で返す
+            // 想定していない状況であり、このコードが実行されたら呼び出し側のバグ
+            if (Searcher == null)
+            {
+                logger.Warn("通常の検索を行う前に護石検索が実行されました。");
+                return new List<EquipSet>();
+            }
 
             // プログレスバー
             if (progress != null)
             {
                 progress.Value = 0.0;
             }
+            // 護石検索の進捗は80%までで、残り20%は下位互換護石の除外処理に使う
+            double mainProgressRate = 0.8;
 
             // 検索対象の護石をリストアップ
             SearchCondition condition = Searcher.Condition;
-            List<Equipment> targetCharms = condition.MakeRelatedCharms();
-
-            // 護石の除外・固定を一時解除
-            List<Clude> charmCludes = new();
-            foreach (var clude in Masters.Cludes)
-            {
-                Equipment equip = Masters.GetEquipByName(clude.Name);
-                if (equip.Kind == EquipKind.charm)
-                {
-                    charmCludes.Add(clude);
-                    DataManagement.DeleteClude(clude.Name);
-                }
-            }
+            List<Equipment> targetCharms = condition.MakeRelatedCharms(Masters.ShiningCharmCombos, Masters.ShiningCharmGroups);
 
             // 走査
             List<EquipSet> resultSets = new();
             Parallel.ForEach(targetCharms,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = LogicConfig.Instance.MaxDegreeOfParallelism
+                    MaxDegreeOfParallelism = _logicConfig.MaxDegreeOfParallelism
                 },
                 () => new List<EquipSet>(),
                 (targetCharm, loop, subResult) =>
                 {
                     // 中断チェック
-                    // TODO: もし時間がかかるようならCancelToken等でちゃんとループを終了させること
-                    if (IsCanceling)
+                    if (token?.IsCancellationRequested ?? false)
                     {
                         return subResult;
                     }
@@ -255,12 +284,14 @@ namespace SimModel.Service
                     // 検索条件をコピー
                     SearchCondition exCondition = new(Searcher.Condition);
 
-                    // 護石を検索条件に追加
-                    exCondition.FixCharm = targetCharm;
+                    // 護石を固定
+                    SearchRange range = new(exCondition, _masters);
+                    range.Charms = new List<Equipment> { targetCharm };
+                    range.Cludes = _masters.Cludes; // 検索範囲の護石は理想護石であり、護石の除外固定はそのまま渡しても無視されるので問題なし
 
                     // 頑張り度1で検索
-                    using Searcher exSearcher = new Searcher(exCondition);
-                    exSearcher.ExecSearch(1);
+                    using Searcher exSearcher = new(exCondition, range);
+                    exSearcher.ExecSearch(1).GetAwaiter().GetResult();
 
                     // 1件でもヒットすれば結果に追加
                     if (exSearcher.ResultSets.Count > 0)
@@ -273,7 +304,7 @@ namespace SimModel.Service
                     {
                         lock (progress)
                         {
-                            progress.Value += 1.0 / targetCharms.Count;
+                            progress.Value += mainProgressRate / targetCharms.Count;
                         }
 
                     }
@@ -289,24 +320,18 @@ namespace SimModel.Service
                 }
             );
 
-            // 護石の除外・固定を戻す
-            foreach (var clude in charmCludes)
+            // (中断時用プログレスバー補正)
+            if (progress != null)
             {
-                if (clude.Kind == CludeKind.exclude)
-                {
-                    DataManagement.AddExclude(clude.Name);
-                }
-                else
-                {
-                    DataManagement.AddInclude(clude.Name);
-                }
+                progress.Value = mainProgressRate;
             }
 
             // 下位互換の護石で済む場合削除
+            // TODO: HasUpperCharmで少し高速化できそう。検索本体に比べて恩恵が少なく、処理も複雑になりそうなので保留中
             List<EquipSet> filtered = new();
             foreach (var left in resultSets)
             {
-                bool hasUpper = false;
+                bool hasLower = false;
                 foreach (var right in resultSets)
                 {
                     // 同じ護石は除外
@@ -314,17 +339,30 @@ namespace SimModel.Service
                     {
                         continue;
                     }
-                    // 上位互換の護石があるか確認
-                    if (Equipment.IsLeftUpper(left.Charm, right.Charm))
+                    // 下位互換の護石があるか確認
+                    if (_charmAppraiser.IsLeftUpper(left.Charm, right.Charm, false))
                     {
-                        hasUpper = true;
+                        hasLower = true;
                         break;
                     }
                 }
-                if (!hasUpper)
+                if (!hasLower)
                 {
                     filtered.Add(left);
                 }
+
+                // プログレスバー
+                if (progress != null)
+                {
+                        progress.Value += (1 - mainProgressRate) / resultSets.Count;
+                }
+
+            }
+
+            // 中断時はフラグを立てる
+            if (token?.IsCancellationRequested ?? false)
+            {
+                IsCanceling = true;
             }
 
             return filtered;
@@ -338,7 +376,7 @@ namespace SimModel.Service
         /// <returns>追加できた場合その設定、追加できなかった場合null</returns>
         public Clude? AddExclude(string name)
         {
-            return DataManagement.AddExclude(name);
+            return _dataManagement.AddExclude(name);
         }
 
         /// <summary>
@@ -348,7 +386,7 @@ namespace SimModel.Service
         /// <returns>追加できた場合その設定、追加できなかった場合null</returns>
         public Clude? AddInclude(string name)
         {
-            return DataManagement.AddInclude(name);
+            return _dataManagement.AddInclude(name);
         }
 
         /// <summary>
@@ -357,7 +395,7 @@ namespace SimModel.Service
         /// <param name="name">対象装備名</param>
         public void DeleteClude(string name)
         {
-            DataManagement.DeleteClude(name);
+            _dataManagement.DeleteClude(name);
         }
 
         /// <summary>
@@ -365,7 +403,7 @@ namespace SimModel.Service
         /// </summary>
         public void DeleteAllClude()
         {
-            DataManagement.DeleteAllClude();
+            _dataManagement.DeleteAllClude();
         }
 
         /// <summary>
@@ -373,7 +411,7 @@ namespace SimModel.Service
         /// </summary>
         public void DeleteAllArmorClude()
         {
-            DataManagement.DeleteAllArmorClude();
+            _dataManagement.DeleteAllArmorClude();
         }
 
         /// <summary>
@@ -381,18 +419,18 @@ namespace SimModel.Service
         /// </summary>
         public void DeleteAllWeaponClude()
         {
-            DataManagement.DeleteAllWeaponClude();
+            _dataManagement.DeleteAllWeaponClude();
         }
 
-        // TODO: 現状未使用
-        /// <summary>
-        /// 指定レア度以下を全除外
-        /// </summary>
-        /// <param name="rare">レア度</param>
-        public void ExcludeByRare(int rare)
-        {
-            DataManagement.ExcludeByRare(rare);
-        }
+        // TODO: 護石・装飾品のレア度整備やアーティア・追加護石のレア度入力が必要なため保留
+        ///// <summary>
+        ///// 指定レア度以下を全除外
+        ///// </summary>
+        ///// <param name="rare">レア度</param>
+        //public void ExcludeByRare(int rare)
+        //{
+        //    _dataManagement.ExcludeByRare(rare);
+        //}
 
         /// <summary>
         /// マイセット登録
@@ -401,7 +439,7 @@ namespace SimModel.Service
         /// <returns>登録セット</returns>
         public EquipSet? AddMySet(EquipSet set)
         {
-            return DataManagement.AddMySet(set);
+            return _dataManagement.AddMySet(set);
         }
 
         /// <summary>
@@ -410,93 +448,15 @@ namespace SimModel.Service
         /// <param name="set">削除対象</param>
         public void DeleteMySet(EquipSet set)
         {
-            DataManagement.DeleteMySet(set);
+            _dataManagement.DeleteMySet(set);
         }
 
         /// <summary>
         /// マイセット更新
         /// </summary>
-        public void SaveMySet()
+        public void ChangeNameOfMySet(string name, EquipSet set)
         {
-            DataManagement.SaveMySet();
-        }
-
-        /// <summary>
-        /// マイセット再読み込み
-        /// </summary>
-        public void LoadMySet()
-        {
-            DataManagement.LoadMySet();
-        }
-
-        /// <summary>
-        /// 最近使ったスキル更新
-        /// </summary>
-        /// <param name="skills">検索で使ったスキル</param>
-        public void UpdateRecentSkill(List<Skill> skills)
-        {
-            DataManagement.UpdateRecentSkill(skills);
-        }
-
-        /// <summary>
-        /// 中断フラグをオン
-        /// </summary>
-        public void Cancel()
-        {
-            IsCanceling = true;
-            if (Searcher != null)
-            {
-                Searcher.IsCanceling = true;
-            }
-        }
-
-        /// <summary>
-        /// 中断フラグをリセット
-        /// </summary>
-        public void ResetIsCanceling()
-        {
-            IsCanceling = false;
-            if (Searcher != null)
-            {
-                Searcher.IsCanceling = false;
-            }
-        }
-
-        /// <summary>
-        /// マイ検索条件登録
-        /// </summary>
-        /// <param name="condition">登録対象</param>
-        public void AddMyCondition(SearchCondition condition)
-        {
-            DataManagement.AddMyCondition(condition);
-        }
-
-        /// <summary>
-        /// マイ検索条件削除
-        /// </summary>
-        /// <param name="condition">削除対象</param>
-        public void DeleteMyCondition(SearchCondition condition)
-        {
-            DataManagement.DeleteMyCondition(condition);
-        }
-
-        /// <summary>
-        /// マイ検索条件更新
-        /// </summary>
-        /// <param name="condition">更新対象</param>
-        public void UpdateMyCondition(SearchCondition condition)
-        {
-            DataManagement.UpdateMyCondition(condition);
-        }
-
-        /// <summary>
-        /// 装飾品の所持数変更を保存
-        /// </summary>
-        /// <param name="deco">対象の装飾品</param>
-        /// <param name="count">変更する値</param>
-        public void SaveDecoCount(Deco deco, int count)
-        {
-            DataManagement.SaveDecoCount(deco, count);
+            _dataManagement.ChangeNameOfMySet(name, set);
         }
 
         /// <summary>
@@ -506,7 +466,54 @@ namespace SimModel.Service
         /// <param name="targetIndex">入れ替え先</param>
         public void MoveMySet(int dropIndex, int targetIndex)
         {
-            DataManagement.MoveMySet(dropIndex, targetIndex);
+            _dataManagement.MoveMySet(dropIndex, targetIndex);
+        }
+
+        /// <summary>
+        /// 最近使ったスキル更新
+        /// </summary>
+        /// <param name="skills">検索で使ったスキル</param>
+        private void UpdateRecentSkill(List<Skill> skills)
+        {
+            _dataManagement.UpdateRecentSkill(skills);
+        }
+
+        /// <summary>
+        /// マイ検索条件登録
+        /// </summary>
+        /// <param name="condition">登録対象</param>
+        public void AddMyCondition(SearchCondition condition)
+        {
+            _dataManagement.AddMyCondition(condition);
+        }
+
+        /// <summary>
+        /// マイ検索条件削除
+        /// </summary>
+        /// <param name="condition">削除対象</param>
+        public void DeleteMyCondition(SearchCondition condition)
+        {
+            _dataManagement.DeleteMyCondition(condition);
+        }
+
+        /// <summary>
+        /// マイ検索条件の名前更新
+        /// </summary>
+        /// <param name="name">名前</param>
+        /// <param name="condition">更新対象</param>
+        public void ChangeNameOfMyCondition(string name, SearchCondition condition)
+        {
+            _dataManagement.ChangeNameOfMyCondition(name, condition);
+        }
+
+        /// <summary>
+        /// 装飾品の所持数変更を保存
+        /// </summary>
+        /// <param name="deco">対象の装飾品</param>
+        /// <param name="count">変更する値</param>
+        public void SaveDecoCount(Deco deco, int count)
+        {
+            _dataManagement.SaveDecoCount(deco, count);
         }
 
         /// <summary>
@@ -515,7 +522,7 @@ namespace SimModel.Service
         /// <param name="charm">登録対象</param>
         public void AddCharm(Equipment charm)
         {
-            DataManagement.AddCharm(charm);
+            _dataManagement.AddCharm(charm);
         }
 
         /// <summary>
@@ -524,7 +531,7 @@ namespace SimModel.Service
         /// <param name="condition">削除対象</param>
         public void DeleteCharm(Equipment charm)
         {
-            DataManagement.DeleteCharm(charm);
+            _dataManagement.DeleteCharm(charm);
         }
 
         /// <summary>
@@ -534,7 +541,7 @@ namespace SimModel.Service
         /// <param name="targetIndex">入れ替え先</param>
         public void MoveCharm(int dropIndex, int targetIndex)
         {
-            DataManagement.MoveCharm(dropIndex, targetIndex);
+            _dataManagement.MoveCharm(dropIndex, targetIndex);
         }
 
         /// <summary>
@@ -543,7 +550,7 @@ namespace SimModel.Service
         /// <param name="artian">登録対象</param>
         public void AddArtian(Weapon artian)
         {
-            DataManagement.AddArtian(artian);
+            _dataManagement.AddArtian(artian);
         }
 
         /// <summary>
@@ -552,7 +559,7 @@ namespace SimModel.Service
         /// <param name="artian">削除対象</param>
         public void DeleteArtian(Weapon artian)
         {
-            DataManagement.DeleteArtian(artian);
+            _dataManagement.DeleteArtian(artian);
         }
 
         /// <summary>
@@ -562,7 +569,15 @@ namespace SimModel.Service
         /// <param name="targetIndex">入れ替え先</param>
         public void MoveArtian(int dropIndex, int targetIndex)
         {
-            DataManagement.MoveArtian(dropIndex, targetIndex);
+            _dataManagement.MoveArtian(dropIndex, targetIndex);
+        }
+
+        /// <summary>
+        /// 中断フラグをリセット
+        /// </summary>
+        private void ResetIsCanceling()
+        {
+            IsCanceling = false;
         }
     }
 }

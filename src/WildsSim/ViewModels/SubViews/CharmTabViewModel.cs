@@ -18,16 +18,6 @@ namespace WildsSim.ViewModels.SubViews
     internal class CharmTabViewModel : ChildViewModelBase
     {
         /// <summary>
-        /// 追加護石のスキル個数
-        /// </summary>
-        private int MaxCharmSkillCount { get; } = LogicConfig.Instance.MaxCharmSkillCount;
-
-        /// <summary>
-        /// スロットの最大の大きさ
-        /// </summary>
-        private int MaxSlotSize { get; } = ViewConfig.Instance.MaxSlotSize;
-
-        /// <summary>
         /// 護石画面のスキル選択部品のVM
         /// </summary>
         public ReactivePropertySlim<ObservableCollection<SkillSelectorViewModel>> CharmSkillSelectorVMs { get; } = new();
@@ -102,14 +92,30 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         public ReactiveCommand RowChangedCommand { get; private set; } = new();
 
+
+        /// <summary>
+        /// ロジックの設定クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly LogicConfig _logicConfig;
+
+        /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public CharmTabViewModel()
+        public CharmTabViewModel(LogicConfig logicConfig, Masters masters)
         {
+            _logicConfig = logicConfig;
+            _masters = masters;
+
             // 護石画面のスキル選択部品準備
             ObservableCollection<SkillSelectorViewModel> charmSelectorVMs = new();
-            for (int i = 0; i < MaxCharmSkillCount; i++)
+            for (int i = 0; i < _logicConfig.MaxCharmSkillCount; i++)
             {
                 charmSelectorVMs.Add(new SkillSelectorViewModel());
             }
@@ -117,7 +123,7 @@ namespace WildsSim.ViewModels.SubViews
 
             // スロットの選択肢を生成し、画面に反映
             ObservableCollection<string> slots = new();
-            for (int i = 0; i <= MaxSlotSize; i++)
+            for (int i = 0; i <= _logicConfig.MaxSlotSize; i++)
             {
                 slots.Add(i.ToString());
             }
@@ -253,7 +259,7 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // この護石を使っているマイセットがあったら再度確認する
-            if (Masters.MySets.Where(set => charm.Name.Equals(set.Charm.Name)).Any())
+            if (_masters.MySets.Where(set => charm.Name.Equals(set.Charm.Name)).Any())
             {
                 MessageBoxResult setConfirm = MessageBox.Show(
                     $"護石「{charm.DispName}」を利用しているマイセットが存在します。\n本当に削除してよろしいですか？\n(該当のマイセットも同時に削除されます。)",
@@ -308,7 +314,7 @@ namespace WildsSim.ViewModels.SubViews
         internal void LoadEquipsForCharm()
         {
             // 護石画面用のVMの設定
-            ObservableCollection<BindableCharm> charmList = BindableCharm.BeBindableList(Masters.AdditionalCharms);
+            ObservableCollection<BindableCharm> charmList = BindableCharm.BeBindableList(_masters.AdditionalCharms);
             Charms.ChangeCollection(charmList);
         }
     }

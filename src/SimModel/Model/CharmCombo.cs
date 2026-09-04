@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SimModel.Model
+﻿namespace SimModel.Model
 {
+    /// <summary>
+    /// 護石のスキルスロット組み合わせ情報
+    /// 理想護石検索用
+    /// </summary>
     public class CharmCombo
     {
         /// <summary>

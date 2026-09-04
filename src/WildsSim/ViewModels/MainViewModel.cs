@@ -1,7 +1,9 @@
-﻿using Prism.Mvvm;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Prism.Mvvm;
 using Reactive.Bindings;
 using SimModel.Service;
 using System.Reactive.Linq;
+using System.Threading;
 using WildsSim.ViewModels.SubViews;
 
 namespace WildsSim.ViewModels
@@ -109,6 +111,25 @@ namespace WildsSim.ViewModels
         /// </summary>
         public ReactiveCommand CancelCommand { get; private set; }
 
+        /// <summary>
+        /// キャンセル用トークン
+        /// </summary>
+        private CancellationTokenSource? tokenSource;
+        /// <summary>
+        /// キャンセル用トークン
+        /// </summary>
+        public CancellationTokenSource? TokenSource {
+            get
+            {
+                return tokenSource;
+            }
+            set 
+            {
+                tokenSource?.Dispose();
+                tokenSource = value;
+            }
+        }
+
 
         /// <summary>
         /// コンストラクタ：起動時処理
@@ -119,21 +140,20 @@ namespace WildsSim.ViewModels
             Instance = this;
 
             // シミュ本体のインスタンス化
-            Simulator = new Simulator();
-            Simulator.LoadData();
+            Simulator = App.ServiceProvider.GetRequiredService<Simulator>();
 
             // ビジー状態のプロパティを紐づけ
             IsFree = IsBusy.Select(x => !x).ToReadOnlyReactivePropertySlim();
 
             // 各タブのVMを設定
-            SkillSelectTabVM.Value = new SkillSelectTabViewModel();
-            SimulatorTabVM.Value = new SimulatorTabViewModel();
-            CludeTabVM.Value = new CludeTabViewModel();
-            CharmTabVM.Value = new CharmTabViewModel();
-            ArtianTabVM.Value = new ArtianTabViewModel();
-            DecoTabVM.Value = new DecoTabViewModel();
-            MySetTabVM.Value = new MySetTabViewModel();
-            LicenseTabVM.Value = new LicenseTabViewModel();
+            SkillSelectTabVM.Value = App.ServiceProvider.GetRequiredService<SkillSelectTabViewModel>();
+            SimulatorTabVM.Value = App.ServiceProvider.GetRequiredService<SimulatorTabViewModel>();
+            CludeTabVM.Value = App.ServiceProvider.GetRequiredService<CludeTabViewModel>();
+            CharmTabVM.Value = App.ServiceProvider.GetRequiredService<CharmTabViewModel>();
+            ArtianTabVM.Value = App.ServiceProvider.GetRequiredService<ArtianTabViewModel>();
+            DecoTabVM.Value = App.ServiceProvider.GetRequiredService<DecoTabViewModel>();
+            MySetTabVM.Value = App.ServiceProvider.GetRequiredService<MySetTabViewModel>();
+            LicenseTabVM.Value = App.ServiceProvider.GetRequiredService<LicenseTabViewModel>();
 
             // マスタファイル読み込み
             LoadMasters();
@@ -191,7 +211,7 @@ namespace WildsSim.ViewModels
         /// </summary>
         private void Cancel()
         {
-            Simulator.Cancel();
+            TokenSource?.Cancel();
         }
     }
 }

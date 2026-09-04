@@ -1,41 +1,63 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using System.Linq;
 
 namespace SimModel.Model
 {
     /// <summary>
-    /// ƒXƒLƒ‹
+    /// ã‚¹ã‚­ãƒ«
     /// </summary>
     public record Skill
     {
+        // TODO: Skillã‚’ã‚¢ãƒ—ãƒªå†…ã§ç·¨é›†ã™ã‚‹ã‚ˆã†ãªæ©Ÿèƒ½ãŒå¿…è¦ã«ãªã£ãŸå ´åˆå†æ¤œè¨
+        // ãã®å ´åˆã‚‚é€šå¸¸èµ·å‹•æ™‚ã¯å•é¡Œãªã„ã¨æ€ã‚ã‚Œã‚‹ãŒã€ãƒ†ã‚¹ãƒˆæ™‚ã«ãƒ†ã‚¹ãƒˆåŒå£«ã§å¹²æ¸‰ã™ã‚‹å¯èƒ½æ€§ãŒã‚ã‚‹
         /// <summary>
-        /// •\¦ƒŒƒxƒ‹‚ğ§ŒÀ‚·‚éƒJƒeƒSƒŠ–¼
+        /// ã‚¹ã‚­ãƒ«ãƒã‚¹ã‚¿æœ¬ä½“
         /// </summary>
-        public static readonly List<string> DisplayRestrictCategories = new() { "ƒOƒ‹[ƒvƒXƒLƒ‹", "ƒVƒŠ[ƒYƒXƒLƒ‹" };
+        public static List<Skill> SkillMaster { get; set; } = new();
 
         /// <summary>
-        /// ƒXƒLƒ‹–¼
+        /// è¡¨ç¤ºãƒ¬ãƒ™ãƒ«ã‚’åˆ¶é™ã™ã‚‹ã‚«ãƒ†ã‚´ãƒªå
+        /// </summary>
+        public static readonly List<string> DisplayRestrictCategories = new() { "ã‚°ãƒ«ãƒ¼ãƒ—ã‚¹ã‚­ãƒ«", "ã‚·ãƒªãƒ¼ã‚ºã‚¹ã‚­ãƒ«" };
+
+        /// <summary>
+        /// ã‚¹ã‚­ãƒ«å
         /// </summary>
         public string Name { get; }
 
         /// <summary>
-        /// ƒXƒLƒ‹ƒŒƒxƒ‹
+        /// ã‚¹ã‚­ãƒ«ãƒ¬ãƒ™ãƒ«
         /// </summary>
         public int Level { get; set; } = 0;
 
         /// <summary>
-        /// ŒÅ’èŒŸõƒtƒ‰ƒO
+        /// å›ºå®šæ¤œç´¢ãƒ•ãƒ©ã‚°
         /// </summary>
         public bool IsFixed { get; set; } = false;
 
+        private string category = @"æœªåˆ†é¡";
         /// <summary>
-        /// ƒXƒLƒ‹‚ÌƒJƒeƒSƒŠ
+        /// ã‚¹ã‚­ãƒ«ã®ã‚«ãƒ†ã‚´ãƒª
         /// </summary>
-        public string Category { get; init; }
+        public string Category 
+        {
+            get
+            {
+                if (category == @"æœªåˆ†é¡")
+                {
+                    category = SkillMaster.Where(s => s.Name == Name).FirstOrDefault()?.Category ?? category;
+                }
+                return category;
+            }
+            set 
+            {
+                category = value;
+            }
+        }
 
         private bool? canWithArtian = null;
         /// <summary>
-        /// ƒA[ƒeƒBƒA•Ší‚É•t—^‰Â”\‚©”Û‚©
+        /// ã‚¢ãƒ¼ãƒ†ã‚£ã‚¢æ­¦å™¨ã«ä»˜ä¸å¯èƒ½ã‹å¦ã‹
         /// </summary>
         public bool CanWithArtian
         {
@@ -43,7 +65,7 @@ namespace SimModel.Model
             {
                 if (canWithArtian == null)
                 {
-                    canWithArtian = Masters.Skills.Where(s => s.Name == Name).First().CanWithArtian;
+                    canWithArtian = SkillMaster.Where(s => s.Name == Name).FirstOrDefault()?.CanWithArtian ?? false;
                 }
                 return canWithArtian.Value;
             }
@@ -54,52 +76,56 @@ namespace SimModel.Model
         }
 
         /// <summary>
-        /// ƒVƒŠ[ƒYƒXƒLƒ‹“™AƒŒƒxƒ‹‚É“Áê‚È–¼Ì‚ª‚ ‚éê‡‚±‚±‚ÉŠi”[
+        /// ã‚·ãƒªãƒ¼ã‚ºã‚¹ã‚­ãƒ«ç­‰ã€ãƒ¬ãƒ™ãƒ«ã«ç‰¹æ®Šãªåç§°ãŒã‚ã‚‹å ´åˆã“ã“ã«æ ¼ç´
         /// </summary>
         public Dictionary<int, string> SpecificNames { get; }
 
         /// <summary>
-        /// ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+        /// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
         /// </summary>
-        /// <param name="name">ƒXƒLƒ‹–¼</param>
-        /// <param name="level">ƒŒƒxƒ‹</param>
-        /// <param name="isFixed">ŒÅ’èŒŸõƒtƒ‰ƒO</param>
-        public Skill(string name, int level, bool isFixed = false, bool? canWithArtian = null) 
-            : this(name, level, Masters.Skills.Where(s => s.Name == name).FirstOrDefault()?.Category, isFixed, canWithArtian) { }
-
-        /// <summary>
-        /// ƒRƒ“ƒXƒgƒ‰ƒNƒ^
-        /// </summary>
-        /// <param name="name">ƒXƒLƒ‹–¼</param>
-        /// <param name="level">ƒŒƒxƒ‹</param>
-        /// <param name="category">ƒJƒeƒSƒŠ</param>
-        /// <param name="isFixed">ŒÅ’èŒŸõƒtƒ‰ƒO</param>
-        public Skill(string name, int level, string? category, bool isFixed = false, bool? canWithArtian = null)
+        /// <param name="name">ã‚¹ã‚­ãƒ«å</param>
+        /// <param name="level">ãƒ¬ãƒ™ãƒ«</param>
+        /// <param name="category">ã‚«ãƒ†ã‚´ãƒª</param>
+        /// <param name="canWithArtian">ã‚¢ãƒ¼ãƒ†ã‚£ã‚¢ä»˜ä¸å¯èƒ½ãƒ•ãƒ©ã‚°</param>
+        public Skill(string name, int level, string? category = null, bool? canWithArtian = null)
         {
             Name = name;
             Level = level;
-            IsFixed = isFixed;
             if (canWithArtian != null)
             {
                 CanWithArtian = canWithArtian.Value;
             }
-            Category = string.IsNullOrEmpty(category) ? @"–¢•ª—Ş" : category;
-            SpecificNames = Masters.Skills.Where(s => s.Name == name).Select(s => s.SpecificNames).FirstOrDefault() ?? new();
+            if (category == null)
+            {
+                category = SkillMaster.Where(s => s.Name == name).FirstOrDefault()?.Category;
+            }
+            if (category != null)
+            {
+                Category = category;
+            }
+            SpecificNames = SkillMaster.Where(s => s.Name == name).Select(s => s.SpecificNames).FirstOrDefault() ?? new();
         }
 
         /// <summary>
-        /// Å‘åƒŒƒxƒ‹
-        /// ƒ}ƒXƒ^‚É‘¶İ‚µ‚È‚¢ƒXƒLƒ‹‚Ìê‡0
+        /// æœ€å¤§ãƒ¬ãƒ™ãƒ«
+        /// ãƒã‚¹ã‚¿ã«å­˜åœ¨ã—ãªã„ã‚¹ã‚­ãƒ«ã®å ´åˆ0
         /// </summary>
         public int MaxLevel {
             get 
             {
-                return Masters.SkillMaxLevel(Name);
+                foreach (var skill in SkillMaster)
+                {
+                    if (skill.Name == Name)
+                    {
+                        return skill.Level;
+                    }
+                }
+                return 0;
             }
         }
 
         /// <summary>
-        /// •\¦—p•¶š—ñ
+        /// è¡¨ç¤ºç”¨æ–‡å­—åˆ—
         /// </summary>
         public string Description
         {
@@ -114,10 +140,10 @@ namespace SimModel.Model
         }
 
         /// <summary>
-        /// •\¦ƒŒƒxƒ‹‚ğ§ŒÀ‚·‚é‚©”Û‚©
+        /// è¡¨ç¤ºãƒ¬ãƒ™ãƒ«ã‚’åˆ¶é™ã™ã‚‹ã‹å¦ã‹
         /// </summary>
-        /// <param name="level">ƒCƒ“ƒXƒ^ƒ“ƒX‚Æˆá‚¤ƒŒƒxƒ‹‚ğ’²‚×‚½‚¢ê‡“ü—Í</param>
-        /// <returns>§ŒÀ‚·‚éê‡true</returns>
+        /// <param name="level">ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã¨é•ã†ãƒ¬ãƒ™ãƒ«ã‚’èª¿ã¹ãŸã„å ´åˆå…¥åŠ›</param>
+        /// <returns>åˆ¶é™ã™ã‚‹å ´åˆtrue</returns>
         public bool IsHideLevel(int? level = null)
         {
             return DisplayRestrictCategories.Contains(Category) && !SpecificNames.ContainsKey(level ?? Level);

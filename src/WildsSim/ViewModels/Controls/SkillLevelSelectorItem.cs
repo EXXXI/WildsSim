@@ -43,7 +43,7 @@ namespace WildsSim.ViewModels.Controls
             {
                 if (!baseSkill.IsHideLevel(i))
                 {
-                    string dispName = baseSkill.SpecificNames.ContainsKey(i) ? $"{baseSkill.SpecificNames[i]}({baseSkill.Name}Lv{i})" : $"{baseSkill.Name}Lv{i}";
+                    string dispName = baseSkill.SpecificNames.TryGetValue(i, out string? value) ? $"{value}({baseSkill.Name}Lv{i})" : $"{baseSkill.Name}Lv{i}";
                     items.Add(new SkillLevelSelectorItem(dispName, i));
                 }
             }

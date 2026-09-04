@@ -62,7 +62,7 @@ namespace WildsSim.ViewModels.BindableWrapper
         /// </summary>
         /// <param name="list">変換前リスト</param>
         /// <returns></returns>
-        static public ObservableCollection<BindableCharm> BeBindableList(List<Equipment> list)
+        static public new ObservableCollection<BindableCharm> BeBindableList(List<Equipment> list)
         {
             ObservableCollection<BindableCharm> bindableList = new();
             foreach (var equip in list)

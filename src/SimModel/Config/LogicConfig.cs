@@ -1,19 +1,15 @@
 ﻿using Csv;
 using SimModel.Domain;
-using System.IO;
+using SimModel.ExceptionClass;
+using System.IO.Abstractions;
 
 namespace SimModel.Config
 {
     /// <summary>
     /// SimModel側の設定
     /// </summary>
-    public class LogicConfig
+    public class LogicConfig : ConfigBase
     {
-        /// <summary>
-        /// インスタンス
-        /// </summary>
-        static private LogicConfig instance;
-
         /// <summary>
         /// ロジック設定ファイル
         /// </summary>
@@ -22,87 +18,87 @@ namespace SimModel.Config
         /// <summary>
         /// スロットの最大の大きさ
         /// </summary>
-        public int MaxSlotSize { get; set; }
+        public int MaxSlotSize { get; set; } = 4;
 
         /// <summary>
         /// 最近使ったスキルの記憶容量
         /// </summary>
-        public int MaxRecentSkillCount { get; set; }
-
-        /// <summary>
-        /// 防具のスキル最大個数
-        /// </summary>
-        public int MaxEquipSkillCount { get; set; }
-
-        /// <summary>
-        /// 装飾品のスキル最大個数
-        /// </summary>
-        public int MaxDecoSkillCount { get; set; }
+        public int MaxRecentSkillCount { get; set; } = 20;
 
         /// <summary>
         /// 追加護石のスキル最大個数
+        /// 泣シミュのフォーマットと合わせておく必要がある
+        /// 基本的に変更を想定していない
         /// </summary>
-        public int MaxCharmSkillCount { get; set; }
+        public int MaxCharmSkillCount { get; set; } = 3;
 
         /// <summary>
         /// 最大並列処理数
+        /// 特殊な理由がない限り-1(自動でコア数に合わせる)であるべき
+        /// 基本的に変更を想定していない
         /// </summary>
-        public int MaxDegreeOfParallelism { get; set; }
+        public int MaxDegreeOfParallelism { get; set; } = -1;
 
         /// <summary>
         /// 入手不可装備の利用有無
         /// </summary>
-        public bool AllowUnavailableEquipments { get; set; }
+        public bool AllowUnavailableEquipments { get; set; } = false;
 
         /// <summary>
         /// 下位互換護石の検出有無
         /// </summary>
-        public bool UseCalcUpperCharm { get; set; }
+        public bool UseCalcUpperCharm { get; set; } = true;
 
         /// <summary>
-        /// アーティアのスキル数
-        /// (現状2固定としてファイルへの外出しはしない)
+        /// アーティア武器のスキル数
+        /// これが変化する場合は、この数字だけで対応できない可能性が高い
+        /// 基本的に変更を想定していない
         /// </summary>
         public int ArtianSkillCount { get; set; } = 2;
 
         /// <summary>
         /// マイセットのデフォルト名
+        /// 基本的に変更を想定していない
         /// </summary>
-        public string DefaultMySetName { get; } = "マイセット";
+        public string DefaultMySetName { get; set; } = "マイセット";
 
         /// <summary>
-        /// プライベートコンストラクタ
+        /// ファイルシステムのインスタンス
+        /// DIで注入される
         /// </summary>
-        private LogicConfig()
-        {
-            string csv = File.ReadAllText(ConfCsv);
-
-            foreach (ICsvLine line in CsvReader.ReadFromText(csv))
-            {
-                MaxSlotSize = ParseUtil.LoadConfigItem(line, @"スロットの最大の大きさ", 4);
-                MaxRecentSkillCount = ParseUtil.LoadConfigItem(line, @"最近使ったスキルの記憶容量", 20);
-                MaxEquipSkillCount = ParseUtil.LoadConfigItem(line, @"防具のスキル最大個数", 5);
-                MaxDecoSkillCount = ParseUtil.LoadConfigItem(line, @"装飾品のスキル最大個数", 2);
-                MaxCharmSkillCount = ParseUtil.LoadConfigItem(line, @"追加護石のスキル最大個数", 3);
-                MaxDegreeOfParallelism = ParseUtil.LoadConfigItem(line, @"最大並列処理数", 4);
-                AllowUnavailableEquipments = ParseUtil.LoadConfigItem(line, @"入手不可装備の利用有無", false);
-                UseCalcUpperCharm = ParseUtil.LoadConfigItem(line, @"下位互換護石の検出有無", true); 
-            }
-        }
+        private readonly IFileSystem _fileSystem;
 
         /// <summary>
-        /// インスタンス
+        /// コンストラクタ
         /// </summary>
-        static public LogicConfig Instance
+        /// <param name="fileSystem"></param>
+        public LogicConfig(IFileSystem fileSystem)
         {
-            get
+            _fileSystem = fileSystem;
+
+            try
             {
-                if (instance == null)
+                string csv = _fileSystem.File.ReadAllText(ConfCsv);
+
+                foreach (ICsvLine line in CsvReader.ReadFromText(csv))
                 {
-                    instance = new LogicConfig();
+                    MaxSlotSize = LoadConfigItem(line, @"スロットの最大の大きさ", MaxSlotSize);
+                    MaxRecentSkillCount = LoadConfigItem(line, @"最近使ったスキルの記憶容量", MaxRecentSkillCount);
+                    MaxCharmSkillCount = LoadConfigItem(line, @"追加護石のスキル最大個数", MaxCharmSkillCount);
+                    MaxDegreeOfParallelism = LoadConfigItem(line, @"最大並列処理数", MaxDegreeOfParallelism);
+                    AllowUnavailableEquipments = LoadConfigItem(line, @"入手不可装備の利用有無", AllowUnavailableEquipments);
+                    UseCalcUpperCharm = LoadConfigItem(line, @"下位互換護石の検出有無", UseCalcUpperCharm);
+                    ArtianSkillCount = LoadConfigItem(line, @"アーティア武器のスキル数", ArtianSkillCount);
+                    DefaultMySetName = LoadConfigItem(line, @"マイセットのデフォルト名", DefaultMySetName);
                 }
-                return instance;
             }
+            catch (System.IO.IOException ex)
+            {
+                string message = $"設定ファイル {ConfCsv} の読み込みに失敗しました。";
+                throw new SimulatorException(message, ex);
+            }
+            
         }
+
     }
 }

@@ -1,9 +1,10 @@
 ﻿using Prism.Mvvm;
 using Reactive.Bindings;
 using Reactive.Bindings.Disposables;
-using WildsSim.ViewModels.SubViews;
 using SimModel.Service;
 using System;
+using System.Threading;
+using WildsSim.ViewModels.SubViews;
 
 namespace WildsSim.ViewModels
 {
@@ -59,6 +60,15 @@ namespace WildsSim.ViewModels
         /// MainViewModelから参照を取得
         /// </summary>
         protected ReactivePropertySlim<bool> IsBusy { get => MainVM.IsBusy; }
+
+        /// <summary>
+        /// キャンセル用トークン
+        /// </summary>
+        protected CancellationTokenSource? TokenSource
+        {
+            get => MainVM.TokenSource; 
+            set => MainVM.TokenSource = value;
+        }
 
         /// <summary>
         /// ステータスバーに指定のテキストを表示

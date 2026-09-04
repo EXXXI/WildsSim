@@ -7,12 +7,24 @@ namespace SimModel.Model
     /// <summary>
     /// 各種マスタ管理
     /// </summary>
-    static public class Masters
+    public class Masters
     {
+        // Loadしたきり変更されないマスタはstaticで保持する
+        // Saveする必要があるマスタはstaticで保持しない(テスト時にテスト同士で干渉しないように)
+
         /// <summary>
-        /// スキルマスタ
+        /// スキルマスタ 本体はSkill.SkillMasterに保持される
         /// </summary>
-        public static List<Skill> Skills { get; set; } = new();
+        public static List<Skill> Skills {
+            get
+            {
+                return Skill.SkillMaster;
+            }
+            set 
+            {
+                Skill.SkillMaster = value;
+            }
+        }
 
         /// <summary>
         /// 武器マスタ
@@ -52,7 +64,7 @@ namespace SimModel.Model
         /// <summary>
         /// 追加護石マスタ
         /// </summary>
-        public static List<Equipment> AdditionalCharms { get; set; } = new();
+        public List<Equipment> AdditionalCharms { get; set; } = new();
 
         /// <summary>
         /// 追加護石組み合わせマスタ
@@ -67,32 +79,32 @@ namespace SimModel.Model
         /// <summary>
         /// アーティアマスタ
         /// </summary>
-        public static List<Weapon> Artians { get; set; } = new();
+        public List<Weapon> Artians { get; set; } = new();
 
         /// <summary>
         /// 装飾品マスタ
         /// </summary>
-        public static List<Deco> Decos { get; set; } = new();
+        public List<Deco> Decos { get; set; } = new();
 
         /// <summary>
         /// 除外固定マスタ
         /// </summary>
-        public static List<Clude> Cludes { get; set; } = new();
+        public List<Clude> Cludes { get; set; } = new();
 
         /// <summary>
         /// マイセットマスタ
         /// </summary>
-        public static List<EquipSet> MySets { get; set; } = new();
+        public List<EquipSet> MySets { get; set; } = new();
 
         /// <summary>
         /// 最近使ったスキルマスタ
         /// </summary>
-        public static List<string> RecentSkillNames { get; set; } = new();
+        public List<string> RecentSkillNames { get; set; } = new();
 
         /// <summary>
         /// マイ検索条件マスタ
         /// </summary>
-        public static List<SearchCondition> MyConditions { get; set; } = new();
+        public List<SearchCondition> MyConditions { get; set; } = new();
 
         /// <summary>
         /// 防御力差分マスタ
@@ -100,17 +112,45 @@ namespace SimModel.Model
         public static Dictionary<int, DefUpgrade> DefUpgrades { get; set; } = new();
 
         /// <summary>
+        /// 全装備キャッシュ
+        /// </summary>
+        private List<Equipment>? _allEquipments = null;
+        /// <summary>
+        /// 全装備
+        /// </summary>
+        public IEnumerable<Equipment> AllEquipments { 
+            get 
+            {
+                if (_allEquipments == null)
+                {
+                    _allEquipments = Weapons.Union(Artians).Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos).ToList();
+                }
+                return _allEquipments;
+            }
+        }
+
+        /// <summary>
+        /// 全装備キャッシュをクリア
+        /// TODO: Artians、AdditionalCharmsの更新時に自動で呼び出される仕組みが望ましい
+        /// </summary>
+        public void ClearAllEquipmentsCache()
+        {
+            _allEquipments = null;
+        }
+
+
+        /// <summary>
         /// 装備名から装備を取得
         /// </summary>
         /// <param name="equipName">装備名</param>
         /// <returns>装備</returns>
-        public static Equipment GetEquipByName(string equipName)
+        public Equipment? GetEquipByName(string equipName)
         {
             string? name = equipName?.Trim();
-            var equips = Weapons.Union(Artians).Union(Heads).Union(Bodys).Union(Arms).Union(Waists).Union(Legs).Union(Charms).Union(AdditionalCharms).Union(Decos);
-            return equips.Where(equip => equip.Name == name).FirstOrDefault() ?? new Equipment();
+            return AllEquipments.Where(equip => equip.Name == name).FirstOrDefault();
         }
 
+        // TODO: Skillに移管すべき？
         /// <summary>
         /// スキル名がマスタに存在するかチェック
         /// </summary>
@@ -127,6 +167,7 @@ namespace SimModel.Model
             return Skills.Any(skill => skill.Name == name);
         }
 
+        // TODO: Skillに移管すべき？
         /// <summary>
         /// スキル名から最大レベルを算出
         /// マスタに存在しないスキルの場合0
@@ -143,41 +184,6 @@ namespace SimModel.Model
                 }
             }
             return 0;
-        }
-
-        /// <summary>
-        /// 護石の下位互換検出
-        /// </summary>
-        public static void CalcLowerCharm()
-        {
-            if (!Config.LogicConfig.Instance.UseCalcUpperCharm)
-            {
-                return;
-            }
-
-            foreach (var charm in AdditionalCharms)
-            {
-                charm.Upper = null;
-                foreach (var other in AdditionalCharms)
-                {
-                    if (charm == other)
-                    {
-                        continue;
-                    }
-                    if (Equipment.IsLeftUpper(other, charm, true))
-                    {
-                        if (Equipment.IsLeftUpper(charm, other, true))
-                        {
-                            charm.Upper = (other, false);
-                        }
-                        else
-                        {
-                            charm.Upper = (other, true);
-                            break;
-                        }
-                    }
-                }
-            }
         }
     }
 }

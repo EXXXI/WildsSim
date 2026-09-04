@@ -61,6 +61,7 @@
             return Str(kind) + '：';
         }
 
+        // TODO: 現在未使用。傀異錬成のような防具カスタマイズが来たら使うかも
         /// <summary>
         /// 文字列をEquipKindに
         /// </summary>
@@ -70,12 +71,15 @@
         {
             return str switch
             {
+                "武器" => EquipKind.weapon,
                 "頭" => EquipKind.head,
                 "胴" => EquipKind.body,
                 "腕" => EquipKind.arm,
                 "腰" => EquipKind.waist,
                 "足" => EquipKind.leg,
                 "脚" => EquipKind.leg,// 誤記
+                "装飾品" => EquipKind.deco,
+                "護石" => EquipKind.charm,
                 _ => EquipKind.error,
             };
         }

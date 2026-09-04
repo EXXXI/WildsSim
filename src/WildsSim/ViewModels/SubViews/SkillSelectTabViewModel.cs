@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Automation;
 using WildsSim.ViewModels.BindableWrapper;
+using System.Threading;
+using NLog;
 
 namespace WildsSim.ViewModels.SubViews
 {
@@ -43,11 +45,6 @@ namespace WildsSim.ViewModels.SubViews
         /// 武器指定なしの選択肢
         /// </summary>
         const string SearchWeaponString = "指定しない(全武器から検索する)";
-
-        /// <summary>
-        /// スロットの最大の大きさ
-        /// </summary>
-        private int MaxSlotSize { get; } = ViewConfig.Instance.MaxSlotSize;
 
         /// <summary>
         /// デフォルトの頑張り度
@@ -210,10 +207,17 @@ namespace WildsSim.ViewModels.SubViews
         public ReactiveCommand AddMyConditionCommand { get; } = new ReactiveCommand();
 
         /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
+
+        /// <summary>
         /// コンストラクタ
         /// </summary>
-        public SkillSelectTabViewModel()
+        public SkillSelectTabViewModel(Masters masters)
         {
+            _masters = masters;
 
             // スキル選択部品を配置
             SkillContainerVMs.ChangeCollection(new ObservableCollection<SkillLevelSelectorContainerViewModel>(
@@ -223,7 +227,7 @@ namespace WildsSim.ViewModels.SubViews
             ));
 
             // 武器指定方式の選択肢を生成し、画面に反映
-            CalcWeaponMaster.Value = new(){ SlotOnlyString, CalcWeaponString };
+            CalcWeaponMaster.Value = new() { SlotOnlyString, CalcWeaponString };
             CalcWeapon.Value = SlotOnlyString;
 
             // スロット武器選択の選択肢を生成し、画面に反映
@@ -287,7 +291,9 @@ namespace WildsSim.ViewModels.SubViews
             MainVM.IsIndeterminate.Value = true;
 
             // 検索
-            List<EquipSet> result = await Task.Run(() => Simulator.Search(condition, searchLimit));
+            TokenSource = new();
+            CancellationToken token = TokenSource.Token;
+            List<EquipSet> result = await Task.Run(() => Simulator.Search(condition, searchLimit, token));
 
             // ビジーフラグ解除
             IsBusy.Value = false;
@@ -325,7 +331,9 @@ namespace WildsSim.ViewModels.SubViews
 
             // 追加スキル検索
             SearchCondition condition = MakeCondition();
-            List<Skill> result = await Task.Run(() => Simulator.SearchExtraSkill(condition, MainVM.Progress));
+            TokenSource = new();
+            CancellationToken token = TokenSource.Token;
+            List<Skill> result = await Task.Run(() => Simulator.SearchExtraSkill(condition, MainVM.Progress, token));
             MainVM.Progress.Value = 0;
 
             // 追加スキル表示用VMをセット
@@ -390,9 +398,9 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         public void LoadMyCondition()
         {
-            List<SearchCondition> conditions = Masters.MyConditions;
+            List<SearchCondition> conditions = _masters.MyConditions;
             MyConditionVMs.ChangeCollection(new ObservableCollection<MyConditionRowViewModel>(
-                Masters.MyConditions.Select(condition => new MyConditionRowViewModel(condition))
+                _masters.MyConditions.Select(condition => new MyConditionRowViewModel(condition))
             ));
         }
 
@@ -401,7 +409,7 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         private void LoadRecentSkills()
         {
-            var recentSkills = Masters.RecentSkillNames.Join(
+            var recentSkills = _masters.RecentSkillNames.Join(
                 Masters.Skills, r => r, s => s.Name,
                 (r, s) => new
                 {
@@ -481,19 +489,31 @@ namespace WildsSim.ViewModels.SubViews
             // 武器情報反映
             if (condition.IsSpecificWeapon)
             {
-                if (condition.WeaponType == WeaponType.指定なし)
+                string? weaponName = condition.WeaponName;
+                WeaponType weaponType = condition.WeaponType;
+
+                // 存在しない武器はスロットのみ_0-0-0として扱う
+                if (string.IsNullOrEmpty(weaponName) ||
+                    !_masters.AllEquipments.Any(w => w.Name == weaponName))
+                {
+                    weaponType = WeaponType.指定なし;
+                    weaponName = "スロットのみ_0-0-0";
+                }
+
+
+                if (weaponType == WeaponType.指定なし)
                 {
                     // スロットのみ指定
                     CalcWeapon.Value = SlotOnlyString;
-                    SelectedSlotWeapon.Value = condition.WeaponName;
+                    SelectedSlotWeapon.Value = weaponName;
                     MinAttack.Value = string.Empty;
                 }
                 else
                 {
                     // 武器指定
                     CalcWeapon.Value = CalcWeaponString;
-                    SelectedWeaponType.Value = condition.WeaponType.ToString();
-                    SelectedWeapon.Value = condition.WeaponName;
+                    SelectedWeaponType.Value = weaponType.ToString();
+                    SelectedWeapon.Value = weaponName;
                     MinAttack.Value = string.Empty;
                 }
             }
@@ -532,7 +552,7 @@ namespace WildsSim.ViewModels.SubViews
             for (int i = 1; hasSameName; i++)
             {
                 condName = "検索条件" + i;
-                hasSameName = Masters.MyConditions.Any(cond => cond.DispName == condName);
+                hasSameName = _masters.MyConditions.Any(cond => cond.DispName == condName);
             }
             condition.DispName = condName;
             Simulator.AddMyCondition(condition);
@@ -569,7 +589,7 @@ namespace WildsSim.ViewModels.SubViews
             string selectedWeaponName = SelectedWeapon.Value;
             ObservableCollection<ComboItemViewModel<string>> weapons = new();
             weapons.Add(new(SearchWeaponString, SearchWeaponString));
-            weapons.AddRange(Masters.Weapons.Union(Masters.Artians).Where(w => w.WeaponType.ToString() == selectedType).Select(w => new ComboItemViewModel<string>(w.Name, w.DispName)).ToList());
+            weapons.AddRange(Masters.Weapons.Union(_masters.Artians).Where(w => w.WeaponType.ToString() == selectedType).Select(w => new ComboItemViewModel<string>(w.Name, w.DispName)).ToList());
             Weapons.Value = weapons;
             if (holdSelection && weapons.Any(w => w.Value == selectedWeaponName))
             {
@@ -630,6 +650,11 @@ namespace WildsSim.ViewModels.SubViews
                     condition.IsSpecificWeapon = true;
                     condition.WeaponType = (WeaponType)Enum.Parse(typeof(WeaponType), SelectedWeaponType.Value);
                     condition.WeaponName = SelectedWeapon.Value;
+                    var artian = _masters.Artians.Where(a => a.Name == condition.WeaponName);
+                    if (artian.Any())
+                    {
+                        condition.WeaponDispName = artian.First().DispName;
+                    }
                 }
             }
 
@@ -669,7 +694,7 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         /// <param name="param">Parsestring</param>
         /// <returns>Parseしたint　変換できなかった場合null</returns>
-        private int? ParseOrNull(string param)
+        private static int? ParseOrNull(string param)
         {
             if (int.TryParse(param, out int result))
             {

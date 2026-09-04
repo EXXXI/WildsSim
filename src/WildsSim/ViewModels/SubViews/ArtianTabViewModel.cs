@@ -55,9 +55,19 @@ namespace WildsSim.ViewModels.SubViews
         /// </summary>
         public ReactiveCommand RowChangedCommand { get; private set; } = new();
 
+        /// <summary>
+        /// マスタ管理クラスのインスタンス
+        /// DIで注入される
+        /// </summary>
+        private readonly Masters _masters;
 
-        public ArtianTabViewModel()
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        public ArtianTabViewModel(Masters masters)
         {
+            _masters = masters;
+
             // 武器種の選択肢を生成し、画面に反映
             WeaponTypes.Value = new(Enum.GetNames(typeof(WeaponType)).Where(s => s != WeaponType.指定なし.ToString()));
             SelectedWeaponType.Value = WeaponTypes.Value[0];
@@ -88,7 +98,7 @@ namespace WildsSim.ViewModels.SubViews
                 for (int i = 1; string.IsNullOrEmpty(dispName); i++)
                 {
                     string tryName = $"アーティア{artian.WeaponType}{i}";
-                    if (Masters.Artians.Any(a => a.DispName == tryName))
+                    if (_masters.Artians.Any(a => a.DispName == tryName))
                     {
                         // 既に存在する名前なので次へ
                         continue;
@@ -158,7 +168,7 @@ namespace WildsSim.ViewModels.SubViews
             }
 
             // この護石を使っているマイセットがあったら再度確認する
-            if (Masters.MySets.Where(set => artian.Name.Equals(set.Weapon.Name)).Any())
+            if (_masters.MySets.Where(set => artian.Name.Equals(set.Weapon.Name)).Any())
             {
                 MessageBoxResult setConfirm = MessageBox.Show(
                     $"アーティア武器「 {artian.DispName}」を利用しているマイセットが存在します。\n本当に削除してよろしいですか？\n(該当のマイセットも同時に削除されます。)",
@@ -189,7 +199,7 @@ namespace WildsSim.ViewModels.SubViews
         internal void LoadEquipsForArtian()
         {
             // 護石画面用のVMの設定
-            ObservableCollection<BindableArtian> artianList = BindableArtian.BeBindableList(Masters.Artians);
+            ObservableCollection<BindableArtian> artianList = BindableArtian.BeBindableList(_masters.Artians);
             Artians.ChangeCollection(artianList);
         }
     }

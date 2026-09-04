@@ -24,7 +24,26 @@ namespace SimModel.Model
         /// <summary>
         /// 武器名(武器指定時のみ有効)
         /// </summary>
-        public string WeaponName { get; set; }
+        public string? WeaponName { get; set; }
+
+        /// <summary>
+        /// 武器表示名(武器指定時のみ有効)
+        /// </summary>
+        private string? weaponDispName = null;
+        /// <summary>
+        /// 武器表示名(武器指定時のみ有効)
+        /// </summary>
+        public string? WeaponDispName
+        {
+            get
+            {
+                return weaponDispName ?? WeaponName;
+            }
+            set
+            {
+                weaponDispName = value;
+            }
+        }
 
         /// <summary>
         /// 武器種(武器非指定時のみ有効)
@@ -74,17 +93,12 @@ namespace SimModel.Model
         /// <summary>
         /// マイ検索条件保存用ID
         /// </summary>
-        public string ID { get; set; }
+        public string? ID { get; set; }
 
         /// <summary>
         /// マイ検索条件保存用名前
         /// </summary>
-        public string DispName { get; set; }
-
-        /// <summary>
-        /// 護石検索用固定護石
-        /// </summary>
-        public Equipment? FixCharm { get; set; } = null;
+        public string? DispName { get; set; }
 
         /// <summary>
         /// 理論値護石検索フラグ
@@ -95,6 +109,11 @@ namespace SimModel.Model
         /// 理論値アーティア検索フラグ
         /// </summary>
         public bool IsBestArtianSearch { get; set; } = false;
+
+        /// <summary>
+        /// 装飾品全所持フラグ
+        /// </summary>
+        public bool HasAllDecos { get; set; } = false;
 
         /// <summary>
         /// CSV用スキル形式
@@ -130,7 +149,9 @@ namespace SimModel.Model
                 {
                     if (string.IsNullOrWhiteSpace(splitted[i]))
                     {
-                        return;
+                        // 基本存在しないので、あったとしても2項目分無視する
+                        i++;
+                        continue;
                     }
                     string name = splitted[i];
                     string levelStr = splitted[++i];
@@ -162,12 +183,12 @@ namespace SimModel.Model
                 }
                 if (IsSpecificWeapon)
                 {
-                    sb.AppendLine($"武器:{WeaponName}");
+                    sb.AppendLine($"武器:{WeaponDispName}");
                 }
                 else
                 {
                     sb.Append($"武器種:{WeaponType}, ");
-                    sb.AppendLine($"最低攻撃力:{MinAttack}");
+                    sb.AppendLine($"最低攻撃力:{MinAttack?.ToString() ?? none}");
                 }
                 sb.AppendLine($"防御力:{Def?.ToString() ?? none}");
                 sb.Append($"火:{Fire?.ToString() ?? none},");
@@ -200,11 +221,16 @@ namespace SimModel.Model
             Skills = new List<Skill>();
             foreach (var skill in condition.Skills)
             {
-                Skill newSkill = new Skill(skill.Name, skill.Level, skill.IsFixed);
+                Skill newSkill = new(skill.Name, skill.Level) { IsFixed = skill.IsFixed };
                 Skills.Add(newSkill);
             }
             IsSpecificWeapon = condition.IsSpecificWeapon;
             WeaponName = condition.WeaponName;
+            if (condition.WeaponName != null &&
+                condition.WeaponName != condition.WeaponDispName)
+            {
+                WeaponDispName = condition.WeaponDispName;
+            }
             WeaponType = condition.WeaponType;
             MinAttack = condition.MinAttack; 
             Def = condition.Def;
@@ -215,6 +241,7 @@ namespace SimModel.Model
             Dragon = condition.Dragon;
             IsBestCharmSearch = condition.IsBestCharmSearch;
             IsBestArtianSearch = condition.IsBestArtianSearch;
+            IsTranscending = condition.IsTranscending;
         }
 
         /// <summary>
@@ -225,6 +252,11 @@ namespace SimModel.Model
         // 
         public bool AddSkill(Skill additionalSkill)
         {
+            if (additionalSkill == null)
+            {
+                return false;
+            }
+
             foreach (var skill in Skills)
             {
                 if(skill.Name == additionalSkill.Name)
@@ -261,15 +293,15 @@ namespace SimModel.Model
         /// この検索条件に関連する理論値護石リストを生成
         /// </summary>
         /// <returns></returns>
-        internal List<Equipment> MakeRelatedCharms()
+        internal List<Equipment> MakeRelatedCharms(List<CharmCombo> charmCombos, Dictionary<int, List<Skill>> charmGroups)
         {
             List<Equipment> targetCharms = new();
             var condSkills = Skills.Where(skill => skill.Level != 0);
-            foreach (var combo in Masters.ShiningCharmCombos)
+            foreach (var combo in charmCombos)
             {
-                var skill1List = Masters.ShiningCharmGroups[combo.Group1].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
-                var skill2List = Masters.ShiningCharmGroups[combo.Group2].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
-                var skill3List = Masters.ShiningCharmGroups[combo.Group3].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                var skill1List = charmGroups[combo.Group1].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                var skill2List = charmGroups[combo.Group2].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
+                var skill3List = charmGroups[combo.Group3].Where(skill => condSkills.Any(s => s.Name == skill.Name)).Append(null);
                 foreach (var skill1 in skill1List)
                 {
                     foreach (var skill2 in skill2List)
@@ -384,7 +416,7 @@ namespace SimModel.Model
         /// <param name="left"></param>
         /// <param name="right"></param>
         /// <returns></returns>
-        private bool IsSameCharm(Equipment left, Equipment right)
+        private static bool IsSameCharm(Equipment left, Equipment right)
         {
             if (left.Skills.Count != right.Skills.Count) { return false; }
             if (left.Slot1 != right.Slot1) { return false; }

@@ -1,5 +1,7 @@
 ﻿using Csv;
+using SimModel.Config;
 using SimModel.Domain;
+using SimModel.ExceptionClass;
 using SimModel.Model;
 using System;
 using System.Collections.Generic;
@@ -13,7 +15,7 @@ namespace WildsSim.Config
     /// <summary>
     /// View関連の設定
     /// </summary>
-    internal class ViewConfig
+    internal class ViewConfig : ConfigBase
     {
         /// <summary>
         /// インスタンス
@@ -26,19 +28,14 @@ namespace WildsSim.Config
         private const string ConfCsv = "conf/viewConfig.csv";
 
         /// <summary>
-        /// スロットの最大の大きさ
-        /// </summary>
-        public int MaxSlotSize { get; set; }
-
-        /// <summary>
         /// デフォルトの頑張り度
         /// </summary>
-        public string DefaultLimit { get; set; }
+        public string DefaultLimit { get; set; } = "100";
 
         /// <summary>
         /// スキル未選択時の表示
         /// </summary>
-        public string NoSkillName { get; set; }
+        public string NoSkillName { get; set; } = "スキル選択";
 
         /// <summary>
         /// グリッドの列順保存有無
@@ -51,14 +48,21 @@ namespace WildsSim.Config
         /// </summary>
         private ViewConfig()
         {
-            string csv = File.ReadAllText(ConfCsv);
-
-            foreach (ICsvLine line in CsvReader.ReadFromText(csv))
+            try
             {
-                MaxSlotSize = ParseUtil.LoadConfigItem(line, @"スロットの最大の大きさ", 4);
-                DefaultLimit = ParseUtil.LoadConfigItem(line, @"デフォルトの頑張り度", 100).ToString();
-                NoSkillName = ParseUtil.LoadConfigItem(line, @"スキル未選択時の表示", @"スキル選択");
-                UseSavedColumnIndexes = ParseUtil.LoadConfigItem(line, @"グリッドの列順保存有無", @"有").Equals(@"有");
+                string csv = File.ReadAllText(ConfCsv);
+
+                foreach (ICsvLine line in CsvReader.ReadFromText(csv))
+                {
+                    DefaultLimit = LoadConfigItem(line, @"デフォルトの頑張り度", DefaultLimit).ToString();
+                    NoSkillName = LoadConfigItem(line, @"スキル未選択時の表示", NoSkillName);
+                    UseSavedColumnIndexes = LoadConfigItem(line, @"グリッドの列順保存有無", @"有").Equals(@"有");
+                }
+            }
+            catch (System.IO.IOException ex)
+            {
+                string message = $"設定ファイル {ConfCsv} の読み込みに失敗しました。";
+                throw new SimulatorException(message, ex);
             }
         }
 
